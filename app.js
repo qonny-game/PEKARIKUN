@@ -1,25 +1,39 @@
 // ==========================================
 // BIG 当たり種類 (10種類 / 200枚〜1000枚 + 2000枚が1つ)
-// weight: 出現しやすさ, glow: GOGO!の発光色
+// glow: GOGO!の発光色 / sub: ペカリ中のサブ表示
 // ==========================================
 const BIG_TIERS = [
-  { coins: 200,  weight: 20, glow: '#3b82f6', sub: 'CHANCE' },
-  { coins: 300,  weight: 17, glow: '#22c55e', sub: 'CHANCE' },
-  { coins: 400,  weight: 14, glow: '#f97316', sub: 'CHANCE!' },
-  { coins: 500,  weight: 12, glow: '#ef4444', sub: 'CHANCE!' },
-  { coins: 600,  weight: 10, glow: '#a855f7', sub: 'BIG CHANCE!' },
-  { coins: 700,  weight: 8,  glow: '#facc15', sub: 'BIG CHANCE!' },
-  { coins: 800,  weight: 7,  glow: '#22d3ee', sub: 'BIG CHANCE!!' },
-  { coins: 900,  weight: 5,  glow: '#ff5a1f', sub: 'SUPER CHANCE!!' },
-  { coins: 1000, weight: 4,  glow: '#ffd700', sub: '★ GRAND CHANCE ★', grand: true },
-  { coins: 2000, weight: 1,  glow: '#ffffff', sub: '★★ MEGA JACKPOT ★★', grand: true, mega: true }
+  { coins: 200,  glow: '#3b82f6', sub: 'CHANCE' },
+  { coins: 300,  glow: '#22c55e', sub: 'CHANCE' },
+  { coins: 400,  glow: '#f97316', sub: 'CHANCE!' },
+  { coins: 500,  glow: '#ef4444', sub: 'CHANCE!' },
+  { coins: 600,  glow: '#a855f7', sub: 'BIG CHANCE!' },
+  { coins: 700,  glow: '#facc15', sub: 'BIG CHANCE!' },
+  { coins: 800,  glow: '#22d3ee', sub: 'BIG CHANCE!!' },
+  { coins: 900,  glow: '#ff5a1f', sub: 'SUPER CHANCE!!' },
+  { coins: 1000, glow: '#ffd700', sub: '★ GRAND CHANCE ★', grand: true },
+  { coins: 2000, glow: '#ffffff', sub: '★★ MEGA JACKPOT ★★', grand: true, mega: true }
 ];
 
+// ==========================================
+// ボーナス確率 (当選1回あたり)
+//   REG・200枚・300枚 : 3つとも同じ確率 (LOW_RATE)
+//   400枚以上の8種類  : 残りを均等に分配
+// ==========================================
+const LOW_RATE = 0.20;  // REG / 200 / 300 それぞれの確率 (ここを変えれば調整できる)
+const LOW_MAX_COINS = 300;
+const REG_RATE = LOW_RATE;
+
+const HIGH_TIERS_COUNT = BIG_TIERS.filter(t => t.coins > LOW_MAX_COINS).length;
+const HIGH_RATE = (1 - LOW_RATE * 3) / HIGH_TIERS_COUNT; // 400枚以上の各確率
+const TIER_RATES = BIG_TIERS.map(t => (t.coins <= LOW_MAX_COINS ? LOW_RATE : HIGH_RATE));
+
+/* BIGに当選したときの種類(枚数)を抽選 */
 function pickTierIndex() {
-  const total = BIG_TIERS.reduce((s, t) => s + t.weight, 0);
-  let r = Math.random() * total;
-  for (let i = 0; i < BIG_TIERS.length; i++) {
-    r -= BIG_TIERS[i].weight;
+  const sum = TIER_RATES.reduce((s, p) => s + p, 0); // = 1 - REG_RATE
+  let r = Math.random() * sum;
+  for (let i = 0; i < TIER_RATES.length; i++) {
+    r -= TIER_RATES[i];
     if (r < 0) return i;
   }
   return BIG_TIERS.length - 1;
@@ -473,7 +487,7 @@ function handleSpin() {
   const isHit = Math.random() < (1 / 30);
 
   if (isHit) {
-    pendingBonusType = Math.random() < 0.6 ? 'BIG' : 'REG';
+    pendingBonusType = Math.random() < REG_RATE ? 'REG' : 'BIG';
     pendingDisplayIndex = pendingBonusType === 'BIG' ? pickTierIndex() : -1;
     pendingTierIndex = pendingDisplayIndex;
     pendingFreezeIndex = -1;
