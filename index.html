@@ -283,6 +283,184 @@
       line-height: 1;
     }
 
+    /* ==========================================
+       揃い図柄 (777 / BAR BAR BAR) リール風表示
+       ========================================== */
+    .reels {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      padding: 0 4px;
+    }
+    .reel {
+      flex: 1;
+      height: 128px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 3px solid #4a4a4a;
+      background: linear-gradient(180deg, #cfcfcf 0%, #ffffff 22%, #ffffff 78%, #c4c4c4 100%);
+      box-shadow: inset 0 8px 12px rgba(0,0,0,0.3), inset 0 -8px 12px rgba(0,0,0,0.3), 0 0 20px var(--glow, #ffffff);
+    }
+    .show-align .reel { animation: reel-pop 0.35s cubic-bezier(0.2, 1.5, 0.4, 1) both; }
+    .show-align .reel:nth-child(2) { animation-delay: 0.12s; }
+    .show-align .reel:nth-child(3) { animation-delay: 0.24s; }
+    @keyframes reel-pop {
+      from { transform: scale(0.2) rotateX(90deg); opacity: 0; }
+      to   { transform: scale(1) rotateX(0deg); opacity: 1; }
+    }
+
+    /* 7図柄の画像 (7red.png / 7blue.png / 7white.png) */
+    .sym-img {
+      max-width: 88%;
+      max-height: 88%;
+      object-fit: contain;
+    }
+    .sym-glow-gold { filter: drop-shadow(0 0 10px #ffd700) drop-shadow(0 0 18px #ffb300); }
+    .sym-glow-mega { animation: sym-mega-glow 0.6s linear infinite; }
+    @keyframes sym-mega-glow {
+      0%   { filter: drop-shadow(0 0 12px #ff0000) drop-shadow(0 0 20px #ff0000); }
+      17%  { filter: drop-shadow(0 0 12px #ffee00) drop-shadow(0 0 20px #ffee00); }
+      34%  { filter: drop-shadow(0 0 12px #00e040) drop-shadow(0 0 20px #00e040); }
+      50%  { filter: drop-shadow(0 0 12px #00c8ff) drop-shadow(0 0 20px #00c8ff); }
+      67%  { filter: drop-shadow(0 0 12px #3355ff) drop-shadow(0 0 20px #3355ff); }
+      84%  { filter: drop-shadow(0 0 12px #ff00ff) drop-shadow(0 0 20px #ff00ff); }
+      100% { filter: drop-shadow(0 0 12px #ff0000) drop-shadow(0 0 20px #ff0000); }
+    }
+
+    /* 赤7 */
+    .sym-seven {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(4rem, 20vw, 6rem);
+      line-height: 1;
+      color: transparent;
+      background: linear-gradient(180deg, #ff7a7a 0%, #e60012 45%, #8a0008 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      filter: drop-shadow(2px 0 0 #3a0000) drop-shadow(-2px 0 0 #3a0000) drop-shadow(0 2px 0 #3a0000) drop-shadow(0 -2px 0 #3a0000);
+    }
+    /* 金7 (1000枚) */
+    .sym-seven.sym-seven-gold {
+      background: linear-gradient(180deg, #fffbd0 0%, #ffd700 45%, #a06a00 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    /* 虹7 (2000枚) */
+    .sym-seven.sym-seven-rainbow {
+      background: linear-gradient(90deg, #ff0000, #ff9900, #ffee00, #00e040, #00c8ff, #3355ff, #d000ff, #ff0000);
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: rainbow-slide 0.8s linear infinite;
+    }
+    /* BARプレート */
+    .sym-bar {
+      width: 90%;
+      padding: 12px 0;
+      text-align: center;
+      background: linear-gradient(180deg, #5a5a5a 0%, #000000 50%, #222222 100%);
+      color: #ffffff;
+      border: 3px solid #fbbf24;
+      border-radius: 8px;
+      font-weight: 900;
+      font-size: clamp(1.3rem, 6.5vw, 2.1rem);
+      letter-spacing: 2px;
+      line-height: 1;
+      box-shadow: inset 0 0 10px rgba(255,255,255,0.4);
+      text-shadow: 0 0 6px #ffffff;
+    }
+    @keyframes rainbow-slide {
+      from { background-position: 0 0; }
+      to   { background-position: 200% 0; }
+    }
+
+    /* NEXT 表示 */
+    .next-hint {
+      margin-top: 10px;
+      opacity: 0;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      letter-spacing: 4px;
+      font-size: 1.1rem;
+      color: #ffffff;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.85), 0 0 12px var(--glow, #ffffff);
+    }
+    .show-align .next-hint {
+      animation: next-in 0.3s 0.5s both, next-blink 0.7s 0.8s infinite alternate;
+    }
+    @keyframes next-in {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes next-blink {
+      from { opacity: 1; }
+      to   { opacity: 0.35; }
+    }
+
+    /* ==========================================
+       枚数表示 (ドドーン) : 青 < 黄 < 緑 < 赤 < 虹 < 特大虹
+       白フチで背景と同化しないようにする
+       ========================================== */
+    .payout-display { opacity: 0; pointer-events: none; }
+    .payout-display.show-pay { opacity: 1; }
+
+    .payout-num {
+      --ol: 3px;
+      display: inline-block;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      line-height: 1.05;
+      white-space: nowrap;
+      filter:
+        drop-shadow(var(--ol) 0 0 #ffffff)
+        drop-shadow(calc(var(--ol) * -1) 0 0 #ffffff)
+        drop-shadow(0 var(--ol) 0 #ffffff)
+        drop-shadow(0 calc(var(--ol) * -1) 0 #ffffff)
+        drop-shadow(0 0 14px var(--pay-glow, #ffffff));
+    }
+    .payout-unit { font-size: 0.35em; margin-left: 0.15em; }
+
+    .pay-l1 { color: #2f8dff; --pay-glow: #1d4ed8; --ol: 3px; font-size: clamp(2.4rem, 12vw, 3.4rem); }
+    .pay-l2 { color: #ffd800; --pay-glow: #ff9900; --ol: 3px; font-size: clamp(2.6rem, 13vw, 3.8rem); }
+    .pay-l3 { color: #1fe05a; --pay-glow: #059a2e; --ol: 4px; font-size: clamp(2.8rem, 14vw, 4.2rem); }
+    .pay-l4 { color: #ff2b2b; --pay-glow: #ff0000; --ol: 4px; font-size: clamp(3rem, 15vw, 4.6rem); }
+    .pay-l5, .pay-l6 {
+      color: transparent;
+      background: linear-gradient(90deg, #ff0000, #ff9900, #ffee00, #00e040, #00c8ff, #3355ff, #d000ff, #ff0000);
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      --pay-glow: #ff00ff;
+    }
+    .pay-l5 { --ol: 5px; font-size: clamp(3.2rem, 16vw, 5rem); }
+    .pay-l6 { --ol: 6px; font-size: clamp(3.4rem, 17vw, 5.6rem); }
+
+    .show-pay .payout-num { animation: don-in 0.6s cubic-bezier(0.2, 1, 0.4, 1) both; }
+    .show-pay .pay-l4 { animation: don-in 0.6s cubic-bezier(0.2, 1, 0.4, 1) both, pay-throb 0.5s 0.6s ease-in-out infinite alternate; }
+    .show-pay .pay-l5 { animation: don-in 0.6s cubic-bezier(0.2, 1, 0.4, 1) both, rainbow-slide 1s linear infinite, pay-throb 0.4s 0.6s ease-in-out infinite alternate; }
+    .show-pay .pay-l6 { animation: don-in 0.7s cubic-bezier(0.2, 1, 0.4, 1) both, rainbow-slide 0.5s linear infinite, pay-shake 0.1s 0.7s linear infinite; }
+
+    @keyframes don-in {
+      0%   { transform: scale(3.2); opacity: 0; }
+      45%  { transform: scale(0.85); opacity: 1; }
+      65%  { transform: scale(1.15); }
+      80%  { transform: scale(0.97); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes pay-throb {
+      from { transform: scale(1); }
+      to   { transform: scale(1.07); }
+    }
+    @keyframes pay-shake {
+      0%, 100% { transform: translate(0, 0) scale(1.05); }
+      25% { transform: translate(-4px, 3px) scale(1.05); }
+      50% { transform: translate(4px, -3px) scale(1.05); }
+      75% { transform: translate(-3px, -3px) scale(1.05); }
+    }
+
     /* フラッシュ効果 */
     .flash-screen {
       animation: flash-animation 0.25s ease-out;
@@ -331,7 +509,7 @@
       </div>
 
       <!-- GOGO! ランプ表示ボックス -->
-      <div id="gogo-box" class="gogo-lamp w-full h-44 flex flex-col items-center justify-center relative cursor-pointer">
+      <div id="gogo-box" class="gogo-lamp w-full h-56 flex flex-col items-center justify-center relative cursor-pointer">
 
         <!-- GOGO! ロゴ (点灯用) -->
         <div id="gogo-text-container" class="relative z-10 text-center transition-opacity duration-200">
@@ -343,14 +521,16 @@
           </div>
         </div>
 
-        <!-- ボーナス揃い演出レイヤー (777 / 77BAR) -->
+        <!-- 揃い図柄表示レイヤー (777 / BAR BAR BAR) -->
         <div id="align-display" class="align-display absolute inset-0 z-20 flex flex-col items-center justify-center">
-          <div id="align-text" class="text-5xl font-black">
-            <!-- JSで動的に 777 または 77BAR を挿入 -->
-          </div>
-          <div id="align-subtext" class="align-sub text-xs font-bold mt-2 tracking-widest uppercase">
-            <!-- BIG BONUS / REG BONUS -->
-          </div>
+          <div id="reels" class="reels"></div>
+          <div id="next-hint" class="next-hint">NEXT ▼</div>
+        </div>
+
+        <!-- 枚数表示レイヤー -->
+        <div id="payout-display" class="payout-display absolute inset-0 z-30 flex flex-col items-center justify-center">
+          <div id="payout-label" class="align-sub text-xs font-bold mb-2 tracking-widest uppercase"></div>
+          <div id="payout-num" class="payout-num pay-l1"><span id="payout-value">0</span><span class="payout-unit">枚</span></div>
         </div>
 
       </div>
@@ -429,8 +609,9 @@
     let soundEnabled = true;
     let isCooldown = false;
     let lockInterval = null;
+    let alignStage = 0; // 0: 未 / 1: 図柄表示中(NEXT待ち) / 2: 枚数表示済み
 
-    const GOGO_BASE = 'gogo-lamp w-full h-44 flex flex-col items-center justify-center relative cursor-pointer';
+    const GOGO_BASE = 'gogo-lamp w-full h-56 flex flex-col items-center justify-center relative cursor-pointer';
     const ALIGN_BTN_DEFAULT = 'w-full py-4 bg-gradient-to-b from-amber-400 to-amber-600 text-slate-900 font-black text-base tracking-wider rounded-xl shadow-md border-t border-amber-200 opacity-40 cursor-not-allowed transition-all';
 
     // UI Element参照
@@ -441,8 +622,11 @@
     const gogoSubtext = document.getElementById('gogo-subtext');
     const gogoTextContainer = document.getElementById('gogo-text-container');
     const alignDisplay = document.getElementById('align-display');
-    const alignText = document.getElementById('align-text');
-    const alignSubtext = document.getElementById('align-subtext');
+    const reelsEl = document.getElementById('reels');
+    const payoutDisplay = document.getElementById('payout-display');
+    const payoutLabel = document.getElementById('payout-label');
+    const payoutNum = document.getElementById('payout-num');
+    const payoutValue = document.getElementById('payout-value');
     const flashOverlay = document.getElementById('flash-overlay');
     const fxOverlay = document.getElementById('fx-overlay');
     const fxCanvas = document.getElementById('fx-canvas');
@@ -468,48 +652,54 @@
       }
     }
 
-    // gako.mp3 を事前読み込み（再生時の遅延をなくす）
-    const gakoAudio = new Audio('gako.mp3');
-    gakoAudio.preload = 'auto';
-    gakoAudio.load();
+    // 効果音ファイル (事前読み込み: 再生時の遅延をなくす)
+    const SOUND_FILES = { gako: 'gako.mp3', vvv: 'vvv.mp3' };
+    const soundAudio = {};    // HTMLAudio (フォールバック用)
+    const soundBuffers = {};  // デコード済みバッファ (連続再生でも正確)
 
-    // 連続再生でも正確に鳴らせるよう、可能ならデコード済みバッファを使う
-    let gakoBuffer = null;
-    try {
-      fetch('gako.mp3')
-        .then(r => r.arrayBuffer())
-        .then(buf => {
-          if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          return audioCtx.decodeAudioData(buf);
-        })
-        .then(b => { gakoBuffer = b; })
-        .catch(() => { /* file:// などで失敗した場合は HTMLAudio で再生 */ });
-    } catch (e) { /* 何もしない */ }
+    Object.keys(SOUND_FILES).forEach(name => {
+      const a = new Audio(SOUND_FILES[name]);
+      a.preload = 'auto';
+      a.load();
+      soundAudio[name] = a;
 
-    function playGakoOnce() {
+      try {
+        fetch(SOUND_FILES[name])
+          .then(r => r.arrayBuffer())
+          .then(buf => {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            return audioCtx.decodeAudioData(buf);
+          })
+          .then(b => { soundBuffers[name] = b; })
+          .catch(() => { /* file:// などで失敗した場合は HTMLAudio で再生 */ });
+      } catch (e) { /* 何もしない */ }
+    });
+
+    function playSampleOnce(name) {
       if (!soundEnabled) return;
-      if (gakoBuffer && audioCtx) {
+      const buf = soundBuffers[name];
+      if (buf && audioCtx) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
         const src = audioCtx.createBufferSource();
-        src.buffer = gakoBuffer;
+        src.buffer = buf;
         src.connect(audioCtx.destination);
         src.start();
         return;
       }
-      const a = gakoAudio.cloneNode();
+      const a = soundAudio[name].cloneNode();
       a.currentTime = 0;
       a.play().catch(err => {
-        console.warn("gako.mp3の再生に失敗したため、プログラム合成音にフォールバックします:", err);
+        console.warn(SOUND_FILES[name] + "の再生に失敗したため、プログラム合成音にフォールバックします:", err);
         playGakoSynth();
       });
     }
 
-    /* ガコッ！音 (count回 gapミリ秒刻みで連続再生) */
-    function playGakoSound(count = 1, gap = 100) {
+    /* ペカリ音 (name: 'gako' | 'vvv' を count回 gapミリ秒刻みで連続再生) */
+    function playGakoSound(name = 'gako', count = 1, gap = 100) {
       if (!soundEnabled) return;
       for (let i = 0; i < count; i++) {
-        if (i === 0) playGakoOnce();
-        else setTimeout(playGakoOnce, i * gap);
+        if (i === 0) playSampleOnce(name);
+        else setTimeout(() => playSampleOnce(name), i * gap);
       }
     }
 
@@ -771,6 +961,8 @@
       const isBig = pendingBonusType === 'BIG';
       const tier = isBig ? BIG_TIERS[pendingTierIndex] : null;
       const n = pendingTierIndex + 1;
+      // 800枚以上は vvv.mp3、それ未満は gako.mp3
+      const snd = tier && tier.coins >= 800 ? 'vvv' : 'gako';
 
       // 表示と音を同じタイミングで実行
       gogoBox.className = `${GOGO_BASE} peka ${isBig ? 'tier-' + n : 'tier-reg'}`;
@@ -781,12 +973,12 @@
 
       if (tier && tier.grand) {
         // 豪華演出: ガコッ音を0.1秒刻みで3連続 + 3連フラッシュ + パーティクル
-        playGakoSound(3, 100);
+        playGakoSound(snd, 3, 100);
         tripleFlash();
         startParticles(tier.mega ? 'mega' : 'gold');
         if (tier.mega) shakeMain();
       } else {
-        playGakoSound();
+        playGakoSound(snd);
         triggerFlash();
       }
 
@@ -794,31 +986,13 @@
       start4SecLock();
     }
 
-    /* 4秒間ボタンロック処理 */
+    /* ペカり直後: レバーを止めて「揃える」ボタンだけ押せるようにする */
     function start4SecLock() {
-      isCooldown = true;
       spinBtn.disabled = true;
-
-      let remaining = 4;
-      spinBtn.innerText = `ロック中 (${remaining}s)...`;
-
-      clearInterval(lockInterval);
-      lockInterval = setInterval(() => {
-        remaining--;
-        if (remaining > 0) {
-          spinBtn.innerText = `ロック中 (${remaining}s)...`;
-        } else {
-          clearInterval(lockInterval);
-          lockInterval = null;
-          isCooldown = false;
-
-          // 4秒経過したらボーナス揃えを案内
-          spinBtn.innerText = "ボーナスを揃えてください";
-          alignBtn.disabled = false;
-          alignBtn.classList.remove('opacity-40', 'cursor-not-allowed');
-          alignBtn.classList.add('animate-bounce', 'from-yellow-400', 'to-amber-500', 'text-black');
-        }
-      }, 1000);
+      spinBtn.innerText = "ボーナスを揃えてください";
+      alignBtn.disabled = false;
+      alignBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+      alignBtn.classList.add('animate-bounce', 'from-yellow-400', 'to-amber-500', 'text-black');
     }
 
     /* レバーON 処理 */
@@ -858,53 +1032,131 @@
       }
     }
 
-    /* ボーナスを揃える！ ボタン処理 (777 / 77BAR画面内表示) */
-    function handleAlignBonus() {
-      if (!isPekared || !pendingBonusType || isBonusAligned) return;
+    /* 当選枚数に応じた表示レベル (1:青 2:黄 3:緑 4:赤 5:虹 6:特大虹) */
+    function payLevel(coins) {
+      if (coins <= 300) return 1;
+      if (coins <= 500) return 2;
+      if (coins <= 700) return 3;
+      if (coins <= 900) return 4;
+      if (coins <= 1000) return 5;
+      return 6;
+    }
 
-      isBonusAligned = true;
-      initAudio(); // 音の再生準備を先に済ませる
+    /* 枚数表示の「ドドーン」音 (豪華枠は0.1秒刻みで3連続) */
+    function playPayoutSound(tier, level) {
+      if (!soundEnabled) return;
+      initAudio();
+      const now = audioCtx.currentTime;
+      const hits = tier && tier.grand ? 3 : 1;
 
-      let tier = null;
+      for (let i = 0; i < hits; i++) {
+        const t = now + i * 0.1;
+        const vol = 0.5 + level * 0.1;
 
-      if (pendingBonusType === 'BIG') {
-        tier = BIG_TIERS[pendingTierIndex];
-        bigCount++;
-        diffCoins += tier.coins;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(180, t);
+        osc.frequency.exponentialRampToValueAtTime(40, t + 0.4);
+        gain.gain.setValueAtTime(vol, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.45);
 
-        const cls = tier.mega ? 'text-777-super' : tier.grand ? 'text-777-gold' : 'text-777-big';
-        alignText.className = 'font-black ' + (tier.grand ? 'text-7xl' : 'text-5xl');
-        alignText.innerHTML = `<span class="${cls}">777</span>`;
-
-        let label = `BIG BONUS +${tier.coins}枚 獲得!`;
-        if (tier.mega) label = `🌈 MEGA BIG BONUS +${tier.coins}枚 🌈`;
-        else if (tier.grand) label = `✨ GRAND BIG BONUS +${tier.coins}枚 ✨`;
-        alignSubtext.textContent = label;
-        alignSubtext.className = `align-sub ${tier.grand ? 'text-sm' : 'text-xs'} font-bold mt-2 tracking-widest uppercase`;
-      } else {
-        regCount++;
-        diffCoins += 104;
-        alignText.className = 'text-5xl font-black';
-        alignText.innerHTML = '<span class="text-777-reg">77</span><span class="bar-symbol text-3xl sm:text-4xl ml-2">BAR</span>';
-        alignSubtext.textContent = "REG BONUS +104枚 獲得!";
-        alignSubtext.className = 'align-sub text-xs font-bold mt-2 tracking-widest uppercase';
+        // 打撃のアタック感
+        tone(900 - i * 150, t, 0.06, 'square', 0.12);
       }
 
-      // ランプ中央に777/77BARを表示
+      // 高レベルはキラッと余韻を足す
+      if (level >= 4) {
+        [1568, 2093, 2637].forEach((f, i) => tone(f, now + 0.3 + i * 0.08, 0.3, 'triangle', 0.12));
+      }
+    }
+
+    /* ボーナスを揃える！ ボタン処理: 1回目=図柄表示 / 2回目(NEXT)=枚数表示 */
+    function handleAlignBonus() {
+      if (!isPekared || !pendingBonusType) return;
+      if (alignStage === 0) showSymbols();
+      else if (alignStage === 1) showPayout();
+    }
+
+    /* 1回目: 777 または BAR BAR BAR をリール風に大きく表示 */
+    function showSymbols() {
+      alignStage = 1;
+      initAudio(); // 音の再生準備を先に済ませる
+
+      const tier = pendingBonusType === 'BIG' ? BIG_TIERS[pendingTierIndex] : null;
+
+      let cell;
+      if (!tier) {
+        cell = '<div class="sym-bar">BAR</div>';
+      } else {
+        // グレード順: 赤(200〜400) < 青(500〜700) < 白(800〜2000)
+        const img = pendingTierIndex <= 2 ? '7red.png' : pendingTierIndex <= 5 ? '7blue.png' : '7white.png';
+        const glow = tier.mega ? 'sym-glow-mega' : tier.grand ? 'sym-glow-gold' : '';
+        // 画像が無い場合は文字の7で代用
+        cell = `<img class="sym-img ${glow}" src="${img}" alt="7" onerror="this.outerHTML='<div class=&quot;sym-seven&quot;>7</div>'">`;
+      }
+      reelsEl.innerHTML = `<div class="reel">${cell}</div>`.repeat(3);
+
       alignDisplay.classList.add('show-align');
       gogoTextContainer.classList.add('opacity-0');
 
-      // 表示と同時にファンファーレ再生
+      // 揃った瞬間にファンファーレ
       playFanfare(tier, pendingTierIndex);
+      triggerFlash();
+
+      // ボタンを NEXT に切替 (もう一度押すと枚数表示)
+      alignBtn.textContent = 'NEXT';
+    }
+
+    /* 2回目(NEXT): 獲得枚数をドドーンと派手に表示 */
+    function showPayout() {
+      alignStage = 2;
+      isBonusAligned = true;
+      initAudio();
+
+      const tier = pendingBonusType === 'BIG' ? BIG_TIERS[pendingTierIndex] : null;
+      let coins, label;
+
+      if (tier) {
+        bigCount++;
+        coins = tier.coins;
+        label = 'BIG BONUS';
+        if (tier.mega) label = '🌈 MEGA BIG BONUS 🌈';
+        else if (tier.grand) label = '✨ GRAND BIG BONUS ✨';
+      } else {
+        regCount++;
+        coins = 104;
+        label = 'REG BONUS';
+      }
+      diffCoins += coins;
+
+      const level = payLevel(coins);
+      payoutLabel.textContent = label;
+      payoutValue.textContent = coins;
+      payoutNum.className = `payout-num pay-l${level}`;
+
+      // 図柄を消して枚数を表示 (アニメーションを最初から再生)
+      alignDisplay.classList.remove('show-align');
+      payoutDisplay.classList.remove('show-pay');
+      void payoutDisplay.offsetWidth;
+      payoutDisplay.classList.add('show-pay');
+
+      playPayoutSound(tier, level);
 
       // 豪華演出: 3連フラッシュ + 紙吹雪/金貨の大放出 + シェイク
       if (tier && tier.grand) {
         tripleFlash();
         burstParticles(tier.mega ? 'mega' : 'gold', tier.mega ? 160 : 90);
         if (tier.mega) shakeMain(); else shakeMain(800);
+      } else {
+        triggerFlash();
       }
 
-      // ボタンを「次へ」に切替
+      // NEXTボタンを無効化し、レバーを「次へ」に
       alignBtn.disabled = true;
       alignBtn.className = ALIGN_BTN_DEFAULT;
 
@@ -928,6 +1180,8 @@
       spinBtn.disabled = false;
       alignBtn.disabled = true;
       alignBtn.className = ALIGN_BTN_DEFAULT;
+      alignBtn.textContent = 'ボーナスを揃える！';
+      alignStage = 0;
 
       gogoBox.className = GOGO_BASE;
       fxOverlay.className = '';
@@ -935,6 +1189,7 @@
       gogoSubtext.textContent = 'CHANCE';
 
       alignDisplay.classList.remove('show-align');
+      payoutDisplay.classList.remove('show-pay');
       gogoTextContainer.classList.remove('opacity-0');
 
       stopParticles();
