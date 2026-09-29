@@ -651,7 +651,7 @@ function thump(t, vol) {
   });
 }
 
-function startHeartbeat(totalMs) {
+function startHeartbeat(totalMs, delay = 350) {
   stopHeartbeat();
   const startedAt = performance.now();
   const beat = () => {
@@ -666,7 +666,7 @@ function startHeartbeat(totalMs) {
     }
     heartbeatTimer = setTimeout(beat, 950 - 450 * p); // だんだん速く
   };
-  heartbeatTimer = setTimeout(beat, 350);
+  heartbeatTimer = setTimeout(beat, delay);
 }
 
 function stopHeartbeat() {
@@ -674,15 +674,94 @@ function stopHeartbeat() {
   heartbeatTimer = null;
 }
 
-/* フリーズ開始: ボタンも回転数も全部まっ黒にして2〜3秒待つ */
+/* ブラウン管テレビの電源OFF音 (ブーン↓ → ブチッ → ピュ〜ン) */
+function playCrtOffSound() {
+  if (!soundEnabled) return;
+  initAudio();
+  const t = audioCtx.currentTime;
+
+  // ① 画面が潰れる間の急降下する電子音「ブーン↓」
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(1200, t);
+  osc.frequency.exponentialRampToValueAtTime(50, t + 0.32);
+  g.gain.setValueAtTime(0.22, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.36);
+  osc.connect(g);
+  g.connect(audioCtx.destination);
+  osc.start(t);
+  osc.stop(t + 0.36);
+
+  // ② 横線になる瞬間の「ブチッ」というノイズ
+  const size = Math.floor(audioCtx.sampleRate * 0.12);
+  const buf = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buf;
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 1800;
+  const ng = audioCtx.createGain();
+  ng.gain.setValueAtTime(0.5, t + 0.28);
+  ng.gain.exponentialRampToValueAtTime(0.01, t + 0.4);
+  noise.connect(filter);
+  filter.connect(ng);
+  ng.connect(audioCtx.destination);
+  noise.start(t + 0.28);
+
+  // ③ 光点に収束して消える「ピュ〜ン」
+  const ping = audioCtx.createOscillator();
+  const pg = audioCtx.createGain();
+  ping.type = 'sine';
+  ping.frequency.setValueAtTime(4000, t + 0.42);
+  ping.frequency.exponentialRampToValueAtTime(300, t + 0.95);
+  pg.gain.setValueAtTime(0.13, t + 0.42);
+  pg.gain.exponentialRampToValueAtTime(0.001, t + 0.95);
+  ping.connect(pg);
+  pg.connect(audioCtx.destination);
+  ping.start(t + 0.42);
+  ping.stop(t + 0.95);
+}
+
+/* ブラウン管OFF演出: 画面全体を縦に潰して、光る線 → 点 → 真っ暗 */
+let crtBlackTimer = null;
+
+function crtTargets() {
+  return [mainEl, document.querySelector('footer'), fxOverlay, fxCanvas];
+}
+
+function startCrtOff() {
+  crtTargets().forEach(el => {
+    // 画面の中心(縦横とも)に向かって潰れるよう、変形の基準点を合わせる
+    const r = el.getBoundingClientRect();
+    el.style.transformOrigin = `${window.innerWidth / 2 - r.left}px ${window.innerHeight / 2 - r.top}px`;
+    el.classList.add('crt-off');
+  });
+  freezeOverlay.classList.add('show-freeze');
+  crtBlackTimer = setTimeout(() => freezeOverlay.classList.add('black'), 300);
+}
+
+function endCrtOff() {
+  clearTimeout(crtBlackTimer);
+  crtTargets().forEach(el => {
+    el.classList.remove('crt-off');
+    el.style.transformOrigin = '';
+  });
+  freezeOverlay.classList.remove('show-freeze', 'black');
+}
+
+/* フリーズ開始: ブラウン管の電源が切れるように消えて、2〜3秒まっ暗 */
 function startFreeze() {
   isFreezing = true;
-  playClickSound();
-  freezeOverlay.classList.add('show-freeze');
+  startCrtOff();
+  playCrtOffSound();
 
-  const wait = 2000 + Math.random() * 1000;
-  startHeartbeat(wait);
-  freezeTimer = setTimeout(erupt, wait);
+  const wait = 2000 + Math.random() * 1000; // 真っ暗になってからの待ち時間
+  const crtMs = 1000;                       // ブラウン管OFF演出の長さ
+  startHeartbeat(wait + crtMs, crtMs + 100); // 心音はOFF演出のあとから
+  freezeTimer = setTimeout(erupt, crtMs + wait);
 }
 
 /* フリーズ明け: 実は1000枚 or 2000枚が急に発生! */
@@ -694,7 +773,7 @@ function erupt() {
 
   // 暗転を解除し、本当の当たりの演出に切り替える (心音はここでぷつっと止まる)
   stopHeartbeat();
-  freezeOverlay.classList.remove('show-freeze');
+  endCrtOff();
   isFreezing = false;
   pendingFreezeIndex = -1;
 
@@ -740,7 +819,7 @@ function resetPekaState() {
   stopHeartbeat();
   isFreezing = false;
   isDebugRun = false;
-  freezeOverlay.classList.remove('show-freeze');
+  endCrtOff();
 
   // ロック中にリセットされた場合の後始末
   clearInterval(lockInterval);

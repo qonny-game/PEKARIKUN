@@ -453,19 +453,77 @@ body {
 }
 
 /* フラッシュ効果 */
-/* フリーズ演出: 画面全体を真っ黒にする (最前面・即座に切替) */
+/* フリーズ演出: ブラウン管テレビの電源OFF風 (縦に潰れる → 横線 → 光点 → 真っ暗) */
 #freeze-overlay {
   position: fixed;
   inset: 0;
-  background: #000;
+  background: transparent;
   z-index: 100;
   opacity: 0;
   pointer-events: none;
+  overflow: hidden;
 }
 #freeze-overlay.show-freeze {
   opacity: 1;
   pointer-events: auto;
   cursor: none;
+}
+#freeze-overlay.black {
+  background: #000;
+}
+
+/* 画面の中身が縦にギュッと潰れる (JSで付け外し) */
+.crt-off {
+  animation: crt-squash 0.3s cubic-bezier(0.6, 0, 0.9, 0.4) forwards !important;
+}
+@keyframes crt-squash {
+  0%   { transform: scale(1, 1); filter: brightness(1); }
+  70%  { transform: scale(1, 0.02); filter: brightness(2.5); }
+  100% { transform: scale(1, 0.004); filter: brightness(4); }
+}
+
+/* 潰れたあとの光る横線 → 中央に収束 */
+#crt-line {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 3px;
+  margin-top: -1.5px;
+  background: #fff;
+  opacity: 0;
+  box-shadow: 0 0 10px 3px #fff, 0 0 36px 10px rgba(150, 190, 255, 0.85);
+}
+#freeze-overlay.show-freeze #crt-line {
+  animation: crt-line 0.7s ease-out forwards;
+}
+@keyframes crt-line {
+  0%   { opacity: 0; transform: scaleX(1); }
+  28%  { opacity: 1; transform: scaleX(1); }
+  43%  { opacity: 1; transform: scaleX(1); }
+  75%  { opacity: 1; transform: scaleX(0.03); }
+  100% { opacity: 0; transform: scaleX(0); }
+}
+
+/* 最後に残る光点 (残光) がスッと消える */
+#crt-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0;
+  box-shadow: 0 0 14px 6px #fff, 0 0 40px 16px rgba(150, 190, 255, 0.8);
+}
+#freeze-overlay.show-freeze #crt-dot {
+  animation: crt-dot 0.55s 0.45s ease-out forwards;
+}
+@keyframes crt-dot {
+  0%   { opacity: 1; transform: scale(1.4); }
+  100% { opacity: 0; transform: scale(0); }
 }
 .flash-screen {
   animation: flash-animation 0.25s ease-out;
