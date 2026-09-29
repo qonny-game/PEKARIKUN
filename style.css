@@ -1,0 +1,476 @@
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: #050b1f;
+  color: #e2e8f0;
+  touch-action: manipulation;
+}
+.digital-font {
+  font-family: 'Orbitron', monospace;
+}
+
+/* GOGO!ランプベース */
+.gogo-lamp {
+  transition: all 0.15s ease-in-out;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ==========================================
+   画面全体エフェクト (REG + BIG 10種類)
+   ========================================== */
+#fx-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: opacity 0.2s ease-out;
+}
+#fx-overlay::before,
+#fx-overlay::after {
+  content: '';
+  position: absolute;
+  inset: -75%;
+  opacity: 0;
+}
+#fx-overlay[class*="fx-"] { opacity: 1; }
+
+/* REG : ピンク脈動 */
+#fx-overlay.fx-reg {
+  background: radial-gradient(circle at 50% 45%, #ff3d9a 0%, #ff007f 35%, #880044 75%, #2a0013 100%);
+  animation: fx-pulse 0.6s infinite alternate;
+}
+/* BIG 1 (200枚) : ブルーウェーブ */
+#fx-overlay.fx-t1 {
+  background: radial-gradient(circle at 50% 45%, #7cb8ff 0%, #2563eb 40%, #0b2a7a 80%, #050b1f 100%);
+  animation: fx-pulse 0.9s infinite alternate;
+}
+/* BIG 2 (300枚) : エメラルドブリージング */
+#fx-overlay.fx-t2 {
+  background: radial-gradient(circle at 50% 45%, #9af7b5 0%, #16a34a 40%, #06421f 80%, #03140a 100%);
+  animation: fx-pulse 0.7s infinite alternate;
+}
+/* BIG 3 (400枚) : サンセットちらつき */
+#fx-overlay.fx-t3 {
+  background: radial-gradient(circle at 50% 45%, #ffc38a 0%, #f97316 40%, #6b2503 80%, #1c0a01 100%);
+  animation: fx-flicker 0.18s steps(2) infinite;
+}
+/* BIG 4 (500枚) : クリムゾン高速心拍 */
+#fx-overlay.fx-t4 {
+  background: radial-gradient(circle at 50% 45%, #ff9a9a 0%, #e11d1d 40%, #5a0505 80%, #1a0202 100%);
+  animation: fx-pulse 0.35s infinite alternate;
+}
+/* BIG 5 (600枚) : バイオレット回転 */
+#fx-overlay.fx-t5 { background: #1b0a3a; }
+#fx-overlay.fx-t5::before {
+  opacity: 1;
+  background: conic-gradient(from 0deg at 50% 50%, #a855f7, #3b0764, #e879f9, #3b0764, #a855f7);
+  animation: fx-spin 4s linear infinite;
+}
+/* BIG 6 (700枚) : サンダーストロボ */
+#fx-overlay.fx-t6 {
+  background: radial-gradient(circle at 50% 45%, #fffbb0 0%, #facc15 40%, #7a5a00 85%, #201700 100%);
+  animation: fx-strobe 0.22s steps(2) infinite;
+}
+/* BIG 7 (800枚) : アイスバースト高速回転 */
+#fx-overlay.fx-t7 { background: #04212e; }
+#fx-overlay.fx-t7::before {
+  opacity: 1;
+  background: conic-gradient(from 0deg at 50% 50%, #67e8f9, #ffffff, #0891b2, #67e8f9, #ffffff, #0e7490, #67e8f9);
+  animation: fx-spin 1.8s linear infinite;
+}
+/* BIG 8 (900枚) : フレイム上昇 */
+#fx-overlay.fx-t8 {
+  background: linear-gradient(0deg, #6b1500, #ff3d00, #ffb300, #ff3d00, #6b1500);
+  background-size: 100% 100%;
+  animation: fx-rise 0.9s linear infinite;
+}
+/* BIG 9 (1000枚) : ゴールドグランド (豪華) */
+#fx-overlay.fx-t9 {
+  background: radial-gradient(circle at 50% 45%, #fff9c4 0%, #ffd700 35%, #b8860b 70%, #3d2a00 100%);
+  animation: fx-pulse 0.3s infinite alternate;
+}
+#fx-overlay.fx-t9::before {
+  opacity: 1;
+  background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,0.55) 0deg 7deg, transparent 7deg 22deg);
+  animation: fx-spin 6s linear infinite;
+}
+/* BIG 10 (2000枚) : レインボーメガジャックポット (超豪華) */
+#fx-overlay.fx-t10 {
+  background: #000;
+  animation: rainbow-glow 0.5s infinite alternate;
+}
+#fx-overlay.fx-t10::before {
+  opacity: 1;
+  background: conic-gradient(from 0deg at 50% 50%, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+  animation: fx-spin 2s linear infinite;
+}
+#fx-overlay.fx-t10::after {
+  opacity: 1;
+  background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,0.5) 0deg 6deg, transparent 6deg 18deg);
+  animation: fx-spin 5s linear infinite reverse;
+}
+
+@keyframes fx-pulse {
+  0% { filter: brightness(0.85); }
+  100% { filter: brightness(1.35); }
+}
+@keyframes fx-flicker {
+  0% { filter: brightness(1.3); }
+  100% { filter: brightness(0.6); }
+}
+@keyframes fx-strobe {
+  0% { filter: brightness(1.5); }
+  100% { filter: brightness(0.35); }
+}
+@keyframes fx-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes fx-rise {
+  from { background-position: 0 0; }
+  to { background-position: 0 -100vh; }
+}
+@keyframes rainbow-glow {
+  0% { filter: hue-rotate(0deg) brightness(1.2); }
+  100% { filter: hue-rotate(360deg) brightness(1.6); }
+}
+
+/* ==========================================
+   GOGO! テキスト (点灯 + 10通りの動き)
+   ========================================== */
+.gogo-text {
+  color: #4d4d4d;
+  transition: all 0.05s ease;
+}
+.peka .gogo-text {
+  color: #ffffff;
+  text-shadow: 0 0 5px #fff, 0 0 15px var(--glow), 0 0 30px var(--glow), 0 0 50px var(--glow);
+}
+.tier-9 .gogo-text {
+  color: #fff8c4;
+  text-shadow: 0 0 6px #fff, 0 0 20px #ffd700, 0 0 40px #ffb300, 0 0 70px #ff9900;
+}
+.tier-10 .gogo-text {
+  color: #ffffff;
+  text-shadow: 0 0 5px #fff, 0 0 20px #00ffff, 0 0 40px #ff00ff, 0 0 60px #ffff00;
+  animation: rainbow-glow 0.6s infinite alternate;
+}
+
+.tier-1  #gogo-text-container { animation: gogo-pulse 0.8s ease-in-out infinite alternate; }
+.tier-2  #gogo-text-container { animation: gogo-shake 0.12s linear infinite; }
+.tier-3  #gogo-text-container { animation: gogo-flicker 0.15s steps(2) infinite; }
+.tier-4  #gogo-text-container { animation: gogo-bounce 0.4s ease-in-out infinite alternate; }
+.tier-5  #gogo-text-container { animation: gogo-swing 0.5s ease-in-out infinite alternate; }
+.tier-6  #gogo-text-container { animation: gogo-zoom 0.25s ease-in-out infinite alternate; }
+.tier-7  #gogo-text-container { animation: gogo-jitter 0.18s linear infinite; }
+.tier-8  #gogo-text-container { animation: gogo-flip 1.2s linear infinite; }
+.tier-9  #gogo-text-container { animation: gogo-gold 0.35s ease-in-out infinite alternate; }
+.tier-10 #gogo-text-container { animation: gogo-mega 0.2s linear infinite; }
+
+@keyframes gogo-pulse   { from { transform: scale(1); } to { transform: scale(1.12); } }
+@keyframes gogo-shake   { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+@keyframes gogo-flicker { from { opacity: 1; } to { opacity: 0.35; } }
+@keyframes gogo-bounce  { from { transform: translateY(0); } to { transform: translateY(-14px); } }
+@keyframes gogo-swing   { from { transform: rotate(-8deg); } to { transform: rotate(8deg); } }
+@keyframes gogo-zoom    { from { transform: scale(1); } to { transform: scale(1.35); } }
+@keyframes gogo-jitter  { 0% { transform: skewX(-10deg) translateX(-3px); } 50% { transform: skewX(10deg) translateX(3px); } 100% { transform: skewX(-10deg) translateX(-3px); } }
+@keyframes gogo-flip    { from { transform: perspective(400px) rotateY(0deg); } to { transform: perspective(400px) rotateY(360deg); } }
+@keyframes gogo-gold    { from { transform: scale(1.05); filter: brightness(1); } to { transform: scale(1.22); filter: brightness(1.5); } }
+@keyframes gogo-mega    { 0% { transform: scale(1.3) translate(-5px, 3px); } 25% { transform: scale(1.4) translate(5px, -3px); } 50% { transform: scale(1.3) translate(-3px, -4px); } 75% { transform: scale(1.4) translate(4px, 4px); } 100% { transform: scale(1.3) translate(-5px, 3px); } }
+
+/* 画面シェイク (超豪華用) */
+.shake-main { animation: shake-main 0.25s linear infinite; }
+@keyframes shake-main {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-5px, 3px); }
+  50% { transform: translate(5px, -3px); }
+  75% { transform: translate(-3px, -4px); }
+}
+
+/* ボーナス揃い（777 / 77BAR）ディスプレイ overlay */
+.align-display {
+  opacity: 0;
+  transform: scale(0.6);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+}
+.align-display.show-align {
+  opacity: 1;
+  transform: scale(1);
+}
+.align-sub {
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.85), 0 0 12px var(--glow, #ff0055);
+}
+
+/* 777 BIGテキスト (ティア色 --glow に連動) */
+.text-777-big {
+  display: inline-block;
+  color: #ffffff;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px #ffffff, 0 0 20px var(--glow), 0 0 40px var(--glow), 0 0 60px var(--glow);
+  animation: big-glow 0.6s infinite alternate;
+}
+@keyframes big-glow {
+  0% { filter: brightness(1); transform: scale(1); }
+  100% { filter: brightness(1.5); transform: scale(1.03); }
+}
+
+/* 777 GOLD (1000枚) */
+.text-777-gold {
+  display: inline-block;
+  color: #fff8c4;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-shadow: 0 0 10px #ffffff, 0 0 20px #ffd700, 0 0 40px #ffb300, 0 0 70px #ff9900;
+  animation: big-glow 0.3s infinite alternate;
+}
+
+/* 777 RAINBOW (2000枚) */
+.text-777-super {
+  display: inline-block;
+  color: #ffffff;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-shadow: 0 0 10px #ffffff, 0 0 20px #00ffff, 0 0 40px #ff00ff, 0 0 60px #ffff00;
+  animation: super-glow 0.35s infinite alternate;
+}
+@keyframes super-glow {
+  0% { filter: hue-rotate(0deg) brightness(1.2); transform: scale(1); }
+  100% { filter: hue-rotate(360deg) brightness(1.8); transform: scale(1.1); }
+}
+
+/* 77 REGテキスト */
+.text-777-reg {
+  color: #ffffff;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px #ffffff, 0 0 20px #00ffcc, 0 0 40px #00ffcc;
+}
+
+/* スロット実機風BAR図柄 */
+.bar-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #3f3f46 0%, #000000 50%, #18181b 100%);
+  color: #ffffff;
+  border: 3px solid #fbbf24;
+  border-radius: 8px;
+  padding: 2px 14px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 900;
+  letter-spacing: 3px;
+  box-shadow: inset 0 0 10px rgba(255,255,255,0.4), 0 0 20px #00ffcc;
+  text-shadow: 0 0 8px #ffffff;
+  transform: translateY(-4px);
+  line-height: 1;
+}
+
+/* ==========================================
+   揃い図柄 (777 / BAR BAR BAR) リール風表示
+   ========================================== */
+.reels {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  padding: 0 4px;
+}
+.reel {
+  flex: 1;
+  height: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 3px solid #4a4a4a;
+  background: linear-gradient(180deg, #cfcfcf 0%, #ffffff 22%, #ffffff 78%, #c4c4c4 100%);
+  box-shadow: inset 0 8px 12px rgba(0,0,0,0.3), inset 0 -8px 12px rgba(0,0,0,0.3), 0 0 20px var(--glow, #ffffff);
+}
+.show-align .reel { animation: reel-pop 0.35s cubic-bezier(0.2, 1.5, 0.4, 1) both; }
+.show-align .reel:nth-child(2) { animation-delay: 0.12s; }
+.show-align .reel:nth-child(3) { animation-delay: 0.24s; }
+@keyframes reel-pop {
+  from { transform: scale(0.2) rotateX(90deg); opacity: 0; }
+  to   { transform: scale(1) rotateX(0deg); opacity: 1; }
+}
+
+/* 7図柄の画像 (7red.png / 7blue.png / 7white.png) */
+.sym-img {
+  max-width: 88%;
+  max-height: 88%;
+  object-fit: contain;
+}
+.sym-glow-gold { filter: drop-shadow(0 0 10px #ffd700) drop-shadow(0 0 18px #ffb300); }
+.sym-glow-mega { animation: sym-mega-glow 0.6s linear infinite; }
+@keyframes sym-mega-glow {
+  0%   { filter: drop-shadow(0 0 12px #ff0000) drop-shadow(0 0 20px #ff0000); }
+  17%  { filter: drop-shadow(0 0 12px #ffee00) drop-shadow(0 0 20px #ffee00); }
+  34%  { filter: drop-shadow(0 0 12px #00e040) drop-shadow(0 0 20px #00e040); }
+  50%  { filter: drop-shadow(0 0 12px #00c8ff) drop-shadow(0 0 20px #00c8ff); }
+  67%  { filter: drop-shadow(0 0 12px #3355ff) drop-shadow(0 0 20px #3355ff); }
+  84%  { filter: drop-shadow(0 0 12px #ff00ff) drop-shadow(0 0 20px #ff00ff); }
+  100% { filter: drop-shadow(0 0 12px #ff0000) drop-shadow(0 0 20px #ff0000); }
+}
+
+/* 赤7 */
+.sym-seven {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: clamp(4rem, 20vw, 6rem);
+  line-height: 1;
+  color: transparent;
+  background: linear-gradient(180deg, #ff7a7a 0%, #e60012 45%, #8a0008 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(2px 0 0 #3a0000) drop-shadow(-2px 0 0 #3a0000) drop-shadow(0 2px 0 #3a0000) drop-shadow(0 -2px 0 #3a0000);
+}
+/* 金7 (1000枚) */
+.sym-seven.sym-seven-gold {
+  background: linear-gradient(180deg, #fffbd0 0%, #ffd700 45%, #a06a00 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+/* 虹7 (2000枚) */
+.sym-seven.sym-seven-rainbow {
+  background: linear-gradient(90deg, #ff0000, #ff9900, #ffee00, #00e040, #00c8ff, #3355ff, #d000ff, #ff0000);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: rainbow-slide 0.8s linear infinite;
+}
+/* BARプレート */
+.sym-bar {
+  width: 90%;
+  padding: 12px 0;
+  text-align: center;
+  background: linear-gradient(180deg, #5a5a5a 0%, #000000 50%, #222222 100%);
+  color: #ffffff;
+  border: 3px solid #fbbf24;
+  border-radius: 8px;
+  font-weight: 900;
+  font-size: clamp(1.3rem, 6.5vw, 2.1rem);
+  letter-spacing: 2px;
+  line-height: 1;
+  box-shadow: inset 0 0 10px rgba(255,255,255,0.4);
+  text-shadow: 0 0 6px #ffffff;
+}
+@keyframes rainbow-slide {
+  from { background-position: 0 0; }
+  to   { background-position: 200% 0; }
+}
+
+/* NEXT 表示 */
+.next-hint {
+  margin-top: 10px;
+  opacity: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  letter-spacing: 4px;
+  font-size: 1.1rem;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.85), 0 0 12px var(--glow, #ffffff);
+}
+.show-align .next-hint {
+  animation: next-in 0.3s 0.5s both, next-blink 0.7s 0.8s infinite alternate;
+}
+@keyframes next-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes next-blink {
+  from { opacity: 1; }
+  to   { opacity: 0.35; }
+}
+
+/* ==========================================
+   枚数表示 (ドドーン) : 青 < 黄 < 緑 < 赤 < 虹 < 特大虹
+   白フチで背景と同化しないようにする
+   ========================================== */
+.payout-display { opacity: 0; pointer-events: none; }
+.payout-display.show-pay { opacity: 1; }
+
+.payout-num {
+  --ol: 3px;
+  display: inline-block;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  line-height: 1.05;
+  white-space: nowrap;
+  filter:
+    drop-shadow(var(--ol) 0 0 #ffffff)
+    drop-shadow(calc(var(--ol) * -1) 0 0 #ffffff)
+    drop-shadow(0 var(--ol) 0 #ffffff)
+    drop-shadow(0 calc(var(--ol) * -1) 0 #ffffff)
+    drop-shadow(0 0 14px var(--pay-glow, #ffffff));
+}
+.payout-unit { font-size: 0.35em; margin-left: 0.15em; }
+
+.pay-l1 { color: #2f8dff; --pay-glow: #1d4ed8; --ol: 3px; font-size: clamp(2.4rem, 12vw, 3.4rem); }
+.pay-l2 { color: #ffd800; --pay-glow: #ff9900; --ol: 3px; font-size: clamp(2.6rem, 13vw, 3.8rem); }
+.pay-l3 { color: #1fe05a; --pay-glow: #059a2e; --ol: 4px; font-size: clamp(2.8rem, 14vw, 4.2rem); }
+.pay-l4 { color: #ff2b2b; --pay-glow: #ff0000; --ol: 4px; font-size: clamp(3rem, 15vw, 4.6rem); }
+.pay-l5, .pay-l6 {
+  color: transparent;
+  background: linear-gradient(90deg, #ff0000, #ff9900, #ffee00, #00e040, #00c8ff, #3355ff, #d000ff, #ff0000);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  --pay-glow: #ff00ff;
+}
+.pay-l5 { --ol: 5px; font-size: clamp(3.2rem, 16vw, 5rem); }
+.pay-l6 { --ol: 6px; font-size: clamp(3.4rem, 17vw, 5.6rem); }
+
+.show-pay .payout-num { animation: don-in 0.6s cubic-bezier(0.2, 1, 0.4, 1) both; }
+.show-pay .pay-l4 { animation: don-in 0.6s cubic-bezier(0.2, 1, 0.4, 1) both, pay-throb 0.5s 0.6s ease-in-out infinite alternate; }
+.show-pay .pay-l5 { animation: don-in 0.6s cubic-bezier(0.2, 1, 0.4, 1) both, rainbow-slide 1s linear infinite, pay-throb 0.4s 0.6s ease-in-out infinite alternate; }
+.show-pay .pay-l6 { animation: don-in 0.7s cubic-bezier(0.2, 1, 0.4, 1) both, rainbow-slide 0.5s linear infinite, pay-shake 0.1s 0.7s linear infinite; }
+
+@keyframes don-in {
+  0%   { transform: scale(3.2); opacity: 0; }
+  45%  { transform: scale(0.85); opacity: 1; }
+  65%  { transform: scale(1.15); }
+  80%  { transform: scale(0.97); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes pay-throb {
+  from { transform: scale(1); }
+  to   { transform: scale(1.07); }
+}
+@keyframes pay-shake {
+  0%, 100% { transform: translate(0, 0) scale(1.05); }
+  25% { transform: translate(-4px, 3px) scale(1.05); }
+  50% { transform: translate(4px, -3px) scale(1.05); }
+  75% { transform: translate(-3px, -3px) scale(1.05); }
+}
+
+/* フラッシュ効果 */
+/* フリーズ演出: 画面全体を真っ黒にする (最前面・即座に切替) */
+#freeze-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+}
+#freeze-overlay.show-freeze {
+  opacity: 1;
+  pointer-events: auto;
+  cursor: none;
+}
+.flash-screen {
+  animation: flash-animation 0.25s ease-out;
+}
+@keyframes flash-animation {
+  0% { background-color: rgba(255, 255, 255, 0.9); }
+  100% { background-color: transparent; }
+}
