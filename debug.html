@@ -121,7 +121,7 @@
     // ==========================================
     // デバッグ: 全演出をボタンで再生 (G数・回数・差枚数は変化しない)
     // ==========================================
-    function debugStart({ type, display = -1, actual = -1, freeze = -1 }) {
+    function debugStart({ type, display = -1, actual = -1, freezeStages = [] }) {
       if (isFreezing) return; // 暗転中は無視
       resetPekaState();       // 進行中の状態を初期化
       isDebugRun = true;
@@ -129,7 +129,7 @@
       pendingBonusType = type;
       pendingDisplayIndex = type === 'BIG' ? display : -1;
       pendingTierIndex = type === 'BIG' ? actual : -1;
-      pendingFreezeIndex = freeze;
+      pendingFreezeStages = freezeStages.slice();
 
       initAudio();
       triggerPekari();
@@ -154,8 +154,10 @@
       const idx = c => BIG_TIERS.findIndex(t => t.coins === c);
       add(specialWrap, 'REG', { type: 'REG' });
       add(specialWrap, '200→実は800', { type: 'BIG', display: idx(200), actual: idx(800) });
-      add(specialWrap, 'フリーズ→1000', { type: 'BIG', display: idx(200), actual: idx(200), freeze: idx(1000) });
-      add(specialWrap, 'フリーズ→2000', { type: 'BIG', display: idx(200), actual: idx(200), freeze: idx(2000) });
+      add(specialWrap, 'フリーズ→1000', { type: 'BIG', display: idx(200), actual: idx(200), freezeStages: [tierStage(idx(1000))] });
+      add(specialWrap, 'フリーズ→2000', { type: 'BIG', display: idx(200), actual: idx(200), freezeStages: [tierStage(idx(2000))] });
+      add(specialWrap, 'REG→777', { type: 'REG', freezeStages: [STAGE_777] });
+      add(specialWrap, 'REG→777→7777', { type: 'REG', freezeStages: [STAGE_777, STAGE_7777] });
     })();
   </script>
 </body>
