@@ -605,7 +605,12 @@
     let isPekared = false;
     let isBonusAligned = false;
     let pendingBonusType = null; // 'BIG' | 'REG'
-    let pendingTierIndex = -1;
+    let pendingTierIndex = -1;         // 実際の当たり (枚数・図柄はこちら)
+    let pendingDisplayIndex = -1;      // GOGO!演出として見せる当たり (ペカリ中の演出・音はこちら)
+
+    // 「実は…」演出: 低めの演出(800枚未満)が、一定確率で実は800枚だった
+    const SURPRISE_RATE = 0.10;
+    const SURPRISE_TIER_INDEX = BIG_TIERS.findIndex(t => t.coins === 800);
     let soundEnabled = true;
     let isCooldown = false;
     let lockInterval = null;
@@ -958,9 +963,10 @@
       isPekared = true;
       isBonusAligned = false;
 
+      // ペカリ中の演出・音は「見せかけの当たり(display)」で決める。枚数はまだ分からない
       const isBig = pendingBonusType === 'BIG';
-      const tier = isBig ? BIG_TIERS[pendingTierIndex] : null;
-      const n = pendingTierIndex + 1;
+      const tier = isBig ? BIG_TIERS[pendingDisplayIndex] : null;
+      const n = pendingDisplayIndex + 1;
       // 800枚以上は vvv.mp3、それ未満は gako.mp3
       const snd = tier && tier.coins >= 800 ? 'vvv' : 'gako';
 
@@ -1021,7 +1027,15 @@
 
       if (isHit) {
         pendingBonusType = Math.random() < 0.6 ? 'BIG' : 'REG';
-        pendingTierIndex = pendingBonusType === 'BIG' ? pickTierIndex() : -1;
+        pendingDisplayIndex = pendingBonusType === 'BIG' ? pickTierIndex() : -1;
+        pendingTierIndex = pendingDisplayIndex;
+
+        // 10%の確率で、演出は控えめなのに実は800枚だった…!
+        if (pendingBonusType === 'BIG'
+            && BIG_TIERS[pendingDisplayIndex].coins < 800
+            && Math.random() < SURPRISE_RATE) {
+          pendingTierIndex = SURPRISE_TIER_INDEX;
+        }
 
         // ボーナス当選でG数リセット
         totalGames = 0;
@@ -1172,6 +1186,7 @@
       isBonusAligned = false;
       pendingBonusType = null;
       pendingTierIndex = -1;
+      pendingDisplayIndex = -1;
 
       // ロック中にリセットされた場合の後始末
       clearInterval(lockInterval);
