@@ -292,9 +292,21 @@
       }
     }
 
-    /* ガコッ！音 (重低音＋打撃ノイズ) */
+    /* ガコッ！音 (gako.mp3 再生) */
     function playGakoSound() {
       if (!soundEnabled) return;
+      
+      // 同階層にある gako.mp3 を再生
+      const audio = new Audio('gako.mp3');
+      audio.play().catch(err => {
+        console.warn("gako.mp3の再生に失敗したため、プログラム合成音にフォールバックします:", err);
+        // gako.mp3 が見つからない・再生制限がある場合のフォールバック合成音
+        playGakoSynth();
+      });
+    }
+
+    /* ガコッ！フォールバック用合成音 */
+    function playGakoSynth() {
       initAudio();
       const now = audioCtx.currentTime;
       
