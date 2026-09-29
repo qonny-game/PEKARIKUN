@@ -462,6 +462,20 @@
     }
 
     /* フラッシュ効果 */
+    /* フリーズ演出: 画面全体を真っ黒にする (最前面・即座に切替) */
+    #freeze-overlay {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #freeze-overlay.show-freeze {
+      opacity: 1;
+      pointer-events: auto;
+      cursor: none;
+    }
     .flash-screen {
       animation: flash-animation 0.25s ease-out;
     }
@@ -476,6 +490,7 @@
   <div id="fx-overlay"></div>
   <canvas id="fx-canvas" class="fixed inset-0 pointer-events-none" style="z-index: 40;"></canvas>
   <div id="flash-overlay" class="fixed inset-0 pointer-events-none z-50"></div>
+  <div id="freeze-overlay"></div>
 
   <main class="w-full max-w-md p-5 flex flex-col gap-5 relative z-10 overflow-hidden">
 
@@ -611,6 +626,15 @@
     // 「実は…」演出: 低めの演出(800枚未満)が、一定確率で実は800枚だった
     const SURPRISE_RATE = 0.10;
     const SURPRISE_TIER_INDEX = BIG_TIERS.findIndex(t => t.coins === 800);
+
+    // フリーズフェイク: ブルー脈動(200枚)で、レバーON後に画面が真っ暗 → 実は1000枚 or 2000枚
+    const FREEZE_RATE = 0.05;                                        // ブルー脈動が出たうち何%でフリーズするか
+    const FREEZE_MEGA_RATE = 0.2;                                    // フリーズのうち2000枚になる割合 (残りは1000枚)
+    const FREEZE_GRAND_INDEX = BIG_TIERS.findIndex(t => t.coins === 1000);
+    const FREEZE_MEGA_INDEX = BIG_TIERS.findIndex(t => t.coins === 2000);
+    let pendingFreezeIndex = -1;   // フリーズ発生時の本当の当たり (-1ならフリーズなし)
+    let isFreezing = false;
+    let freezeTimer = null;
     let soundEnabled = true;
     let isCooldown = false;
     let lockInterval = null;
@@ -634,6 +658,7 @@
     const payoutValue = document.getElementById('payout-value');
     const flashOverlay = document.getElementById('flash-overlay');
     const fxOverlay = document.getElementById('fx-overlay');
+    const freezeOverlay = document.getElementById('freeze-overlay');
     const fxCanvas = document.getElementById('fx-canvas');
     const fxCtx = fxCanvas.getContext('2d');
 
@@ -1003,7 +1028,13 @@
 
     /* レバーON 処理 */
     function handleSpin() {
-      if (isCooldown) return;
+      if (isCooldown || isFreezing) return;
+
+      // フリーズフェイク: 200枚を見せたあとのレバーONで暗転する
+      if (isBonusAligned && pendingFreezeIndex >= 0) {
+        startFreeze();
+        return;
+      }
 
       // ボーナス揃え後に次へ進む場合
       if (isBonusAligned) {
@@ -1029,12 +1060,16 @@
         pendingBonusType = Math.random() < 0.6 ? 'BIG' : 'REG';
         pendingDisplayIndex = pendingBonusType === 'BIG' ? pickTierIndex() : -1;
         pendingTierIndex = pendingDisplayIndex;
+        pendingFreezeIndex = -1;
 
-        // 10%の確率で、演出は控えめなのに実は800枚だった…!
-        if (pendingBonusType === 'BIG'
-            && BIG_TIERS[pendingDisplayIndex].coins < 800
-            && Math.random() < SURPRISE_RATE) {
-          pendingTierIndex = SURPRISE_TIER_INDEX;
+        if (pendingBonusType === 'BIG' && BIG_TIERS[pendingDisplayIndex].coins < 800) {
+          if (pendingDisplayIndex === 0 && Math.random() < FREEZE_RATE) {
+            // ブルー脈動(200枚): 200枚を見せたあとレバーONでフリーズ → 1000枚 or 2000枚
+            pendingFreezeIndex = Math.random() < FREEZE_MEGA_RATE ? FREEZE_MEGA_INDEX : FREEZE_GRAND_INDEX;
+          } else if (Math.random() < SURPRISE_RATE) {
+            // 10%の確率で、演出は控えめなのに実は800枚だった…!
+            pendingTierIndex = SURPRISE_TIER_INDEX;
+          }
         }
 
         // ボーナス当選でG数リセット
@@ -1180,6 +1215,101 @@
       updateUI();
     }
 
+    /* 心音 (ドクン…ドクン): フリーズ中に鳴らす。だんだん速く・大きくなる */
+    let heartbeatTimer = null;
+
+    function thump(t, vol) {
+      // 低音の本体 + スマホスピーカーでも聞こえる少し高い成分
+      [[90, 45, 'sine', vol], [200, 80, 'triangle', vol * 0.5]].forEach(([f0, f1, type, v]) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(f0, t);
+        osc.frequency.exponentialRampToValueAtTime(f1, t + 0.18);
+        gain.gain.setValueAtTime(v, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.22);
+      });
+    }
+
+    function startHeartbeat(totalMs) {
+      stopHeartbeat();
+      const startedAt = performance.now();
+      const beat = () => {
+        if (!isFreezing) return;
+        const p = Math.min(1, (performance.now() - startedAt) / totalMs); // 0→1 (エンド間際ほど1)
+        if (soundEnabled) {
+          initAudio();
+          const t = audioCtx.currentTime;
+          const vol = 0.55 + p * 0.45;
+          thump(t, vol);            // ドクン
+          thump(t + 0.17, vol * 0.75); // …ドクン
+        }
+        heartbeatTimer = setTimeout(beat, 950 - 450 * p); // だんだん速く
+      };
+      heartbeatTimer = setTimeout(beat, 350);
+    }
+
+    function stopHeartbeat() {
+      clearTimeout(heartbeatTimer);
+      heartbeatTimer = null;
+    }
+
+    /* フリーズ開始: ボタンも回転数も全部まっ黒にして2〜3秒待つ */
+    function startFreeze() {
+      isFreezing = true;
+      playClickSound();
+      freezeOverlay.classList.add('show-freeze');
+
+      const wait = 2000 + Math.random() * 1000;
+      startHeartbeat(wait);
+      freezeTimer = setTimeout(erupt, wait);
+    }
+
+    /* フリーズ明け: 実は1000枚 or 2000枚が急に発生! */
+    function erupt() {
+      const idx = pendingFreezeIndex;
+      const real = BIG_TIERS[idx];
+      const shown = BIG_TIERS[pendingTierIndex].coins; // 直前に見せていた枚数(200)
+      const n = idx + 1;
+
+      // 暗転を解除し、本当の当たりの演出に切り替える (心音はここでぷつっと止まる)
+      stopHeartbeat();
+      freezeOverlay.classList.remove('show-freeze');
+      isFreezing = false;
+      pendingFreezeIndex = -1;
+
+      diffCoins += real.coins - shown;
+      gogoBox.className = `${GOGO_BASE} peka tier-${n}`;
+      gogoBox.style.setProperty('--glow', real.glow);
+      fxOverlay.className = `fx-t${n}`;
+
+      // 枚数をドドーンと再表示
+      const level = payLevel(real.coins);
+      payoutLabel.textContent = real.mega ? '🌈 FREEZE!! MEGA BIG BONUS 🌈' : '✨ FREEZE!! GRAND BIG BONUS ✨';
+      payoutValue.textContent = real.coins;
+      payoutNum.className = `payout-num pay-l${level}`;
+      payoutDisplay.classList.remove('show-pay');
+      void payoutDisplay.offsetWidth;
+      payoutDisplay.classList.add('show-pay');
+
+      // 音: vvv.mp3 を0.1秒刻みで3連続 + ドドーン、少し遅れてファンファーレ
+      playGakoSound('vvv', 3, 100);
+      playPayoutSound(real, level);
+      setTimeout(() => playFanfare(real, idx), 500);
+
+      // 3連フラッシュ + 金貨/紙吹雪 + シェイク
+      tripleFlash();
+      startParticles(real.mega ? 'mega' : 'gold');
+      burstParticles(real.mega ? 'mega' : 'gold', real.mega ? 160 : 90);
+      if (real.mega) shakeMain(); else shakeMain(800);
+
+      updateUI();
+    }
+
     /* ランプ状態をリセットして通常状態に戻す */
     function resetPekaState() {
       isPekared = false;
@@ -1187,6 +1317,13 @@
       pendingBonusType = null;
       pendingTierIndex = -1;
       pendingDisplayIndex = -1;
+      pendingFreezeIndex = -1;
+
+      // フリーズ中にリセットされた場合の後始末
+      clearTimeout(freezeTimer);
+      stopHeartbeat();
+      isFreezing = false;
+      freezeOverlay.classList.remove('show-freeze');
 
       // ロック中にリセットされた場合の後始末
       clearInterval(lockInterval);
