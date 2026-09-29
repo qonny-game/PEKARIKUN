@@ -293,12 +293,17 @@
     }
 
     /* ガコッ！音 (gako.mp3 再生) */
+    // gako.mp3 を事前読み込み（再生時の読み込み遅延をなくす）
+    const gakoAudio = new Audio('gako.mp3');
+    gakoAudio.preload = 'auto';
+    gakoAudio.load();
+
     function playGakoSound() {
       if (!soundEnabled) return;
       
-      // 同階層にある gako.mp3 を再生
-      const audio = new Audio('gako.mp3');
-      audio.play().catch(err => {
+      // 事前読み込み済みの gako.mp3 を頭出しして即再生
+      gakoAudio.currentTime = 0;
+      gakoAudio.play().catch(err => {
         console.warn("gako.mp3の再生に失敗したため、プログラム合成音にフォールバックします:", err);
         // gako.mp3 が見つからない・再生制限がある場合のフォールバック合成音
         playGakoSynth();
@@ -405,11 +410,12 @@
     function triggerPekari(isPremium = false) {
       isPekared = true;
       isBonusAligned = false;
-      playGakoSound();
-      triggerFlash();
 
+      // 表示と音を同じタイミングで実行
       gogoBox.className = `gogo-lamp w-full h-44 rounded-2xl border-2 border-slate-800 flex flex-col items-center justify-center relative overflow-hidden cursor-pointer ${isPremium ? 'peka-premium' : 'peka-regular'}`;
       gogoSubtext.style.opacity = '1';
+      playGakoSound();
+      triggerFlash();
 
       // 4秒間ボタンロック
       start4SecLock();
@@ -481,7 +487,7 @@
       if (!isPekared || !pendingBonusType || isBonusAligned) return;
 
       isBonusAligned = true;
-      playFanfare(pendingBonusType === 'BIG' || pendingBonusType === 'SUPER_BIG');
+      initAudio(); // 音の再生準備を先に済ませる
 
       if (pendingBonusType === 'SUPER_BIG') {
         bigCount++;
@@ -503,6 +509,9 @@
       // ランプ中央に777/77BARを表示
       alignDisplay.classList.add('show-align');
       gogoTextContainer.classList.add('opacity-0');
+
+      // 表示と同時にファンファーレ再生
+      playFanfare(pendingBonusType === 'BIG' || pendingBonusType === 'SUPER_BIG');
 
       // ボタンを「次へ」に切替
       alignBtn.disabled = true;
