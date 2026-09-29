@@ -9,8 +9,8 @@
   <style>
     body {
       font-family: 'Noto Sans JP', sans-serif;
-      background: linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 50%, #cbd5e1 100%);
-      color: #0f172a;
+      background: #050b1f;
+      color: #e2e8f0;
       touch-action: manipulation;
     }
     .digital-font {
@@ -20,22 +20,42 @@
     /* GOGO!ランプベース */
     .gogo-lamp {
       transition: all 0.15s ease-in-out;
-      background: radial-gradient(circle, #18181b 0%, #09090b 100%);
-      box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 10px 25px rgba(0,0,0,0.3);
+      background: transparent;
+      box-shadow: none;
     }
     
     /* 通常の点灯 (標準ピンクペカリ) */
     .gogo-lamp.peka-regular {
-      background: radial-gradient(circle, #ff007f 10%, #880044 65%, #2a0013 100%);
-      box-shadow: 0 0 35px #ff007f, 0 0 70px #ff007f, inset 0 0 20px #ffffff;
-      animation: pulse-glow 1.2s infinite alternate;
+      background: transparent;
     }
 
     /* プレミアム点灯 (レインボー) */
     .gogo-lamp.peka-premium {
-      background: radial-gradient(circle, #00ffff 0%, #ff00ff 50%, #ffff00 100%);
-      box-shadow: 0 0 45px #00ffff, 0 0 80px #ff00ff, inset 0 0 25px #ffffff;
+      background: transparent;
+    }
+
+    /* 画面全体エフェクト */
+    #fx-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0;
+      transition: opacity 0.2s ease-out;
+    }
+    #fx-overlay.fx-regular {
+      opacity: 1;
+      background: radial-gradient(circle at 50% 45%, #ff3d9a 0%, #ff007f 35%, #880044 75%, #2a0013 100%);
+      animation: fx-pulse 0.6s infinite alternate;
+    }
+    #fx-overlay.fx-premium {
+      opacity: 1;
+      background: radial-gradient(circle at 50% 45%, #00ffff 0%, #ff00ff 50%, #ffff00 100%);
       animation: rainbow-glow 0.7s infinite alternate;
+    }
+    @keyframes fx-pulse {
+      0% { filter: brightness(0.85); }
+      100% { filter: brightness(1.35); }
     }
 
     @keyframes pulse-glow {
@@ -50,7 +70,7 @@
 
     /* GOGO!テキスト */
     .gogo-text {
-      color: #27272a;
+      color: #4d4d4d;
       transition: all 0.05s ease;
     }
     .peka-regular .gogo-text {
@@ -140,24 +160,18 @@
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-between p-3 sm:p-5 select-none">
+<body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-5 select-none">
 
+  <div id="fx-overlay"></div>
   <div id="flash-overlay" class="fixed inset-0 pointer-events-none z-50"></div>
 
-  <header class="w-full max-w-md text-center my-1">
-    <h1 class="text-4xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-pink-600 to-yellow-500 italic drop-shadow-sm">
-      PEKARI-KUN
-    </h1>
-    <p class="text-xs font-bold text-slate-600 tracking-wider">ペカり君 - パチスロ超高確率シミュレーター</p>
-  </header>
-
-  <main class="w-full max-w-md bg-white rounded-3xl p-5 border-4 border-slate-300 shadow-2xl shadow-slate-400 flex flex-col gap-5 relative overflow-hidden">
+  <main class="w-full max-w-md p-5 flex flex-col gap-5 relative z-10 overflow-hidden">
     
     <!-- カウンター & GOGO!ランプ表示 -->
-    <div class="bg-slate-900 rounded-2xl p-4 border-2 border-slate-800 shadow-inner flex flex-col gap-4">
+    <div class="p-4 flex flex-col gap-4">
       
       <!-- カウンターセグ表示 -->
-      <div class="grid grid-cols-4 gap-2 bg-black/90 p-3 rounded-xl border border-slate-800 text-center">
+      <div class="grid grid-cols-4 gap-2 p-3 text-center">
         <div>
           <div class="text-[11px] text-slate-400 font-bold">G数</div>
           <div id="display-games" class="digital-font text-xl text-yellow-400 font-bold">0</div>
@@ -183,17 +197,7 @@
       </div>
 
       <!-- GOGO! ランプ表示ボックス -->
-      <div id="gogo-box" class="gogo-lamp w-full h-44 rounded-2xl border-2 border-slate-800 flex flex-col items-center justify-center relative overflow-hidden cursor-pointer">
-        
-        <!-- 背景格子模様 -->
-        <div class="absolute inset-0 opacity-10 pointer-events-none">
-          <svg width="100%" height="100%">
-            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#ffffff" stroke-width="0.5"/>
-            </pattern>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
-        </div>
+      <div id="gogo-box" class="gogo-lamp w-full h-44 flex flex-col items-center justify-center relative cursor-pointer">
         
         <!-- GOGO! ロゴ (点灯用) -->
         <div id="gogo-text-container" class="relative z-10 text-center transition-opacity duration-200">
@@ -206,7 +210,7 @@
         </div>
 
         <!-- ボーナス揃い演出レイヤー (777 / 77BAR) -->
-        <div id="align-display" class="align-display absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs rounded-2xl">
+        <div id="align-display" class="align-display absolute inset-0 z-20 flex flex-col items-center justify-center">
           <div id="align-text" class="text-5xl font-black">
             <!-- JSで動的に 777 または 77BAR を挿入 -->
           </div>
@@ -223,8 +227,8 @@
     <div class="flex flex-col gap-3">
       
       <!-- メイン レバーON ボタン -->
-      <button id="spin-btn" class="w-full py-6 bg-gradient-to-b from-red-500 via-red-600 to-red-800 hover:from-red-400 hover:to-red-700 active:scale-95 text-white font-black text-2xl tracking-widest rounded-2xl shadow-xl shadow-red-200 border-t-2 border-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-        レバーON (叩く!)
+      <button id="spin-btn" class="w-full py-6 bg-gradient-to-b from-red-500 via-red-600 to-red-800 hover:from-red-400 hover:to-red-700 active:scale-95 text-white font-black text-2xl tracking-widest rounded-2xl border-t-2 border-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+        レバーON
       </button>
 
       <!-- ボーナスを揃える ボタン -->
@@ -235,18 +239,18 @@
     </div>
 
     <!-- フッター・リセット -->
-    <div class="flex justify-between items-center pt-2 border-t border-slate-200 text-xs text-slate-500">
-      <button id="sound-toggle-btn" class="px-3 py-1 bg-slate-100 border border-slate-300 text-slate-700 rounded-lg font-bold hover:bg-slate-200">
-        🔊 音声: ON
+    <div class="flex justify-between items-center pt-2 border-t border-white/20 text-xs text-slate-300">
+      <button id="sound-toggle-btn" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20">
+        ON
       </button>
-      <button id="reset-btn" class="text-slate-400 hover:text-red-500 underline font-bold">
-        データをリセット
+      <button id="reset-btn" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20">
+        RESET
       </button>
     </div>
 
   </main>
 
-  <footer class="my-2 text-[11px] text-slate-500 font-bold text-center">
+  <footer class="relative z-10 my-2 text-[11px] text-slate-400 font-bold text-center">
     &copy; ペカり君 - GOGO! SIMULATOR
   </footer>
 
@@ -273,6 +277,7 @@
     const alignText = document.getElementById('align-text');
     const alignSubtext = document.getElementById('align-subtext');
     const flashOverlay = document.getElementById('flash-overlay');
+    const fxOverlay = document.getElementById('fx-overlay');
 
     const displayGames = document.getElementById('display-games');
     const displayBig = document.getElementById('display-big');
@@ -412,7 +417,8 @@
       isBonusAligned = false;
 
       // 表示と音を同じタイミングで実行
-      gogoBox.className = `gogo-lamp w-full h-44 rounded-2xl border-2 border-slate-800 flex flex-col items-center justify-center relative overflow-hidden cursor-pointer ${isPremium ? 'peka-premium' : 'peka-regular'}`;
+      gogoBox.className = `gogo-lamp w-full h-44 flex flex-col items-center justify-center relative cursor-pointer ${isPremium ? 'peka-premium' : 'peka-regular'}`;
+      fxOverlay.className = isPremium ? 'fx-premium' : 'fx-regular';
       gogoSubtext.style.opacity = '1';
       playGakoSound();
       triggerFlash();
@@ -529,13 +535,14 @@
       isBonusAligned = false;
       pendingBonusType = null;
 
-      gogoBox.className = 'gogo-lamp w-full h-44 rounded-2xl border-2 border-slate-800 flex flex-col items-center justify-center relative overflow-hidden cursor-pointer';
+      gogoBox.className = 'gogo-lamp w-full h-44 flex flex-col items-center justify-center relative cursor-pointer';
+      fxOverlay.className = '';
       gogoSubtext.style.opacity = '0';
 
       alignDisplay.classList.remove('show-align');
       gogoTextContainer.classList.remove('opacity-0');
 
-      spinBtn.innerText = "レバーON (叩く!)";
+      spinBtn.innerText = "レバーON";
     }
 
     /* UIデータ更新 */
@@ -571,7 +578,7 @@
     const soundToggleBtn = document.getElementById('sound-toggle-btn');
     soundToggleBtn.addEventListener('click', () => {
       soundEnabled = !soundEnabled;
-      soundToggleBtn.textContent = soundEnabled ? "🔊 音声: ON" : "🔇 音声: OFF";
+      soundToggleBtn.textContent = soundEnabled ? "ON" : "OFF";
     });
   </script>
 </body>
