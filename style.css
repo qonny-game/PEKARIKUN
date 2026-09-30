@@ -1,8 +1,15 @@
 body {
+  overflow-x: hidden;
   font-family: 'Noto Sans JP', sans-serif;
   background: #050b1f;
   color: #e2e8f0;
   touch-action: manipulation;
+}
+/* 紙吹雪で文字が見えなくならないよう、文字エリアの背景に黒30%を敷く
+   (重なり順: 全画面エフェクト → 紙吹雪 → この黒 → ボタン・文字) */
+.ui-shade {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 0.75rem;
 }
 .digital-font {
   font-family: 'Orbitron', monospace;
@@ -400,6 +407,7 @@ body {
 
 .payout-num {
   --ol: 3px;
+  rotate: -4deg;
   display: inline-block;
   font-family: 'Orbitron', sans-serif;
   font-weight: 900;
@@ -414,10 +422,10 @@ body {
 }
 .payout-unit { font-size: 0.35em; margin-left: 0.15em; }
 
-.pay-l1 { color: #2f8dff; --pay-glow: #1d4ed8; --ol: 3px; font-size: clamp(2.4rem, 12vw, 3.4rem); }
-.pay-l2 { color: #ffd800; --pay-glow: #ff9900; --ol: 3px; font-size: clamp(2.6rem, 13vw, 3.8rem); }
-.pay-l3 { color: #1fe05a; --pay-glow: #059a2e; --ol: 4px; font-size: clamp(2.8rem, 14vw, 4.2rem); }
-.pay-l4 { color: #ff2b2b; --pay-glow: #ff0000; --ol: 4px; font-size: clamp(3rem, 15vw, 4.6rem); }
+.pay-l1 { color: #2f8dff; --pay-glow: #1d4ed8; --ol: 3px; font-size: var(--fs, clamp(2.4rem, 12vw, 3.4rem)); }
+.pay-l2 { color: #ffd800; --pay-glow: #ff9900; --ol: 3px; font-size: var(--fs, clamp(2.6rem, 13vw, 3.8rem)); }
+.pay-l3 { color: #1fe05a; --pay-glow: #059a2e; --ol: 4px; font-size: var(--fs, clamp(2.8rem, 14vw, 4.2rem)); }
+.pay-l4 { color: #ff2b2b; --pay-glow: #ff0000; --ol: 4px; font-size: var(--fs, clamp(3rem, 15vw, 4.6rem)); }
 .pay-l5, .pay-l6, .pay-l7 {
   color: transparent;
   background: linear-gradient(90deg, #ff0000, #ff9900, #ffee00, #00e040, #00c8ff, #3355ff, #d000ff, #ff0000);
@@ -426,23 +434,26 @@ body {
   background-clip: text;
   --pay-glow: #ff00ff;
 }
-.pay-l5 { --ol: 5px; font-size: clamp(3.2rem, 16vw, 5rem); }
-.pay-l6 { --ol: 6px; font-size: clamp(3.4rem, 17vw, 5.6rem); }
-.pay-l7 { --ol: 7px; --pay-glow: #ffd700; font-size: clamp(3.4rem, 16vw, 5.2rem); }
+.pay-l5 { --ol: 5px; font-size: var(--fs, clamp(3.2rem, 16vw, 5rem)); }
+.pay-l6 { --ol: 6px; font-size: var(--fs, clamp(3.4rem, 17vw, 5.6rem)); }
+.pay-l7 { --ol: 7px; --pay-glow: #ffd700; font-size: var(--fs, clamp(3.4rem, 16vw, 5.2rem)); }
 
-.show-pay .payout-num { animation: don-in 0.6s cubic-bezier(0.2, 1, 0.4, 1) both; }
-.show-pay .pay-l4 { animation: don-in 0.6s cubic-bezier(0.2, 1, 0.4, 1) both, pay-throb 0.5s 0.6s ease-in-out infinite alternate; }
-.show-pay .pay-l5 { animation: don-in 0.6s cubic-bezier(0.2, 1, 0.4, 1) both, rainbow-slide 1s linear infinite, pay-throb 0.4s 0.6s ease-in-out infinite alternate; }
-.show-pay .pay-l6 { animation: don-in 0.7s cubic-bezier(0.2, 1, 0.4, 1) both, rainbow-slide 0.5s linear infinite, pay-shake 0.1s 0.7s linear infinite; }
+.show-pay .payout-num { animation: don-in 0.8s cubic-bezier(0.2, 1, 0.4, 1) both; }
+.show-pay .pay-l4 { animation: don-in 0.8s cubic-bezier(0.2, 1, 0.4, 1) both, pay-throb 0.5s 0.8s ease-in-out infinite alternate; }
+.show-pay .pay-l5 { animation: don-in 0.8s cubic-bezier(0.2, 1, 0.4, 1) both, rainbow-slide 1s linear infinite, pay-throb 0.4s 0.8s ease-in-out infinite alternate; }
+.show-pay .pay-l6 { animation: don-in 0.9s cubic-bezier(0.2, 1, 0.4, 1) both, rainbow-slide 0.5s linear infinite, pay-shake 0.1s 0.9s linear infinite; }
 
-.show-pay .pay-l7 { animation: don-in 0.8s cubic-bezier(0.2, 1, 0.4, 1) both, rainbow-slide 0.3s linear infinite, pay-shake 0.08s 0.8s linear infinite; }
+.show-pay .pay-l7 { animation: don-in 1s cubic-bezier(0.2, 1, 0.4, 1) both, rainbow-slide 0.3s linear infinite, pay-shake 0.08s 1s linear infinite; }
 
+
+/* 遠くから一気に超ドアップ! 斜めに傾きながら飛び込んで、ドン!と着地 */
 @keyframes don-in {
-  0%   { transform: scale(3.2); opacity: 0; }
-  45%  { transform: scale(0.85); opacity: 1; }
-  65%  { transform: scale(1.15); }
-  80%  { transform: scale(0.97); }
-  100% { transform: scale(1); opacity: 1; }
+  0%   { transform: scale(0.03); rotate: -35deg; opacity: 0; }
+  30%  { opacity: 1; }
+  55%  { transform: scale(2.1);  rotate: 10deg; }
+  68%  { transform: scale(0.88); rotate: -8deg; }
+  82%  { transform: scale(1.12); rotate: -2deg; }
+  100% { transform: scale(1);    rotate: -4deg; opacity: 1; }
 }
 @keyframes pay-throb {
   from { transform: scale(1); }
@@ -535,3 +546,6 @@ body {
   0% { background-color: rgba(255, 255, 255, 0.9); }
   100% { background-color: transparent; }
 }
+
+/* ドアップ演出がパネルの枠で切れないように */
+main { overflow: visible !important; }

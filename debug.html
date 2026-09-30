@@ -11,7 +11,7 @@
 <body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-5 select-none">
 
   <div id="fx-overlay"></div>
-  <canvas id="fx-canvas" class="fixed inset-0 pointer-events-none" style="z-index: 40;"></canvas>
+  <canvas id="fx-canvas" class="fixed inset-0 pointer-events-none" style="z-index: 5;"></canvas>
   <div id="flash-overlay" class="fixed inset-0 pointer-events-none z-50"></div>
   <div id="freeze-overlay"><div id="crt-line"></div><div id="crt-dot"></div></div>
 
@@ -20,6 +20,7 @@
     <!-- カウンター & GOGO!ランプ表示 -->
     <div class="p-4 flex flex-col gap-4">
 
+      <div class="ui-shade py-2 flex flex-col gap-2">
       <!-- カウンターセグ表示 -->
       <div class="grid grid-cols-4 gap-2 p-3 text-center">
         <div>
@@ -44,6 +45,7 @@
       <div class="flex justify-between items-center px-2 text-xs">
         <div class="text-slate-300 font-bold">差枚数: <span id="display-diff" class="digital-font font-bold text-white text-sm">0</span> 枚</div>
         <div class="text-slate-300 font-bold">確率: <span class="text-yellow-400 font-bold">1/30 (超高確率)</span></div>
+      </div>
       </div>
 
       <!-- GOGO! ランプ表示ボックス -->
@@ -79,7 +81,7 @@
     <div class="flex flex-col gap-3">
 
       <!-- デバッグ: 全演出テスト (不要になったらこのブロックを削除) -->
-      <details id="debug-panel" open class="rounded-xl border border-white/20 bg-white/5 text-xs">
+      <details id="debug-panel" open class="ui-shade rounded-xl border border-white/20 text-xs">
         <summary class="cursor-pointer px-3 py-2 font-bold text-slate-300">🛠 DEBUG (全演出テスト)</summary>
         <div class="p-2 flex flex-col gap-2">
           <div class="text-[11px] text-slate-400 font-bold">BIG (演出 = 枚数)</div>
@@ -102,7 +104,7 @@
     </div>
 
     <!-- フッター・リセット -->
-    <div class="flex justify-between items-center pt-2 border-t border-white/20 text-xs text-slate-300">
+    <div class="ui-shade flex justify-between items-center p-2 border-t border-white/20 text-xs text-slate-300">
       <button id="sound-toggle-btn" aria-label="音声 ON/OFF" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center">
       </button>
       <button id="reset-btn" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20">
@@ -112,7 +114,7 @@
 
   </main>
 
-  <footer class="relative z-10 my-2 text-[11px] text-slate-400 font-bold text-center">
+  <footer class="ui-shade relative z-10 my-2 px-4 py-1 text-[11px] text-slate-400 font-bold text-center">
     &copy; ペカり君 - GOGO! SIMULATOR
   </footer>
 
@@ -121,7 +123,7 @@
     // ==========================================
     // デバッグ: 全演出をボタンで再生 (G数・回数・差枚数は変化しない)
     // ==========================================
-    function debugStart({ type, display = -1, actual = -1, freezeStages = [] }) {
+    function debugStart({ type, display = -1, actual = -1, freezeStages = [], chainQueue = [] }) {
       if (isFreezing) return; // 暗転中は無視
       resetPekaState();       // 進行中の状態を初期化
       isDebugRun = true;
@@ -130,6 +132,7 @@
       pendingDisplayIndex = type === 'BIG' ? display : -1;
       pendingTierIndex = type === 'BIG' ? actual : -1;
       pendingFreezeStages = freezeStages.slice();
+      pendingChainQueue = chainQueue.slice();
 
       initAudio();
       triggerPekari();
@@ -156,6 +159,9 @@
       add(specialWrap, '200→実は800', { type: 'BIG', display: idx(200), actual: idx(800) });
       add(specialWrap, 'フリーズ→1000', { type: 'BIG', display: idx(200), actual: idx(200), freezeStages: [tierStage(idx(1000))] });
       add(specialWrap, 'フリーズ→2000', { type: 'BIG', display: idx(200), actual: idx(200), freezeStages: [tierStage(idx(2000))] });
+      add(specialWrap, '上乗せ 200→1000', { type: 'BIG', display: idx(200), actual: idx(200), chainQueue: [300, 400, 500, 600, 700, 800, 900, 1000] });
+      [200, 300, 400, 500, 600, 700].forEach(c =>
+        add(specialWrap, '上乗せ(運) ' + c + '開始', { type: 'BIG', display: idx(c), actual: idx(c), chainQueue: makeChainQueue(c) }));
       add(specialWrap, 'REG→777', { type: 'REG', freezeStages: [STAGE_777] });
       add(specialWrap, 'REG→777→7777', { type: 'REG', freezeStages: [STAGE_777, STAGE_7777] });
     })();

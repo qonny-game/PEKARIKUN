@@ -11,7 +11,7 @@
 <body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-5 select-none">
 
   <div id="fx-overlay"></div>
-  <canvas id="fx-canvas" class="fixed inset-0 pointer-events-none" style="z-index: 40;"></canvas>
+  <canvas id="fx-canvas" class="fixed inset-0 pointer-events-none" style="z-index: 5;"></canvas>
   <div id="flash-overlay" class="fixed inset-0 pointer-events-none z-50"></div>
   <div id="freeze-overlay"><div id="crt-line"></div><div id="crt-dot"></div></div>
 
@@ -20,6 +20,7 @@
     <!-- カウンター & GOGO!ランプ表示 -->
     <div class="p-4 flex flex-col gap-4">
 
+      <div class="ui-shade py-2 flex flex-col gap-2">
       <!-- カウンターセグ表示 -->
       <div class="grid grid-cols-4 gap-2 p-3 text-center">
         <div>
@@ -44,6 +45,7 @@
       <div class="flex justify-between items-center px-2 text-xs">
         <div class="text-slate-300 font-bold">差枚数: <span id="display-diff" class="digital-font font-bold text-white text-sm">0</span> 枚</div>
         <div class="text-slate-300 font-bold">確率: <span class="text-yellow-400 font-bold">1/30 (超高確率)</span></div>
+      </div>
       </div>
 
       <!-- GOGO! ランプ表示ボックス -->
@@ -91,7 +93,7 @@
     </div>
 
     <!-- フッター・リセット -->
-    <div class="flex justify-between items-center pt-2 border-t border-white/20 text-xs text-slate-300">
+    <div class="ui-shade flex justify-between items-center p-2 border-t border-white/20 text-xs text-slate-300">
       <button id="sound-toggle-btn" aria-label="音声 ON/OFF" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center">
       </button>
       <button id="reset-btn" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20">
@@ -101,7 +103,7 @@
 
   </main>
 
-  <footer class="relative z-10 my-2 text-[11px] text-slate-400 font-bold text-center">
+  <footer class="ui-shade relative z-10 my-2 px-4 py-1 text-[11px] text-slate-400 font-bold text-center">
     &copy; ペカり君 - GOGO! SIMULATOR
   </footer>
 
