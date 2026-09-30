@@ -176,6 +176,7 @@ Object.keys(SOUND_FILES).forEach(name => {
 });
 
 /* 長すぎる音は途中でフェードアウトして切る (秒)。vvv.mp3 はここで長さを調整できる */
+const VVV_MIN_COINS = 700;   // この枚数以上の「枚数表示」で vvv.mp3 を鳴らす
 const SAMPLE_MAX_SEC = { vvv: 2.8 };
 const SAMPLE_FADE_SEC = 0.15;
 
@@ -544,8 +545,8 @@ function triggerPekari() {
   const isBig = pendingBonusType === 'BIG';
   const tier = isBig ? BIG_TIERS[pendingDisplayIndex] : null;
   const n = pendingDisplayIndex + 1;
-  // 800枚以上は vvv.mp3、それ未満は gako.mp3
-  const snd = tier && tier.coins >= 800 ? 'vvv' : 'gako';
+  // GOGO!ランプが光った時の音は、どの当たりでも gako.mp3
+  const snd = 'gako';
 
   // 表示と音を同じタイミングで実行
   gogoBox.className = `${GOGO_BASE} peka ${isBig ? 'tier-' + n : 'tier-reg'}`;
@@ -796,6 +797,7 @@ function chainStep() {
   fxOverlay.className = `fx-t${n}`;
   gogoSubtext.textContent = t.sub;
 
+  if (next >= VVV_MIN_COINS) playGakoSound('vvv');
   payoutLabel.textContent = next >= CHAIN_MAX ? '🔥 UP!! MAX 🔥' : '🔥 UP!! 🔥';
   applyPayoutStyle(next, level);
   restartPayAnim();
@@ -848,6 +850,7 @@ function showPayout() {
   restartPayAnim();
 
   const rank = tier ? pendingTierIndex + 1 : 0;
+  if (coins >= VVV_MIN_COINS) playGakoSound('vvv'); // 700枚以上は枚数表示の時だけ vvv.mp3
   const finish = () => {
     playPayoutSound(level);
     playPayoutFanfare(rank);
