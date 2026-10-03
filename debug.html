@@ -150,6 +150,30 @@
     </div>
   </div>
 
+  <!-- AT突入演出 -->
+  <div id="rush-overlay" class="rush-overlay">
+    <div class="rush-text">
+      <div class="rush-line">PEKA</div>
+      <div class="rush-line">RUSH!!!</div>
+      <div id="rush-sub" class="rush-sub"></div>
+    </div>
+  </div>
+
+  <!-- ATリザルト -->
+  <div id="at-result" class="at-result">
+    <div class="at-result-card">
+      <div class="at-result-title">AT RESULT</div>
+      <div class="at-result-label">獲得枚数</div>
+      <div id="at-result-gain" class="at-result-gain">+0</div>
+      <div class="at-result-stats">
+        <div><span>AT G数</span><b id="ar-games">0 G</b></div>
+        <div><span>ベル揃い</span><b id="ar-bells">0 回</b></div>
+        <div><span>ボーナス当選</span><b id="ar-bonus">0 回</b></div>
+      </div>
+      <button type="button" id="at-result-close">閉じる</button>
+    </div>
+  </div>
+
   <script src="app.js"></script>
   <script>
     // ==========================================
@@ -204,7 +228,11 @@
         b.addEventListener('click', fn);
         specialWrap.appendChild(b);
       };
-      addFn('AT突入', () => { atGames = 0; startAT(); });
+      addFn('ATリザルト表示', () => { if (!isAtResult) showAtResult({ gain: 1234, games: 50, bells: 21, bonuses: 1 }); });
+      addFn('AT突入 +10G', () => { if (!isRushing) startAT(true, 10); });
+      addFn('AT突入 +20G', () => { if (!isRushing) startAT(true, 20); });
+      addFn('AT突入 +50G (プレミア)', () => { if (!isRushing) startAT(true, 50); });
+      addFn('AT突入 +100G (プレミア)', () => { if (!isRushing) startAT(true, 100); });
       addFn('ベル 直線6枚', () => hitBell(0));
       addFn('ベル 左上から1枚', () => hitBell(1));
       addFn('ベル 左下から15枚', () => hitBell(2));

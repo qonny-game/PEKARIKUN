@@ -34,8 +34,14 @@ const DEFAULT_SETTINGS = {
   chainContinue: 60,   // 上乗せのたびに、さらに続く割合
   replay: 13.7,        // ハズレのうちリプレイになる割合 (約1/7.3)
   bellNormal: 8,       // 通常時: ハズレのうちベルが揃う割合
-  bellAt: 40,          // AT中: ハズレのうちベルが揃う割合
-  at100: 30,           // ATが+100Gになる割合 (残りは+50G)
+  bellAt: 45,          // AT中: ハズレのうちベルが揃う割合
+  replayAt: 35,        // AT中: ハズレのうちリプレイになる割合 (ベルと合わせてコインがほぼ減らない)
+  atEntry: 30,         // ボーナス終了後にATへ突入する割合
+  atHitMult: 0.1,      // AT中のボーナス当選確率の倍率 (低いほど当選しにくい)
+  atW10: 50,           // AT継続G数の比率: +10G (基本)
+  atW20: 42,           // +20G (基本)
+  atW50: 6,            // +50G (プレミア)
+  atW100: 2,           // +100G (プレミア)
   bellStraight: 60,    // ベルの種類の比率: 直線 (6枚)
   bellDiagTL: 25,      // 斜め 左上から (1枚)
   bellDiagBL: 15,      // 斜め 左下から (15枚)
@@ -67,8 +73,8 @@ function saveSettings() {
 
 let SETTINGS = loadSettings();
 let HIT_RATE, REG_RATE, TIER_RATES;
-let PULLBACK_G, PULLBACK_MULT, BELL_NORMAL_RATE, BELL_AT_RATE, AT100_RATE, BELL_WEIGHTS = [60, 25, 15];
-let REPLAY_RATE, SURPRISE_RATE, FREEZE_RATE, FREEZE_MEGA_RATE, REG_FREEZE_RATE, CHAIN_7777_RATE, CHAIN_UP_RATE, CHAIN_CONTINUE;
+let PULLBACK_G, PULLBACK_MULT, BELL_NORMAL_RATE, BELL_AT_RATE, AT_ENTRY_RATE, AT_HIT_MULT, AT_WEIGHTS = [50, 42, 6, 2], BELL_WEIGHTS = [60, 25, 15];
+let REPLAY_AT_RATE, REPLAY_RATE, SURPRISE_RATE, FREEZE_RATE, FREEZE_MEGA_RATE, REG_FREEZE_RATE, CHAIN_7777_RATE, CHAIN_UP_RATE, CHAIN_CONTINUE;
 
 function applySettings() {
   const st = SETTINGS;
@@ -86,11 +92,14 @@ function applySettings() {
   CHAIN_UP_RATE = clampP(st.chainUp);
   CHAIN_CONTINUE = clampP(st.chainContinue);
   REPLAY_RATE = clampP(st.replay);
+  REPLAY_AT_RATE = clampP(st.replayAt);
   PULLBACK_G = Math.max(0, Math.round(st.pullbackG));
   PULLBACK_MULT = Math.max(0, st.pullbackMult);
   BELL_NORMAL_RATE = clampP(st.bellNormal);
   BELL_AT_RATE = clampP(st.bellAt);
-  AT100_RATE = clampP(st.at100);
+  AT_ENTRY_RATE = clampP(st.atEntry);
+  AT_HIT_MULT = Math.max(0, st.atHitMult);
+  AT_WEIGHTS = [st.atW10, st.atW20, st.atW50, st.atW100].map(v => Math.max(0, +v || 0));
   BELL_WEIGHTS = [st.bellStraight, st.bellDiagTL, st.bellDiagBL].map(v => Math.max(0, +v || 0));
 }
 applySettings();
@@ -161,8 +170,12 @@ let countRAF = null;
 let chainActive = false;        // 上乗せ連続演出の最中
 let chainUps = 0;               // ここまでの上乗せ回数
 let pullbackGames = 0;          // 引き戻しゾーン残りG数 (AT終了後。当選確率アップ)
+let atRun = null;               // いまのAT中の集計 {startDiff, games, bells, bonuses}
+let atEnding = false;           // ATのG数が0になった (リザルト待ち)
+let isAtResult = false;         // リザルト表示中 (レバー無効)
 let atGames = 0;                // AT残りG数 (0なら通常時)
 let replayPending = false;      // 次のゲームはリプレイ (3枚を消費しない)
+let isRushing = false;          // PEKA RUSH!!! 演出中 (レバー無効)
 let isSuspense = false;         // 鼓動演出中 (レバー無効)
 let suspenseTimer = null;
 
@@ -657,7 +670,7 @@ function start4SecLock() {
 
 /* レバーON 処理 */
 function handleSpin() {
-  if (isCooldown || isFreezing || isCounting || isSuspense) return;
+  if (isCooldown || isFreezing || isCounting || isSuspense || isRushing || isAtResult) return;
 
   // フリーズフェイク: 200枚を見せたあとのレバーONで暗転する
   if (isBonusAligned && pendingFreezeStages.length > 0) {
@@ -675,7 +688,11 @@ function handleSpin() {
   if (isBonusAligned) {
     const wasDebug = isDebugRun;
     resetPekaState();
-    if (!wasDebug) startAT();
+    if (!wasDebug && startAT()) return;   // AT突入の PEKA RUSH!!! 演出中はゲームを進めない
+    if (!wasDebug) {
+      maybeShowAtResult();                // ATの最終ゲームでボーナスに当選していた場合はここでリザルト
+      if (isAtResult) return;
+    }
   }
 
   // ペカっている途中の誤操作防止
@@ -692,9 +709,10 @@ function handleSpin() {
   const inPullback = !inAT && pullbackGames > 0;
   if (inAT) {
     atGames--;
+    if (atRun) atRun.games++;
     if (atGames === 0) {
-      pullbackGames = PULLBACK_G;
-      showAtToast(PULLBACK_G > 0 ? `AT 終了  引き戻し ${PULLBACK_G}G` : 'AT 終了');
+      pullbackGames = PULLBACK_G;   // AT終了後は引き戻しゾーン
+      atEnding = true;              // リザルトはこのゲームの結果が出たあとに表示
     }
     updateAT();
   } else if (inPullback) {
@@ -710,7 +728,8 @@ function handleSpin() {
   recordPoint();
 
   // 1/30の超高確率で抽選
-  const isHit = Math.random() < Math.min(1, HIT_RATE * (inPullback ? PULLBACK_MULT : 1));
+  const hitMult = inAT ? AT_HIT_MULT : inPullback ? PULLBACK_MULT : 1;   // AT中は当選しにくい / 引き戻し中は当選しやすい
+  const isHit = Math.random() < Math.min(1, HIT_RATE * hitMult);
 
   if (isHit) {
     pendingBonusType = Math.random() < REG_RATE ? 'REG' : 'BIG';
@@ -744,6 +763,7 @@ function handleSpin() {
     chainActive = pendingChainQueue.length > 0;
     chainUps = 0;
     replayPending = false;
+    if (inAT && atRun) atRun.bonuses++;
 
     // ボーナス当選でG数リセット
     totalGames = 0;
@@ -752,9 +772,10 @@ function handleSpin() {
     triggerPekari();
   } else if (Math.random() < (inAT ? BELL_AT_RATE : BELL_NORMAL_RATE)) {
     // ベル揃い: 直線6枚 / 斜め左上から1枚 / 斜め左下から15枚
+    if (inAT && atRun) atRun.bells++;
     hitBell();
     updateUI();
-  } else if (Math.random() < REPLAY_RATE) {
+  } else if (Math.random() < (inAT ? REPLAY_AT_RATE : REPLAY_RATE)) {
     // リプレイ: 図柄が揃って、次のゲームは投入枚数なし
     replayPending = true;
     showReplayReels();
@@ -765,6 +786,8 @@ function handleSpin() {
     showLoseReels();
     updateUI();
   }
+
+  if (!isHit) maybeShowAtResult();   // ATの最終ゲームがボーナス以外ならここでリザルト
 }
 
 /* 当選枚数に応じた表示レベル (1:青 2:黄 3:緑 4:赤 5:虹 6:特大虹) */
@@ -950,20 +973,118 @@ function showAtToast(text) {
   void atToast.offsetWidth;
   atToast.classList.add('show');
 }
-/* ボーナス終了後にAT突入: +50G か +100G (AT中に再び当選したら上乗せ) */
-function startAT() {
-  const n = Math.random() < AT100_RATE ? 100 : 50;
-  atGames += n;
-  pullbackGames = 0;
-  updateAT();
-  showAtToast(`AT 突入  +${n}G`);
-  triggerFlash();
-  if (soundEnabled) {
-    initAudio();
-    const t = audioCtx.currentTime;
-    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, t + i * 0.09, 0.3, 'square', 0.14));
+/* AT継続G数を比率から抽選: +10G / +20G (基本)、+50G / +100G (プレミア) */
+const AT_CHOICES = [10, 20, 50, 100];
+function pickAtGames() {
+  const sum = AT_WEIGHTS.reduce((x, y) => x + y, 0);
+  if (sum <= 0) return AT_CHOICES[0];
+  let r = Math.random() * sum;
+  for (let i = 0; i < AT_WEIGHTS.length; i++) {
+    r -= AT_WEIGHTS[i];
+    if (r < 0) return AT_CHOICES[i];
   }
+  return AT_CHOICES[0];
 }
+
+const rushOverlay = document.getElementById('rush-overlay');
+const rushSub = document.getElementById('rush-sub');
+
+/* ボーナス終了後にAT突入 (突入率はAT_ENTRY_RATE)。突入するなら演出を始めて true を返す
+   force: 抽選せず必ず突入 (デバッグ用) / games: G数を指定 (デバッグ用) */
+function startAT(force, games) {
+  if (!force && Math.random() >= AT_ENTRY_RATE) return false;
+  const n = games || pickAtGames();
+  const premium = n >= 50;
+  atEnding = false;                  // AT継続 (上乗せ)
+  if (!atRun) atRun = { startDiff: diffCoins, games: 0, bells: 0, bonuses: 0 };
+  isRushing = true;
+  rushSub.textContent = `+${n}G`;
+  rushOverlay.classList.remove('show', 'premium');
+  void rushOverlay.offsetWidth;
+  rushOverlay.classList.add('show');
+  if (premium) rushOverlay.classList.add('premium');
+
+  // 音・演出 (プレミアはより豪華)
+  playGakoSound('gako');
+  playPayoutSound(premium ? 6 : 4);
+  playPayoutFanfare(premium ? 10 : 6);
+  tripleFlash();
+  if (premium) {
+    burstParticles('mega', 160);
+    startParticles('gold');
+    shakeMain();
+  } else {
+    burstParticles('gold', 70);
+  }
+
+  const ms = premium ? 3400 : 2400;
+  setTimeout(() => {
+    rushOverlay.classList.remove('show', 'premium');
+    stopParticles();
+    mainEl.classList.remove('shake-main');
+    atGames += n;
+    pullbackGames = 0;
+    isRushing = false;
+    updateAT();
+    showAtToast(`AT  +${n}G`);
+  }, ms);
+  return true;
+}
+
+/* ---------- ATリザルト ---------- */
+const atResultEl = document.getElementById('at-result');
+const atResultGain = document.getElementById('at-result-gain');
+let atResultRAF = null;
+
+function maybeShowAtResult() {
+  if (!atEnding || atGames > 0 || !atRun || isAtResult) return;
+  isAtResult = true;                       // 結果表示までレバーを止める
+  const run = atRun;
+  setTimeout(() => showAtResult(run), 900);
+}
+
+/* PEKA RUSH 開始から終了までの獲得枚数を表示 */
+function showAtResult(run) {
+  isAtResult = true;
+  const gain = run.gain !== undefined ? run.gain : diffCoins - run.startDiff;
+  document.getElementById('ar-games').textContent = `${run.games} G`;
+  document.getElementById('ar-bells').textContent = `${run.bells} 回`;
+  document.getElementById('ar-bonus').textContent = `${run.bonuses} 回`;
+  atResultGain.className = 'at-result-gain ' + (gain >= 0 ? 'plus' : 'minus');
+  atResultEl.classList.remove('show');
+  void atResultEl.offsetWidth;
+  atResultEl.classList.add('show');
+
+  // 獲得枚数を 0 から高速カウントアップ
+  const fmt = v => (v >= 0 ? '+' : '') + v;
+  cancelAnimationFrame(atResultRAF);
+  const t0 = performance.now();
+  const ms = 1300;
+  const frame = now => {
+    const p = Math.min(1, (now - t0) / ms);
+    atResultGain.textContent = fmt(Math.round(gain * (1 - Math.pow(1 - p, 3))));
+    if (p < 1) {
+      atResultRAF = requestAnimationFrame(frame);
+    } else if (gain > 0) {
+      playPayoutSound(gain >= 1000 ? 6 : gain >= 300 ? 4 : 2);
+      playPayoutFanfare(gain >= 1500 ? 10 : gain >= 800 ? 8 : gain >= 300 ? 5 : 2);
+      if (gain >= 800) { tripleFlash(); burstParticles('gold', 90); }
+    }
+  };
+  atResultRAF = requestAnimationFrame(frame);
+}
+
+document.getElementById('at-result-close').addEventListener('click', () => {
+  cancelAnimationFrame(atResultRAF);
+  atResultEl.classList.remove('show');
+  stopParticles();
+  const wasEnding = atEnding && atGames === 0;
+  isAtResult = false;
+  atRun = null;
+  atEnding = false;
+  updateAT();
+  if (wasEnding && pullbackGames > 0) showAtToast(`引き戻し ${pullbackGames}G`);
+});
 
 function playReplayJingle() {
   if (!soundEnabled) return;
@@ -1459,6 +1580,10 @@ function resetData() {
     replayPending = false;
     atGames = 0;
     pullbackGames = 0;
+    atRun = null;
+    atEnding = false;
+    isAtResult = false;
+    atResultEl.classList.remove('show');
     updateAT();
     gameHistory.length = 0;
     bonusLog.length = 0;
@@ -1502,7 +1627,13 @@ const SETTING_ROWS = [
   { key: 'replay', label: 'リプレイ (ハズレのうち)', min: 0, max: 100, step: 0.1, suffix: '%' },
   { key: 'bellNormal', label: 'ベル揃い 通常時', min: 0, max: 100, step: 0.1, suffix: '%' },
   { key: 'bellAt', label: 'ベル揃い AT中', min: 0, max: 100, step: 0.1, suffix: '%' },
-  { key: 'at100', label: 'ATが+100Gになる割合', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'replayAt', label: 'リプレイ AT中', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'atEntry', label: 'ボーナス後のAT突入率', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'atHitMult', label: 'AT中のボーナス当選確率 (倍)', min: 0, max: 100, step: 0.01, suffix: '' },
+  { key: 'atW10', label: 'AT比率: +10G (基本)', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'atW20', label: 'AT比率: +20G (基本)', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'atW50', label: 'AT比率: +50G (プレミア)', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'atW100', label: 'AT比率: +100G (プレミア)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'bellStraight', label: 'ベル比率: 直線 (6枚)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'bellDiagTL', label: 'ベル比率: 斜め左上から (1枚)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'bellDiagBL', label: 'ベル比率: 斜め左下から (15枚)', min: 0, max: 1000, step: 1, suffix: '' },

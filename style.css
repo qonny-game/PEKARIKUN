@@ -746,3 +746,118 @@ main { overflow: visible !important; }
 
 .at-status.pullback .at-label { background: #38bdf8; animation: none; box-shadow: 0 0 10px #38bdf8; }
 .at-status.pullback { color: #bae6fd; }
+
+/* AT突入演出: PEKA RUSH!!! */
+.rush-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+.rush-overlay.show { display: flex; animation: rush-bg 0.3s ease-out both; }
+@keyframes rush-bg { from { opacity: 0; } to { opacity: 1; } }
+.rush-text {
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1.05;
+  transform: rotate(-6deg);
+}
+.rush-line {
+  font-size: clamp(4.2rem, 24vw, 8rem);
+  color: #fff7d6;
+  text-shadow: 0 0 10px #fff, 0 0 24px #ffb300, 0 0 48px #ff6a00, 0 0 80px #ff3d00, 0 4px 0 #7a2e00;
+}
+.rush-line:nth-child(2) { font-size: clamp(3.4rem, 19vw, 6.4rem); }
+.rush-sub {
+  margin-top: 10px;
+  font-size: clamp(1.6rem, 9vw, 2.6rem);
+  color: #fde68a;
+  text-shadow: 0 0 12px #f59e0b, 0 2px 6px rgba(0, 0, 0, 0.9);
+}
+.rush-overlay.show .rush-line:nth-child(1) { animation: rush-slam 0.55s cubic-bezier(0.2, 1, 0.4, 1) both, rush-glow 0.25s 0.55s ease-in-out infinite alternate; }
+.rush-overlay.show .rush-line:nth-child(2) { animation: rush-slam 0.55s 0.35s cubic-bezier(0.2, 1, 0.4, 1) both, rush-glow 0.25s 0.9s ease-in-out infinite alternate; }
+.rush-overlay.show .rush-sub { animation: rush-fade 0.4s 1s both; }
+@keyframes rush-slam {
+  0%   { transform: scale(6); opacity: 0; }
+  55%  { transform: scale(0.9); opacity: 1; }
+  75%  { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes rush-glow {
+  from { filter: brightness(1); }
+  to   { filter: brightness(1.6); }
+}
+@keyframes rush-fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* プレミア (+50G / +100G): 虹色 */
+.rush-overlay.premium .rush-line {
+  color: transparent;
+  background: linear-gradient(90deg, #ff0000, #ff9900, #ffee00, #00e040, #00c8ff, #3355ff, #d000ff, #ff0000);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 22px #ff00ff);
+}
+.rush-overlay.show.premium .rush-line:nth-child(1) { animation: rush-slam 0.55s cubic-bezier(0.2, 1, 0.4, 1) both, rainbow-slide 0.5s linear infinite; }
+.rush-overlay.show.premium .rush-line:nth-child(2) { animation: rush-slam 0.55s 0.35s cubic-bezier(0.2, 1, 0.4, 1) both, rainbow-slide 0.5s linear infinite; }
+
+/* ATリザルト */
+.at-result {
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.75);
+}
+.at-result.show { display: flex; animation: rush-bg 0.3s ease-out both; }
+.at-result-card {
+  width: 100%;
+  max-width: 24rem;
+  padding: 20px 16px 16px;
+  text-align: center;
+  border-radius: 16px;
+  background: #0b1228;
+  border: 2px solid #fbbf24;
+  box-shadow: 0 0 30px rgba(251, 191, 36, 0.35);
+}
+.at-result.show .at-result-card { animation: result-in 0.5s cubic-bezier(0.2, 1.2, 0.4, 1) both; }
+@keyframes result-in { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.at-result-title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  letter-spacing: 3px;
+  font-size: 1.1rem;
+  color: #fde68a;
+}
+.at-result-label { margin-top: 10px; font-size: 12px; color: #94a3b8; font-weight: 700; }
+.at-result-gain {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: clamp(3rem, 16vw, 4.6rem);
+  line-height: 1.1;
+  white-space: nowrap;
+  filter: drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff);
+}
+.at-result-gain.plus { color: #f59e0b; }
+.at-result-gain.minus { color: #ef4444; }
+.at-result-stats { display: flex; justify-content: space-around; margin: 14px 0; gap: 6px; }
+.at-result-stats div { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: #94a3b8; font-weight: 700; }
+.at-result-stats b { font-size: 15px; color: #e2e8f0; }
+#at-result-close {
+  padding: 8px 28px;
+  border-radius: 8px;
+  font-weight: 700;
+  background: #2563eb;
+  border: 1px solid #3b82f6;
+  color: #fff;
+}
