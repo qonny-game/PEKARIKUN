@@ -180,6 +180,7 @@
     // ==========================================
     // デバッグ: 全演出をボタンで再生 (G数・回数・差枚数は変化しない)
     // ==========================================
+    window.SHOW_INTERNAL = true;   // デバッグ版では内部状態 (チェリー後の高確率) も表示
     function debugStart({ type, display = -1, actual = -1, freezeStages = [], chainQueue = [] }) {
       if (isFreezing) return; // 暗転中は無視
       resetPekaState();       // 進行中の状態を初期化
@@ -229,7 +230,8 @@
         b.addEventListener('click', fn);
         specialWrap.appendChild(b);
       };
-      addFn('チェリー', () => hitCherry(true));
+      addFn('チェリー', () => hitCherry(true, false));
+      addFn('チェリー (AT中)', () => hitCherry(true, true));
       addFn('ATリザルト表示', () => { if (!isAtResult) showAtResult({ gain: 1234, games: 50, bells: 21, bonuses: 1 }); });
       addFn('AT突入 +10G', () => { if (!isRushing) startAT(true, 10); });
       addFn('AT突入 +20G', () => { if (!isRushing) startAT(true, 20); });

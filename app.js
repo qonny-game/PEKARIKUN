@@ -23,7 +23,7 @@ const BIG_TIERS = [
 // ==========================================
 const TIER_LABELS = ['REG', ...BIG_TIERS.map(t => String(t.coins))];
 const DEFAULT_SETTINGS = {
-  hitDenom: 30,                                        // ボーナス当選確率 1/N
+  hitDenom: 100,                                       // 通常時のボーナス当選確率 1/N (基本はチェリー→高確率で当てる)
   weights: [20, 20, 20, 5, 5, 5, 5, 5, 5, 5, 5],      // 当選内訳の比率
   surprise: 10,        // 800枚未満の演出が実は800枚だった割合
   freeze: 5,           // 200枚(ブルー脈動)がフリーズする割合
@@ -34,7 +34,7 @@ const DEFAULT_SETTINGS = {
   chainContinue: 60,   // 上乗せのたびに、さらに続く割合
   replay: 13.7,        // ハズレのうちリプレイになる割合 (約1/7.3)
   bellNormal: 8,       // 通常時: ハズレのうちベルが揃う割合
-  bellAt: 45,          // AT中: ハズレのうちベルが揃う割合
+  bellAt: 50,          // AT中: ハズレのうちベルが揃う割合
   replayAt: 35,        // AT中: ハズレのうちリプレイになる割合 (ベルと合わせてコインがほぼ減らない)
   atEntry: 30,         // ボーナス終了後にATへ突入する割合
   atHitMult: 0.1,      // AT中のボーナス当選確率の倍率 (低いほど当選しにくい)
@@ -45,9 +45,12 @@ const DEFAULT_SETTINGS = {
   bellStraight: 60,    // ベルの種類の比率: 直線 (6枚)
   bellDiagTL: 25,      // 斜め 左上から (1枚)
   bellDiagBL: 15,      // 斜め 左下から (15枚)
-  cherry: 2,           // ハズレのうちチェリーが揃う割合 (左列に1個で成立)
-  cherryMult: 4,       // チェリー後のボーナス当選確率の倍率
-  cherryG: 8,          // チェリー後に当選しやすい期間 (G)
+  cherry: 3,           // 通常時: ハズレのうちチェリーが揃う割合 (左列に1個で成立)
+  cherryMult: 5,       // チェリー後 (内部高確率) のボーナス当選確率の倍率
+  cherryG: 30,         // チェリー後の内部高確率の期間 (G)
+  cherryAt: 6,         // AT中: ハズレのうちチェリーが揃う割合
+  cherryAtG: 10,       // AT中にチェリーが揃うと増えるG数
+  regNextBig: 95,      // REGの次回ボーナスがBIG(777)になる割合
   cherryCoins: 2,      // チェリーの払い出し枚数
   pullbackG: 20,       // AT終了後の引き戻しゾーン (G数)
   pullbackMult: 1.5    // 引き戻し中の当選確率の倍率
@@ -77,7 +80,7 @@ function saveSettings() {
 
 let SETTINGS = loadSettings();
 let HIT_RATE, REG_RATE, TIER_RATES;
-let CHERRY_RATE, CHERRY_MULT, CHERRY_G, CHERRY_COINS, PULLBACK_G, PULLBACK_MULT, BELL_NORMAL_RATE, BELL_AT_RATE, AT_ENTRY_RATE, AT_HIT_MULT, AT_WEIGHTS = [50, 42, 6, 2], BELL_WEIGHTS = [60, 25, 15];
+let CHERRY_AT_RATE, CHERRY_AT_G, REG_NEXT_BIG, CHERRY_RATE, CHERRY_MULT, CHERRY_G, CHERRY_COINS, PULLBACK_G, PULLBACK_MULT, BELL_NORMAL_RATE, BELL_AT_RATE, AT_ENTRY_RATE, AT_HIT_MULT, AT_WEIGHTS = [50, 42, 6, 2], BELL_WEIGHTS = [60, 25, 15];
 let REPLAY_AT_RATE, REPLAY_RATE, SURPRISE_RATE, FREEZE_RATE, FREEZE_MEGA_RATE, REG_FREEZE_RATE, CHAIN_7777_RATE, CHAIN_UP_RATE, CHAIN_CONTINUE;
 
 function applySettings() {
@@ -98,6 +101,9 @@ function applySettings() {
   REPLAY_RATE = clampP(st.replay);
   REPLAY_AT_RATE = clampP(st.replayAt);
   CHERRY_RATE = clampP(st.cherry);
+  CHERRY_AT_RATE = clampP(st.cherryAt);
+  CHERRY_AT_G = Math.max(0, Math.round(st.cherryAtG));
+  REG_NEXT_BIG = clampP(st.regNextBig);
   CHERRY_MULT = Math.max(0, st.cherryMult);
   CHERRY_G = Math.max(0, Math.round(st.cherryG));
   CHERRY_COINS = Math.max(0, Math.round(st.cherryCoins));
@@ -181,6 +187,7 @@ let pullbackGames = 0;          // 引き戻しゾーン残りG数 (AT終了後�
 let atRun = null;               // いまのAT中の集計 {startDiff, games, bells, bonuses}
 let atEnding = false;           // ATのG数が0になった (リザルト待ち)
 let isAtResult = false;         // リザルト表示中 (レバー無効)
+let nextBonusBigBoost = false;  // 直前のボーナスがREG → 次回はBIG(777)になりやすい
 let cherryGames = 0;            // チェリー後の当選しやすい期間 (残りG)
 let atGames = 0;                // AT残りG数 (0なら通常時)
 let replayPending = false;      // 次のゲームはリプレイ (3枚を消費しない)
@@ -743,7 +750,11 @@ function handleSpin() {
   const isHit = Math.random() < Math.min(1, HIT_RATE * hitMult);
 
   if (isHit) {
-    pendingBonusType = Math.random() < REG_RATE ? 'REG' : 'BIG';
+    // REGの次回は、高い確率でBIG(777)になる
+    pendingBonusType = nextBonusBigBoost
+      ? (Math.random() < REG_NEXT_BIG ? 'BIG' : 'REG')
+      : (Math.random() < REG_RATE ? 'REG' : 'BIG');
+    nextBonusBigBoost = pendingBonusType === 'REG';
     pendingDisplayIndex = pendingBonusType === 'BIG' ? pickTierIndex() : -1;
     pendingTierIndex = pendingDisplayIndex;
     pendingFreezeStages = [];
@@ -788,9 +799,9 @@ function handleSpin() {
     if (inAT && atRun) atRun.bells++;
     hitBell();
     updateUI();
-  } else if (Math.random() < CHERRY_RATE) {
-    // チェリー: 左列に1個あるだけで成立。しばらくボーナスに当選しやすくなる
-    hitCherry();
+  } else if (Math.random() < (inAT ? CHERRY_AT_RATE : CHERRY_RATE)) {
+    // チェリー: 左列に1個あるだけで成立。通常時は30G間ボーナス高確率 (内部) / AT中はATのG数が増える
+    hitCherry(false, inAT);
     updateUI();
   } else if (Math.random() < (inAT ? REPLAY_AT_RATE : REPLAY_RATE)) {
     // リプレイ: 図柄が揃って、次のゲームは投入枚数なし
@@ -981,10 +992,10 @@ const cherryStatus = document.getElementById('cherry-status');
 const cherryRemain = document.getElementById('cherry-remain');
 function updateCherry() {
   if (!cherryStatus) return;
-  cherryStatus.classList.toggle('on', cherryGames > 0);
+  cherryStatus.classList.toggle('on', cherryGames > 0 && window.SHOW_INTERNAL === true);   // 内部状態なので通常は表示しない
   cherryRemain.textContent = cherryGames;
 }
-function hitCherry(isDebugCall) {
+function hitCherry(isDebugCall, inAT) {
   const row = Math.floor(Math.random() * 3);
   const idx = row * 3;                                 // 左列のどれか1マス
   let g;
@@ -1000,10 +1011,18 @@ function hitCherry(isDebugCall) {
   if (!isDebugCall) {
     diffCoins += CHERRY_COINS;
     recordPoint();
-    cherryGames = CHERRY_G;
-    updateCherry();
+    if (inAT) {
+      // AT中のチェリー: ATのG数が増える (最終ゲームなら終了を取り消して延長)
+      atGames += CHERRY_AT_G;
+      if (atEnding) { atEnding = false; pullbackGames = 0; }
+      updateAT();
+      showAtToast(`AT +${CHERRY_AT_G}G`);
+    } else {
+      cherryGames = CHERRY_G;        // 内部的にボーナス高確率 (画面には出さない)
+      updateCherry();
+    }
   }
-  bellBadge.textContent = 'CHERRY' + (CHERRY_COINS > 0 ? ` +${CHERRY_COINS}` : '');
+  bellBadge.textContent = 'CHERRY' + (inAT && !isDebugCall ? ` +${CHERRY_AT_G}G` : CHERRY_COINS > 0 ? ` +${CHERRY_COINS}` : '');
   bellBadge.classList.remove('show');
   void bellBadge.offsetWidth;
   bellBadge.classList.add('show');
@@ -1643,6 +1662,7 @@ function resetData() {
     atGames = 0;
     pullbackGames = 0;
     cherryGames = 0;
+    nextBonusBigBoost = false;
     updateCherry();
     atRun = null;
     atEnding = false;
@@ -1704,6 +1724,9 @@ const SETTING_ROWS = [
   { key: 'cherry', label: 'チェリー (ハズレのうち)', min: 0, max: 100, step: 0.1, suffix: '%' },
   { key: 'cherryMult', label: 'チェリー後の当選確率 (倍)', min: 0, max: 100, step: 0.1, suffix: '' },
   { key: 'cherryG', label: 'チェリー後の期間 (G)', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'cherryAt', label: 'チェリー AT中 (ハズレのうち)', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'cherryAtG', label: 'AT中チェリーで増えるG', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'regNextBig', label: 'REG後の次回BIG(777)率', min: 0, max: 100, step: 0.1, suffix: '%' },
   { key: 'cherryCoins', label: 'チェリーの払い出し (枚)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'pullbackG', label: 'AT終了後の引き戻し (G)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'pullbackMult', label: '引き戻し中の当選確率 (倍)', min: 0, max: 100, step: 0.1, suffix: '' }
