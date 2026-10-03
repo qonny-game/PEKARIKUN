@@ -16,21 +16,74 @@ const BIG_TIERS = [
 ];
 
 // ==========================================
-// ボーナス確率 (当選1回あたり)
-//   REG・200枚・300枚 : 3つとも同じ確率 (LOW_RATE)
-//   400枚以上の8種類  : 残りを均等に分配
+// 確率設定 (画面の設定ボタンから手動で編集できる。値はブラウザに保存される)
+//   weights : [REG, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000] の比率
+//             (合計が100でなくても、比率として扱う)
+//   その他  : 単位は %
 // ==========================================
-const LOW_RATE = 0.20;  // REG / 200 / 300 それぞれの確率 (ここを変えれば調整できる)
-const LOW_MAX_COINS = 300;
-const REG_RATE = LOW_RATE;
+const TIER_LABELS = ['REG', ...BIG_TIERS.map(t => String(t.coins))];
+const DEFAULT_SETTINGS = {
+  hitDenom: 30,                                        // ボーナス当選確率 1/N
+  weights: [20, 20, 20, 5, 5, 5, 5, 5, 5, 5, 5],      // 当選内訳の比率
+  surprise: 10,        // 800枚未満の演出が実は800枚だった割合
+  freeze: 5,           // 200枚(ブルー脈動)がフリーズする割合
+  freezeMega: 20,      // フリーズのうち2000枚になる割合 (残りは1000枚)
+  regFreeze: 5,        // REGがフリーズ→777枚になる割合
+  chain7777: 25,       // 777枚フリーズからさらに7777枚へ連鎖する割合
+  chainUp: 15,         // BIGのうち上乗せ連続演出になる割合
+  chainContinue: 60,   // 上乗せのたびに、さらに続く割合
+  replay: 13.7         // ハズレのうちリプレイになる割合 (約1/7.3)
+};
+const SETTINGS_KEY = 'pekari-settings-v1';
 
-const HIGH_TIERS_COUNT = BIG_TIERS.filter(t => t.coins > LOW_MAX_COINS).length;
-const HIGH_RATE = (1 - LOW_RATE * 3) / HIGH_TIERS_COUNT; // 400枚以上の各確率
-const TIER_RATES = BIG_TIERS.map(t => (t.coins <= LOW_MAX_COINS ? LOW_RATE : HIGH_RATE));
+function loadSettings() {
+  const st = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+  try {
+    const raw = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
+    if (raw && typeof raw === 'object') {
+      Object.keys(DEFAULT_SETTINGS).forEach(k => {
+        if (k === 'weights') {
+          if (Array.isArray(raw.weights) && raw.weights.length === st.weights.length &&
+              raw.weights.every(v => Number.isFinite(+v) && +v >= 0)) st.weights = raw.weights.map(Number);
+        } else if (Number.isFinite(+raw[k])) {
+          st[k] = +raw[k];
+        }
+      });
+    }
+  } catch (e) { /* 保存データが無い/読めない場合は初期値 */ }
+  return st;
+}
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(SETTINGS)); } catch (e) { /* 保存できなくても動作は続ける */ }
+}
+
+let SETTINGS = loadSettings();
+let HIT_RATE, REG_RATE, TIER_RATES;
+let REPLAY_RATE, SURPRISE_RATE, FREEZE_RATE, FREEZE_MEGA_RATE, REG_FREEZE_RATE, CHAIN_7777_RATE, CHAIN_UP_RATE, CHAIN_CONTINUE;
+
+function applySettings() {
+  const st = SETTINGS;
+  const clampP = v => Math.min(1, Math.max(0, v / 100));
+  HIT_RATE = 1 / Math.max(1, st.hitDenom);
+  const w = st.weights.map(v => Math.max(0, +v || 0));
+  const total = w.reduce((x, y) => x + y, 0);
+  REG_RATE = total > 0 ? w[0] / total : 0;
+  TIER_RATES = w.slice(1);                 // BIG各枚数の比率 (抽選時に正規化)
+  SURPRISE_RATE = clampP(st.surprise);
+  FREEZE_RATE = clampP(st.freeze);
+  FREEZE_MEGA_RATE = clampP(st.freezeMega);
+  REG_FREEZE_RATE = clampP(st.regFreeze);
+  CHAIN_7777_RATE = clampP(st.chain7777);
+  CHAIN_UP_RATE = clampP(st.chainUp);
+  CHAIN_CONTINUE = clampP(st.chainContinue);
+  REPLAY_RATE = clampP(st.replay);
+}
+applySettings();
 
 /* BIGに当選したときの種類(枚数)を抽選 */
 function pickTierIndex() {
-  const sum = TIER_RATES.reduce((s, p) => s + p, 0); // = 1 - REG_RATE
+  const sum = TIER_RATES.reduce((x, y) => x + y, 0);
+  if (sum <= 0) return 0;
   let r = Math.random() * sum;
   for (let i = 0; i < TIER_RATES.length; i++) {
     r -= TIER_RATES[i];
@@ -40,6 +93,14 @@ function pickTierIndex() {
 }
 
 // ゲーム状態変数
+const gameHistory = [];   // グラフ用: {g: 累計G数, diff: 差枚数}
+const bonusLog = [];      // グラフ用: {g, type, coins}
+let currentBonus = null;  // いま進行中のボーナス (上乗せ・フリーズで枚数が増える)
+function recordPoint() {
+  if (isDebugRun) return;
+  gameHistory.push({ g: cumulativeGames, diff: diffCoins });
+  if (gameHistory.length > 20000) gameHistory.shift();
+}
 let totalGames = 0;       // 表示用G数 (ボーナス当選でリセット)
 let cumulativeGames = 0;  // 合算確率計算用の累計G数
 let bigCount = 0;
@@ -53,16 +114,11 @@ let pendingTierIndex = -1;         // 実際の当たり (枚数・図柄はこ�
 let pendingDisplayIndex = -1;      // GOGO!演出として見せる当たり (ペカリ中の演出・音はこちら)
 
 // 「実は…」演出: 低めの演出(800枚未満)が、一定確率で実は800枚だった
-const SURPRISE_RATE = 0.10;
 const SURPRISE_TIER_INDEX = BIG_TIERS.findIndex(t => t.coins === 800);
 
 // フリーズフェイク: ブルー脈動(200枚)で、レバーON後に画面が真っ暗 → 実は1000枚 or 2000枚
-const FREEZE_RATE = 0.05;                                        // ブルー脈動が出たうち何%でフリーズするか
-const FREEZE_MEGA_RATE = 0.2;                                    // フリーズのうち2000枚になる割合 (残りは1000枚)
 const FREEZE_GRAND_INDEX = BIG_TIERS.findIndex(t => t.coins === 1000);
 const FREEZE_MEGA_INDEX = BIG_TIERS.findIndex(t => t.coins === 2000);
-const REG_FREEZE_RATE = 0.05;   // REGが出たうち何%で「REG→フリーズ→777枚」になるか
-const CHAIN_7777_RATE = 0.25;   // 777枚フリーズのあと、さらにフリーズして7777枚になる割合
 let currentShownCoins = 0;      // いま画面に見せている枚数 (フリーズ時の差枚数計算用)
 
 /* フリーズ明けに発生する「本当の当たり」の定義 (rank: ファンファーレの豪華さ) */
@@ -74,21 +130,24 @@ function tierStage(idx) {
     ultra: false
   };
 }
-const STAGE_777 = { coins: 777, fxN: 9, glow: '#ffd700', mega: false, level: 5, rank: 9, ultra: false,
+const STAGE_777 = { coins: 777, fxN: 9, glow: '#ffd700', mega: false, level: 5, rank: 9, ultra: false, count: true,
   label: '🎰 FREEZE!! LUCKY 777 🎰' };
-const STAGE_7777 = { coins: 7777, fxN: 10, glow: '#ff2bd6', mega: true, level: 7, rank: 11, ultra: true,
+const STAGE_7777 = { coins: 7777, fxN: 10, glow: '#ff2bd6', mega: true, level: 7, rank: 11, ultra: true, count: true,
   label: '👑 FREEZE!! ULTRA 7777 JACKPOT 👑' };
 let pendingFreezeStages = [];   // 残りのフリーズ (空ならフリーズなし)
 
 // 上乗せ連続演出: レバーONのたびに 200→300→400… と増えていく (最大1000枚)
-const CHAIN_UP_RATE = 0.15;     // BIGのうち、上乗せ連続演出になる割合
 const CHAIN_START_COUNT = BIG_TIERS.findIndex(t => t.coins === 800); // 開始枚数は 200〜700 (この個数の中から均等に選ぶ)
-const CHAIN_CONTINUE = 0.6;     // 1回上乗せするごとに、さらに続く確率 (低いほど早く止まる)
 const CHAIN_STEP = 100;         // 1回の上乗せ枚数
 const CHAIN_MAX = 1000;         // 上乗せの上限
 let pendingChainQueue = [];     // 残りの上乗せ枚数 (例: [300, 400, 500])
 let isCounting = false;         // 数字カウントアップ中
 let countRAF = null;
+let chainActive = false;        // 上乗せ連続演出の最中
+let chainUps = 0;               // ここまでの上乗せ回数
+let replayPending = false;      // 次のゲームはリプレイ (3枚を消費しない)
+let isSuspense = false;         // 鼓動演出中 (レバー無効)
+let suspenseTimer = null;
 
 /* 開始枚数から、どこで止まるかを運で決める (例: 300 → [400, 500, 600]) */
 function makeChainQueue(start) {
@@ -551,7 +610,7 @@ function triggerPekari() {
   // 表示と音を同じタイミングで実行
   gogoBox.className = `${GOGO_BASE} peka ${isBig ? 'tier-' + n : 'tier-reg'}`;
   gogoBox.style.setProperty('--glow', tier ? tier.glow : '#ff007f');
-  fxOverlay.className = isBig ? `fx-t${n}` : 'fx-reg';
+  fxOverlay.className = '';   // 背景エフェクトは枚数表示の時だけ。ペカリ中は文字ランプが光る
   gogoSubtext.textContent = tier ? tier.sub : 'CHANCE';
   gogoSubtext.style.opacity = '1';
 
@@ -581,7 +640,7 @@ function start4SecLock() {
 
 /* レバーON 処理 */
 function handleSpin() {
-  if (isCooldown || isFreezing || isCounting) return;
+  if (isCooldown || isFreezing || isCounting || isSuspense) return;
 
   // フリーズフェイク: 200枚を見せたあとのレバーONで暗転する
   if (isBonusAligned && pendingFreezeStages.length > 0) {
@@ -590,8 +649,8 @@ function handleSpin() {
   }
 
   // 上乗せ連続演出: レバーONで枚数が増える
-  if (isBonusAligned && pendingChainQueue.length > 0) {
-    chainStep();
+  if (isBonusAligned && chainActive) {
+    chainPress();
     return;
   }
 
@@ -610,10 +669,16 @@ function handleSpin() {
 
   totalGames++;
   cumulativeGames++;
-  diffCoins -= 3; // 3枚消費
+  if (replayPending) {
+    replayPending = false;       // リプレイ: このゲームは投入なし
+    spinBtn.innerText = 'レバーON';
+  } else {
+    diffCoins -= 3;              // 3枚消費
+  }
+  recordPoint();
 
   // 1/30の超高確率で抽選
-  const isHit = Math.random() < (1 / 30);
+  const isHit = Math.random() < HIT_RATE;
 
   if (isHit) {
     pendingBonusType = Math.random() < REG_RATE ? 'REG' : 'BIG';
@@ -644,11 +709,24 @@ function handleSpin() {
       }
     }
 
+    chainActive = pendingChainQueue.length > 0;
+    chainUps = 0;
+    replayPending = false;
+
     // ボーナス当選でG数リセット
     totalGames = 0;
     updateUI();
+    hideLoseReels();
     triggerPekari();
+  } else if (Math.random() < REPLAY_RATE) {
+    // リプレイ: 図柄が揃って、次のゲームは投入枚数なし
+    replayPending = true;
+    showReplayReels();
+    spinBtn.innerText = 'リプレイ (レバーON)';
+    playReplayJingle();
+    updateUI();
   } else {
+    showLoseReels();
     updateUI();
   }
 }
@@ -702,6 +780,79 @@ function handleAlignBonus() {
   else if (alignStage === 1) showPayout();
 }
 
+/* ---------- リール (3行3列) ---------- */
+const REEL_SYMBOLS = ['7red', '7blue', '7white', 'bar', 'bell', 'cherry', 'melon'];
+const REEL_LINES = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+const EMOJI = { bell: '🔔', cherry: '🍒', melon: '🍉' };
+
+function symbolHTML(key, glow) {
+  if (key === 'replay') return '<div class="sym-replay">REPLAY</div>';
+  if (key === 'bar') return '<div class="sym-bar">BAR</div>';
+  if (EMOJI[key]) return `<div class="sym-emoji">${EMOJI[key]}</div>`;
+  // 画像が無い場合は文字の7で代用
+  return `<img class="sym-img ${glow || ''}" src="${key}.png" alt="7" onerror="this.outerHTML='<div class=&quot;sym-seven&quot;>7</div>'">`;
+}
+const randSym = () => REEL_SYMBOLS[Math.floor(Math.random() * REEL_SYMBOLS.length)];
+const lineOf = (g, l) => g[l[0]] === g[l[1]] && g[l[1]] === g[l[2]];
+
+/* ハズレ: どの列・行・斜めも揃わない9マス */
+function loseGrid() {
+  let g;
+  do { g = Array.from({ length: 9 }, randSym); } while (REEL_LINES.some(l => lineOf(g, l)));
+  return g;
+}
+/* 当たり: 中段だけが揃い、残りの6マスは別の図柄で埋める */
+function winGrid(key) {
+  let g;
+  do {
+    g = Array.from({ length: 9 }, randSym);
+    g[3] = g[4] = g[5] = key;
+  } while (REEL_LINES.some((l, i) => i !== 1 && lineOf(g, l)));
+  return g;
+}
+
+/* winIdx: 揃ったマスの番号の配列 (null ならハズレ表示) */
+function renderReels(grid, winIdx, glow) {
+  reelsEl.innerHTML = grid.map((key, i) => {
+    const isWin = !!winIdx && winIdx.includes(i);
+    const cls = winIdx ? (isWin ? 'win' : 'dim') : '';
+    return `<div class="reel ${cls}" style="--i:${i}">${symbolHTML(key, isWin ? glow : '')}</div>`;
+  }).join('');
+}
+
+/* リプレイ: ランダムな1ラインにREPLAYが揃う */
+function showReplayReels() {
+  const line = REEL_LINES[Math.floor(Math.random() * REEL_LINES.length)];
+  let g;
+  do {
+    g = Array.from({ length: 9 }, randSym);
+    line.forEach(i => { g[i] = 'replay'; });
+  } while (REEL_LINES.some(l => l !== line && lineOf(g, l)));
+  renderReels(g, line, '');
+  alignDisplay.classList.remove('show-align');
+  alignDisplay.classList.add('show-lose');
+  gogoTextContainer.classList.add('opacity-0');
+}
+
+function playReplayJingle() {
+  if (!soundEnabled) return;
+  initAudio();
+  const t = audioCtx.currentTime;
+  [784, 988, 1175].forEach((f, i) => tone(f, t + i * 0.07, 0.18, 'triangle', 0.16));
+}
+
+/* ハズレ時: 9マスをランダムに埋めて表示 */
+function showLoseReels() {
+  renderReels(loseGrid(), null, '');
+  alignDisplay.classList.remove('show-align');
+  alignDisplay.classList.add('show-lose');
+  gogoTextContainer.classList.add('opacity-0');
+}
+function hideLoseReels() {
+  alignDisplay.classList.remove('show-lose');
+  gogoTextContainer.classList.remove('opacity-0');
+}
+
 /* 1回目: 777 または BAR BAR BAR をリール風に大きく表示 */
 function showSymbols() {
   alignStage = 1;
@@ -709,17 +860,11 @@ function showSymbols() {
 
   const tier = pendingBonusType === 'BIG' ? BIG_TIERS[pendingTierIndex] : null;
 
-  let cell;
-  if (!tier) {
-    cell = '<div class="sym-bar">BAR</div>';
-  } else {
-    // グレード順: 赤(200〜400) < 青(500〜700) < 白(800〜2000)
-    const img = pendingTierIndex <= 2 ? '7red.png' : pendingTierIndex <= 5 ? '7blue.png' : '7white.png';
-    const glow = tier.mega ? 'sym-glow-mega' : tier.grand ? 'sym-glow-gold' : '';
-    // 画像が無い場合は文字の7で代用
-    cell = `<img class="sym-img ${glow}" src="${img}" alt="7" onerror="this.outerHTML='<div class=&quot;sym-seven&quot;>7</div>'">`;
-  }
-  reelsEl.innerHTML = `<div class="reel">${cell}</div>`.repeat(3);
+  // グレード順: 赤(200〜400) < 青(500〜700) < 白(800〜2000)。REGはBAR
+  const winKey = !tier ? 'bar' : pendingTierIndex <= 2 ? '7red' : pendingTierIndex <= 5 ? '7blue' : '7white';
+  const glow = !tier ? '' : tier.mega ? 'sym-glow-mega' : tier.grand ? 'sym-glow-gold' : '';
+  renderReels(winGrid(winKey), [3, 4, 5], glow);
+  alignDisplay.classList.remove('show-lose');
 
   alignDisplay.classList.add('show-align');
   gogoTextContainer.classList.add('opacity-0');
@@ -777,7 +922,33 @@ function countUp(from, to, ms, onDone) {
   countRAF = requestAnimationFrame(frame);
 }
 
-/* 上乗せ: レバーONで枚数が +100 されて、数字がまた高速で増える */
+/* 上乗せ中のレバーON: 1回目は即上乗せ / 2回目以降は鼓動演出 → 上乗せ or 終了 */
+function chainPress() {
+  if (chainUps === 0) {
+    chainStep();
+    return;
+  }
+  initAudio();
+  isSuspense = true;
+  payoutDisplay.classList.add('suspense');
+  payoutLabel.textContent = 'NEXT UP ?';
+  const ms = 1800 + Math.random() * 700;
+  startHeartbeat(ms, 0);
+  suspenseTimer = setTimeout(() => {
+    stopHeartbeat();
+    payoutDisplay.classList.remove('suspense');
+    isSuspense = false;
+    if (pendingChainQueue.length > 0) {
+      chainStep();
+    } else {
+      chainActive = false;
+      payoutLabel.textContent = 'FINISH';
+      if (soundEnabled) { initAudio(); tone(220, audioCtx.currentTime, 0.4, 'triangle', 0.2); }
+    }
+  }, ms);
+}
+
+/* 上乗せ: 枚数が +100 されて、数字がまた高速で増える */
 function chainStep() {
   const next = pendingChainQueue.shift();
   const idx = BIG_TIERS.findIndex(t => t.coins === next);
@@ -790,6 +961,10 @@ function chainStep() {
 
   if (!isDebugRun) diffCoins += next - from;
   currentShownCoins = next;
+  chainUps++;
+  if (next >= CHAIN_MAX) chainActive = false;
+  recordPoint();
+  if (currentBonus) currentBonus.coins = next;
 
   // GOGO!の発光・全画面エフェクトも、増えた枚数のものに切り替わる
   gogoBox.className = `${GOGO_BASE} peka tier-${n}`;
@@ -838,9 +1013,15 @@ function showPayout() {
     coins = 104;
     label = 'REG BONUS';
   }
-  if (!isDebugRun) diffCoins += coins;
+  if (!isDebugRun) {
+    diffCoins += coins;
+    currentBonus = { g: cumulativeGames, type: tier ? 'BIG' : 'REG', coins };
+    bonusLog.push(currentBonus);
+    recordPoint();
+  }
 
   currentShownCoins = coins;
+  fxOverlay.className = tier ? `fx-t${pendingTierIndex + 1}` : 'fx-reg';   // 枚数表示で背景が豪華に
   const level = payLevel(coins);
   payoutLabel.textContent = label;
   applyPayoutStyle(coins, level);
@@ -908,7 +1089,7 @@ function startHeartbeat(totalMs, delay = 350) {
   stopHeartbeat();
   const startedAt = performance.now();
   const beat = () => {
-    if (!isFreezing) return;
+    if (!isFreezing && !isSuspense) return;
     const p = Math.min(1, (performance.now() - startedAt) / totalMs); // 0→1 (エンド間際ほど1)
     if (soundEnabled) {
       initAudio();
@@ -1037,16 +1218,21 @@ function erupt() {
   // 枚数をドドーンと再表示
   const level = st.level || payLevel(st.coins);
   payoutLabel.textContent = st.label;
-  payoutValue.textContent = st.coins;
   applyPayoutStyle(st.coins, level);
-  payoutDisplay.classList.remove('show-pay');
-  void payoutDisplay.offsetWidth;
-  payoutDisplay.classList.add('show-pay');
+  restartPayAnim();
 
   // 音: vvv.mp3 (1回) + ドドーン + 枚数に応じたファンファーレ
   playGakoSound('vvv');
-  playPayoutSound(level);
-  playPayoutFanfare(st.rank);
+  const landing = () => { playPayoutSound(level); playPayoutFanfare(st.rank); };
+  if (st.count) {
+    // 777枚・7777枚は 0 から高速カウントアップ → 数字が決まった瞬間にドドーン
+    countUp(0, st.coins, st.ultra ? 1800 : 1300, landing);
+  } else {
+    payoutValue.textContent = st.coins;
+    landing();
+  }
+  recordPoint();
+  if (currentBonus) currentBonus.coins = st.coins;
 
   // フラッシュ + 金貨/紙吹雪 + シェイク
   tripleFlash();
@@ -1074,6 +1260,12 @@ function resetPekaState() {
   pendingDisplayIndex = -1;
   pendingFreezeStages = [];
   pendingChainQueue = [];
+  chainActive = false;
+  chainUps = 0;
+  clearTimeout(suspenseTimer);
+  isSuspense = false;
+  payoutDisplay.classList.remove('suspense');
+  currentBonus = null;
   cancelAnimationFrame(countRAF);
   countRAF = null;
   isCounting = false;
@@ -1101,7 +1293,7 @@ function resetPekaState() {
   gogoSubtext.style.opacity = '0';
   gogoSubtext.textContent = 'CHANCE';
 
-  alignDisplay.classList.remove('show-align');
+  alignDisplay.classList.remove('show-align', 'show-lose');
   payoutDisplay.classList.remove('show-pay');
   gogoTextContainer.classList.remove('opacity-0');
 
@@ -1132,6 +1324,9 @@ function resetData() {
     bigCount = 0;
     regCount = 0;
     diffCoins = 0;
+    replayPending = false;
+    gameHistory.length = 0;
+    bonusLog.length = 0;
     resetPekaState();
     updateUI();
   }
@@ -1152,3 +1347,223 @@ soundToggleBtn.addEventListener('click', () => {
   soundEnabled = !soundEnabled;
   soundToggleBtn.innerHTML = soundEnabled ? ICON_SOUND_ON : ICON_SOUND_OFF;
 });
+
+// ==========================================
+// 確率設定パネル
+// ==========================================
+const settingsModal = document.getElementById('settings-modal');
+const settingsBody = document.getElementById('settings-body');
+const displayRate = document.getElementById('display-rate');
+
+const SETTING_ROWS = [
+  { key: 'hitDenom', label: 'ボーナス当選確率 (1/N)', min: 1, max: 100000, step: 1, prefix: '1/' },
+  { key: 'surprise', label: '演出より多い800枚', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'freeze', label: '200枚からフリーズ', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'freezeMega', label: 'フリーズ時の2000枚割合', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'regFreeze', label: 'REGからフリーズ(777枚)', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'chain7777', label: '777枚から7777枚へ連鎖', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'chainUp', label: '上乗せ連続演出', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'chainContinue', label: '上乗せ継続率', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'replay', label: 'リプレイ (ハズレのうち)', min: 0, max: 100, step: 0.1, suffix: '%' }
+];
+
+function buildSettingsForm(src = SETTINGS) {
+  const rows = SETTING_ROWS.map(r => `
+    <label class="set-row">
+      <span class="set-label">${r.label}</span>
+      <span class="set-field">${r.prefix || ''}<input type="number" data-key="${r.key}" min="${r.min}" max="${r.max}" step="${r.step}" value="${src[r.key]}">${r.suffix || ''}</span>
+    </label>`).join('');
+  const weights = TIER_LABELS.map((l, i) => `
+    <label class="set-row">
+      <span class="set-label">${l}${i === 0 ? '' : '枚'}</span>
+      <span class="set-field"><input type="number" data-w="${i}" min="0" step="0.1" value="${src.weights[i]}"><span class="set-pct" data-pct="${i}"></span></span>
+    </label>`).join('');
+  settingsBody.innerHTML = `
+    <div class="set-group">
+      ${rows}
+    </div>
+    <div class="set-title">当選内訳 (比率。合計が100でなくても自動で換算)</div>
+    <div class="set-group">
+      ${weights}
+      <div class="set-row set-total"><span class="set-label">合計</span><span class="set-field" id="set-total"></span></div>
+    </div>`;
+  settingsBody.querySelectorAll('input[data-w]').forEach(el => el.addEventListener('input', refreshWeightPct));
+  refreshWeightPct();
+}
+
+function readWeightInputs() {
+  return [...settingsBody.querySelectorAll('input[data-w]')].map(el => Math.max(0, parseFloat(el.value) || 0));
+}
+
+function refreshWeightPct() {
+  const w = readWeightInputs();
+  const total = w.reduce((x, y) => x + y, 0);
+  w.forEach((v, i) => {
+    settingsBody.querySelector(`[data-pct="${i}"]`).textContent = total > 0 ? `${(v / total * 100).toFixed(1)}%` : '-';
+  });
+  document.getElementById('set-total').textContent = total.toFixed(1);
+}
+
+function applySettingsForm() {
+  const next = JSON.parse(JSON.stringify(SETTINGS));
+  settingsBody.querySelectorAll('input[data-key]').forEach(el => {
+    const v = parseFloat(el.value);
+    if (Number.isFinite(v)) next[el.dataset.key] = Math.min(+el.max, Math.max(+el.min, v));
+  });
+  const w = readWeightInputs();
+  if (w.reduce((x, y) => x + y, 0) > 0) next.weights = w;
+  SETTINGS = next;
+  saveSettings();
+  applySettings();
+  refreshRateLabel();
+  closeModal(settingsModal);
+}
+
+function refreshRateLabel() {
+  if (displayRate) displayRate.textContent = `1/${SETTINGS.hitDenom}`;
+}
+
+// ==========================================
+// 当選グラフ (差枚数の推移 + 当選枚数)
+// ==========================================
+const graphModal = document.getElementById('graph-modal');
+const graphLine = document.getElementById('graph-line');
+const graphBars = document.getElementById('graph-bars');
+const graphSummary = document.getElementById('graph-summary');
+
+const LEVEL_COLORS = { 1: '#2f8dff', 2: '#ffd800', 3: '#1fe05a', 4: '#ff2b2b', 5: '#d946ef', 6: '#fb923c', 7: '#fde047' };
+function bonusColor(b) {
+  if (b.type === 'REG') return '#94a3b8';
+  const lv = b.coins >= 5000 ? 7 : b.coins === 777 ? 5 : payLevel(b.coins);
+  return LEVEL_COLORS[lv];
+}
+
+function setupCanvas(cv) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = cv.clientWidth, h = cv.clientHeight;
+  cv.width = Math.round(w * dpr);
+  cv.height = Math.round(h * dpr);
+  const c = cv.getContext('2d');
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.clearRect(0, 0, w, h);
+  c.font = '10px sans-serif';
+  return { c, w, h };
+}
+
+function drawEmpty(c, w, h) {
+  c.fillStyle = '#94a3b8';
+  c.textAlign = 'center';
+  c.fillText('データがありません', w / 2, h / 2);
+}
+
+function drawDiffGraph() {
+  const { c, w, h } = setupCanvas(graphLine);
+  if (gameHistory.length < 2) { drawEmpty(c, w, h); return; }
+  const padL = 46, padR = 8, padT = 10, padB = 18;
+  let minY = 0, maxY = 0;
+  gameHistory.forEach(p => { if (p.diff < minY) minY = p.diff; if (p.diff > maxY) maxY = p.diff; });
+  if (maxY === minY) maxY = minY + 1;
+  const maxX = Math.max(1, gameHistory[gameHistory.length - 1].g);
+  const X = g => padL + (g / maxX) * (w - padL - padR);
+  const Y = v => padT + (1 - (v - minY) / (maxY - minY)) * (h - padT - padB);
+
+  // 当選ごとの縦線
+  bonusLog.forEach(b => {
+    c.strokeStyle = bonusColor(b) + '66';
+    c.lineWidth = 1;
+    c.beginPath();
+    c.moveTo(X(b.g), padT);
+    c.lineTo(X(b.g), h - padB);
+    c.stroke();
+  });
+
+  // 0ライン
+  c.strokeStyle = '#64748b';
+  c.setLineDash([4, 4]);
+  c.beginPath();
+  c.moveTo(padL, Y(0));
+  c.lineTo(w - padR, Y(0));
+  c.stroke();
+  c.setLineDash([]);
+
+  // 差枚数の線
+  c.strokeStyle = '#4ade80';
+  c.lineWidth = 1.5;
+  c.beginPath();
+  gameHistory.forEach((p, i) => {
+    if (i === 0) c.moveTo(X(p.g), Y(p.diff)); else c.lineTo(X(p.g), Y(p.diff));
+  });
+  c.stroke();
+
+  // 軸ラベル
+  c.fillStyle = '#cbd5e1';
+  c.textAlign = 'right';
+  c.fillText(String(maxY), padL - 4, padT + 8);
+  c.fillText(String(minY), padL - 4, h - padB);
+  if (minY < 0 && maxY > 0) c.fillText('0', padL - 4, Y(0) + 3);
+  c.textAlign = 'left';
+  c.fillText('0G', padL, h - 4);
+  c.textAlign = 'right';
+  c.fillText(`${maxX}G`, w - padR, h - 4);
+}
+
+function drawBonusBars() {
+  const { c, w, h } = setupCanvas(graphBars);
+  const list = bonusLog.slice(-40);
+  if (list.length === 0) { drawEmpty(c, w, h); return; }
+  const padL = 46, padR = 8, padT = 14, padB = 16;
+  const maxV = Math.max(...list.map(b => b.coins));
+  const slot = (w - padL - padR) / Math.max(list.length, 10);
+  const barW = Math.max(3, slot * 0.7);
+
+  c.fillStyle = '#cbd5e1';
+  c.textAlign = 'right';
+  c.fillText(String(maxV), padL - 4, padT + 8);
+  c.fillText('0', padL - 4, h - padB);
+  c.strokeStyle = '#64748b';
+  c.beginPath();
+  c.moveTo(padL, h - padB);
+  c.lineTo(w - padR, h - padB);
+  c.stroke();
+
+  list.forEach((b, i) => {
+    const bh = (b.coins / maxV) * (h - padT - padB);
+    const x = padL + i * slot + (slot - barW) / 2;
+    c.fillStyle = bonusColor(b);
+    c.fillRect(x, h - padB - bh, barW, bh);
+    if (b.coins === maxV || b.coins >= 1000) {
+      c.fillStyle = '#e2e8f0';
+      c.textAlign = 'center';
+      c.fillText(String(b.coins), x + barW / 2, h - padB - bh - 3);
+    }
+  });
+  c.fillStyle = '#94a3b8';
+  c.textAlign = 'left';
+  c.fillText(`直近${list.length}回`, padL, h - 3);
+}
+
+function drawGraphs() {
+  const best = bonusLog.reduce((m, b) => Math.max(m, b.coins), 0);
+  graphSummary.textContent = `BIG ${bigCount}  REG ${regCount}  最高 ${best}枚  差枚数 ${diffCoins >= 0 ? '+' : ''}${diffCoins}  総G ${cumulativeGames}`;
+  drawDiffGraph();
+  drawBonusBars();
+}
+
+// ==========================================
+// モーダル共通 / ボタン
+// ==========================================
+function openModal(m) { m.classList.add('open'); }
+function closeModal(m) { m.classList.remove('open'); }
+
+document.getElementById('settings-btn').addEventListener('click', () => { buildSettingsForm(); openModal(settingsModal); });
+document.getElementById('settings-apply').addEventListener('click', applySettingsForm);
+document.getElementById('settings-default').addEventListener('click', () => {
+  buildSettingsForm(DEFAULT_SETTINGS);   // 入力欄だけ初期値に戻す (適用を押すまで反映されない)
+});
+document.getElementById('graph-btn').addEventListener('click', () => { openModal(graphModal); drawGraphs(); });
+document.querySelectorAll('[data-close-modal]').forEach(el =>
+  el.addEventListener('click', () => closeModal(el.closest('.modal'))));
+document.querySelectorAll('.modal').forEach(m =>
+  m.addEventListener('click', e => { if (e.target === m) closeModal(m); }));
+window.addEventListener('resize', () => { if (graphModal.classList.contains('open')) drawGraphs(); });
+refreshRateLabel();

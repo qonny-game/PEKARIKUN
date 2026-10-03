@@ -44,7 +44,7 @@
       <!-- ステータス情報 -->
       <div class="flex justify-between items-center px-2 text-xs">
         <div class="text-slate-300 font-bold">差枚数: <span id="display-diff" class="digital-font font-bold text-white text-sm">0</span> 枚</div>
-        <div class="text-slate-300 font-bold">確率: <span class="text-yellow-400 font-bold">1/30 (超高確率)</span></div>
+        <div class="text-slate-300 font-bold">確率: <span id="display-rate" class="text-yellow-400 font-bold">1/30</span></div>
       </div>
       </div>
 
@@ -94,8 +94,12 @@
 
     <!-- フッター・リセット -->
     <div class="ui-shade flex justify-between items-center p-2 border-t border-white/20 text-xs text-slate-300">
-      <button id="sound-toggle-btn" aria-label="音声 ON/OFF" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center">
-      </button>
+      <div class="flex gap-2">
+        <button id="sound-toggle-btn" aria-label="音声 ON/OFF" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center">
+        </button>
+        <button id="graph-btn" aria-label="当選グラフ" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"/><polyline points="15 6 21 6 21 12"/></svg></button>
+        <button id="settings-btn" aria-label="確率設定" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2.2" fill="currentColor"/><circle cx="15" cy="12" r="2.2" fill="currentColor"/><circle cx="8" cy="18" r="2.2" fill="currentColor"/></svg></button>
+      </div>
       <button id="reset-btn" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20">
         RESET
       </button>
@@ -106,6 +110,30 @@
   <footer class="ui-shade relative z-10 my-2 px-4 py-1 text-[11px] text-slate-400 font-bold text-center">
     &copy; ペカり君 - GOGO! SIMULATOR
   </footer>
+
+  <!-- 当選グラフ -->
+  <div id="graph-modal" class="modal">
+    <div class="modal-card">
+      <div class="modal-head"><span>当選グラフ</span><button type="button" data-close-modal aria-label="閉じる">&times;</button></div>
+      <div id="graph-summary" class="graph-summary"></div>
+      <div class="graph-title">差枚数の推移 (縦線は当選)</div>
+      <canvas id="graph-line" class="graph-canvas"></canvas>
+      <div class="graph-title">当選枚数</div>
+      <canvas id="graph-bars" class="graph-canvas"></canvas>
+    </div>
+  </div>
+
+  <!-- 確率設定 -->
+  <div id="settings-modal" class="modal">
+    <div class="modal-card">
+      <div class="modal-head"><span>確率設定</span><button type="button" data-close-modal aria-label="閉じる">&times;</button></div>
+      <div id="settings-body"></div>
+      <div class="modal-foot">
+        <button type="button" id="settings-default">初期値</button>
+        <button type="button" id="settings-apply" class="primary">適用</button>
+      </div>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>
