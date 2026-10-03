@@ -46,6 +46,7 @@
         <div class="text-slate-300 font-bold">差枚数: <span id="display-diff" class="digital-font font-bold text-white text-sm">0</span> 枚</div>
         <div class="text-slate-300 font-bold">確率: <span id="display-rate" class="text-yellow-400 font-bold">1/30</span></div>
       </div>
+      <div id="at-status" class="at-status"><span id="at-label" class="at-label">AT</span><span>残り <span id="at-remain" class="digital-font">0</span> G</span></div>
       </div>
 
       <!-- GOGO! ランプ表示ボックス -->
@@ -61,10 +62,13 @@
           </div>
         </div>
 
+        <div id="at-toast" class="at-toast"></div>
+
         <!-- 揃い図柄表示レイヤー (777 / BAR BAR BAR) -->
         <div id="align-display" class="align-display absolute inset-0 z-20 flex flex-col items-center justify-center">
           <div id="reels" class="reels"></div>
           <div id="next-hint" class="next-hint">NEXT ▼</div>
+          <div id="bell-badge" class="bell-badge"></div>
         </div>
 
         <!-- 枚数表示レイヤー -->

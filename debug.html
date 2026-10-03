@@ -46,6 +46,7 @@
         <div class="text-slate-300 font-bold">差枚数: <span id="display-diff" class="digital-font font-bold text-white text-sm">0</span> 枚</div>
         <div class="text-slate-300 font-bold">確率: <span id="display-rate" class="text-yellow-400 font-bold">1/30</span></div>
       </div>
+      <div id="at-status" class="at-status"><span id="at-label" class="at-label">AT</span><span>残り <span id="at-remain" class="digital-font">0</span> G</span></div>
       </div>
 
       <!-- GOGO! ランプ表示ボックス -->
@@ -61,10 +62,13 @@
           </div>
         </div>
 
+        <div id="at-toast" class="at-toast"></div>
+
         <!-- 揃い図柄表示レイヤー (777 / BAR BAR BAR) -->
         <div id="align-display" class="align-display absolute inset-0 z-20 flex flex-col items-center justify-center">
           <div id="reels" class="reels"></div>
           <div id="next-hint" class="next-hint">NEXT ▼</div>
+          <div id="bell-badge" class="bell-badge"></div>
         </div>
 
         <!-- 枚数表示レイヤー -->
@@ -192,6 +196,18 @@
       add(specialWrap, '上乗せ 200→1000', { type: 'BIG', display: idx(200), actual: idx(200), chainQueue: [300, 400, 500, 600, 700, 800, 900, 1000] });
       [200, 300, 400, 500, 600, 700].forEach(c =>
         add(specialWrap, '上乗せ(運) ' + c + '開始', { type: 'BIG', display: idx(c), actual: idx(c), chainQueue: makeChainQueue(c) }));
+      const addFn = (label, fn) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = btnClass;
+        b.textContent = label;
+        b.addEventListener('click', fn);
+        specialWrap.appendChild(b);
+      };
+      addFn('AT突入', () => { atGames = 0; startAT(); });
+      addFn('ベル 直線6枚', () => hitBell(0));
+      addFn('ベル 左上から1枚', () => hitBell(1));
+      addFn('ベル 左下から15枚', () => hitBell(2));
       add(specialWrap, 'REG→777', { type: 'REG', freezeStages: [STAGE_777] });
       add(specialWrap, 'REG→777→7777', { type: 'REG', freezeStages: [STAGE_777, STAGE_7777] });
     })();

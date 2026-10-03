@@ -32,7 +32,15 @@ const DEFAULT_SETTINGS = {
   chain7777: 25,       // 777枚フリーズからさらに7777枚へ連鎖する割合
   chainUp: 15,         // BIGのうち上乗せ連続演出になる割合
   chainContinue: 60,   // 上乗せのたびに、さらに続く割合
-  replay: 13.7         // ハズレのうちリプレイになる割合 (約1/7.3)
+  replay: 13.7,        // ハズレのうちリプレイになる割合 (約1/7.3)
+  bellNormal: 8,       // 通常時: ハズレのうちベルが揃う割合
+  bellAt: 40,          // AT中: ハズレのうちベルが揃う割合
+  at100: 30,           // ATが+100Gになる割合 (残りは+50G)
+  bellStraight: 60,    // ベルの種類の比率: 直線 (6枚)
+  bellDiagTL: 25,      // 斜め 左上から (1枚)
+  bellDiagBL: 15,      // 斜め 左下から (15枚)
+  pullbackG: 20,       // AT終了後の引き戻しゾーン (G数)
+  pullbackMult: 1.5    // 引き戻し中の当選確率の倍率
 };
 const SETTINGS_KEY = 'pekari-settings-v1';
 
@@ -59,6 +67,7 @@ function saveSettings() {
 
 let SETTINGS = loadSettings();
 let HIT_RATE, REG_RATE, TIER_RATES;
+let PULLBACK_G, PULLBACK_MULT, BELL_NORMAL_RATE, BELL_AT_RATE, AT100_RATE, BELL_WEIGHTS = [60, 25, 15];
 let REPLAY_RATE, SURPRISE_RATE, FREEZE_RATE, FREEZE_MEGA_RATE, REG_FREEZE_RATE, CHAIN_7777_RATE, CHAIN_UP_RATE, CHAIN_CONTINUE;
 
 function applySettings() {
@@ -77,6 +86,12 @@ function applySettings() {
   CHAIN_UP_RATE = clampP(st.chainUp);
   CHAIN_CONTINUE = clampP(st.chainContinue);
   REPLAY_RATE = clampP(st.replay);
+  PULLBACK_G = Math.max(0, Math.round(st.pullbackG));
+  PULLBACK_MULT = Math.max(0, st.pullbackMult);
+  BELL_NORMAL_RATE = clampP(st.bellNormal);
+  BELL_AT_RATE = clampP(st.bellAt);
+  AT100_RATE = clampP(st.at100);
+  BELL_WEIGHTS = [st.bellStraight, st.bellDiagTL, st.bellDiagBL].map(v => Math.max(0, +v || 0));
 }
 applySettings();
 
@@ -145,6 +160,8 @@ let isCounting = false;         // 数字カウントアップ中
 let countRAF = null;
 let chainActive = false;        // 上乗せ連続演出の最中
 let chainUps = 0;               // ここまでの上乗せ回数
+let pullbackGames = 0;          // 引き戻しゾーン残りG数 (AT終了後。当選確率アップ)
+let atGames = 0;                // AT残りG数 (0なら通常時)
 let replayPending = false;      // 次のゲームはリプレイ (3枚を消費しない)
 let isSuspense = false;         // 鼓動演出中 (レバー無効)
 let suspenseTimer = null;
@@ -654,9 +671,11 @@ function handleSpin() {
     return;
   }
 
-  // ボーナス揃え後に次へ進む場合
+  // ボーナス揃え後に次へ進む場合 (ボーナス終了 → ATに突入)
   if (isBonusAligned) {
+    const wasDebug = isDebugRun;
     resetPekaState();
+    if (!wasDebug) startAT();
   }
 
   // ペカっている途中の誤操作防止
@@ -669,6 +688,19 @@ function handleSpin() {
 
   totalGames++;
   cumulativeGames++;
+  const inAT = atGames > 0;
+  const inPullback = !inAT && pullbackGames > 0;
+  if (inAT) {
+    atGames--;
+    if (atGames === 0) {
+      pullbackGames = PULLBACK_G;
+      showAtToast(PULLBACK_G > 0 ? `AT 終了  引き戻し ${PULLBACK_G}G` : 'AT 終了');
+    }
+    updateAT();
+  } else if (inPullback) {
+    pullbackGames--;
+    updateAT();
+  }
   if (replayPending) {
     replayPending = false;       // リプレイ: このゲームは投入なし
     spinBtn.innerText = 'レバーON';
@@ -678,7 +710,7 @@ function handleSpin() {
   recordPoint();
 
   // 1/30の超高確率で抽選
-  const isHit = Math.random() < HIT_RATE;
+  const isHit = Math.random() < Math.min(1, HIT_RATE * (inPullback ? PULLBACK_MULT : 1));
 
   if (isHit) {
     pendingBonusType = Math.random() < REG_RATE ? 'REG' : 'BIG';
@@ -718,6 +750,10 @@ function handleSpin() {
     updateUI();
     hideLoseReels();
     triggerPekari();
+  } else if (Math.random() < (inAT ? BELL_AT_RATE : BELL_NORMAL_RATE)) {
+    // ベル揃い: 直線6枚 / 斜め左上から1枚 / 斜め左下から15枚
+    hitBell();
+    updateUI();
   } else if (Math.random() < REPLAY_RATE) {
     // リプレイ: 図柄が揃って、次のゲームは投入枚数なし
     replayPending = true;
@@ -822,6 +858,7 @@ function renderReels(grid, winIdx, glow) {
 
 /* リプレイ: ランダムな1ラインにREPLAYが揃う */
 function showReplayReels() {
+  bellBadge.classList.remove('show');
   const line = REEL_LINES[Math.floor(Math.random() * REEL_LINES.length)];
   let g;
   do {
@@ -834,6 +871,100 @@ function showReplayReels() {
   gogoTextContainer.classList.add('opacity-0');
 }
 
+/* ---------- ベル ---------- */
+const BELL_TYPES = [
+  { name: '直線', coins: 6 },          // 横一列 (3段のどれか)
+  { name: '斜め左上から', coins: 1 },   // 左上 → 右下
+  { name: '斜め左下から', coins: 15 }   // 左下 → 右上
+];
+const BELL_LINES = {
+  0: [[0, 1, 2], [3, 4, 5], [6, 7, 8]],
+  1: [[0, 4, 8]],
+  2: [[2, 4, 6]]
+};
+function pickBellType() {
+  const sum = BELL_WEIGHTS.reduce((x, y) => x + y, 0);
+  if (sum <= 0) return 0;
+  let r = Math.random() * sum;
+  for (let i = 0; i < BELL_WEIGHTS.length; i++) {
+    r -= BELL_WEIGHTS[i];
+    if (r < 0) return i;
+  }
+  return 0;
+}
+const bellBadge = document.getElementById('bell-badge');
+
+function hitBell(forceType) {
+  const isDebugCall = forceType !== undefined;   // デバッグ再生は差枚数を変えない
+  const type = isDebugCall ? forceType : pickBellType();
+  const lines = BELL_LINES[type];
+  const line = lines[Math.floor(Math.random() * lines.length)];
+  let g;
+  do {
+    g = Array.from({ length: 9 }, randSym);
+    line.forEach(i => { g[i] = 'bell'; });
+  } while (REEL_LINES.some(l => l.join() !== line.join() && lineOf(g, l)));
+  renderReels(g, line, '');
+  alignDisplay.classList.remove('show-align');
+  alignDisplay.classList.add('show-lose');
+  gogoTextContainer.classList.add('opacity-0');
+
+  const coins = BELL_TYPES[type].coins;
+  if (!isDebugCall) {
+    diffCoins += coins;
+    recordPoint();
+  }
+  bellBadge.textContent = `BELL +${coins}`;
+  bellBadge.classList.remove('show');
+  void bellBadge.offsetWidth;
+  bellBadge.classList.add('show');
+  playBellSound(coins);
+}
+
+function playBellSound(coins) {
+  if (!soundEnabled) return;
+  initAudio();
+  const t = audioCtx.currentTime;
+  const n = coins >= 15 ? 5 : coins >= 6 ? 3 : 2;   // 枚数が多いほど長いチャイム
+  for (let i = 0; i < n; i++) tone(1568 * Math.pow(1.122, i), t + i * 0.07, 0.35, 'sine', 0.16);
+}
+
+/* ---------- AT ---------- */
+const atStatus = document.getElementById('at-status');
+const atRemain = document.getElementById('at-remain');
+const atLabel = document.getElementById('at-label');
+const atToast = document.getElementById('at-toast');
+
+function updateAT() {
+  if (!atStatus) return;
+  const pull = atGames === 0 && pullbackGames > 0;
+  atStatus.classList.toggle('on', atGames > 0 || pull);
+  atStatus.classList.toggle('pullback', pull);
+  atLabel.textContent = pull ? '引き戻し' : 'AT';
+  atRemain.textContent = pull ? pullbackGames : atGames;
+}
+function showAtToast(text) {
+  if (!atToast) return;
+  atToast.textContent = text;
+  atToast.classList.remove('show');
+  void atToast.offsetWidth;
+  atToast.classList.add('show');
+}
+/* ボーナス終了後にAT突入: +50G か +100G (AT中に再び当選したら上乗せ) */
+function startAT() {
+  const n = Math.random() < AT100_RATE ? 100 : 50;
+  atGames += n;
+  pullbackGames = 0;
+  updateAT();
+  showAtToast(`AT 突入  +${n}G`);
+  triggerFlash();
+  if (soundEnabled) {
+    initAudio();
+    const t = audioCtx.currentTime;
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, t + i * 0.09, 0.3, 'square', 0.14));
+  }
+}
+
 function playReplayJingle() {
   if (!soundEnabled) return;
   initAudio();
@@ -843,6 +974,7 @@ function playReplayJingle() {
 
 /* ハズレ時: 9マスをランダムに埋めて表示 */
 function showLoseReels() {
+  bellBadge.classList.remove('show');
   renderReels(loseGrid(), null, '');
   alignDisplay.classList.remove('show-align');
   alignDisplay.classList.add('show-lose');
@@ -1325,6 +1457,9 @@ function resetData() {
     regCount = 0;
     diffCoins = 0;
     replayPending = false;
+    atGames = 0;
+    pullbackGames = 0;
+    updateAT();
     gameHistory.length = 0;
     bonusLog.length = 0;
     resetPekaState();
@@ -1364,7 +1499,15 @@ const SETTING_ROWS = [
   { key: 'chain7777', label: '777枚から7777枚へ連鎖', min: 0, max: 100, step: 0.1, suffix: '%' },
   { key: 'chainUp', label: '上乗せ連続演出', min: 0, max: 100, step: 0.1, suffix: '%' },
   { key: 'chainContinue', label: '上乗せ継続率', min: 0, max: 100, step: 0.1, suffix: '%' },
-  { key: 'replay', label: 'リプレイ (ハズレのうち)', min: 0, max: 100, step: 0.1, suffix: '%' }
+  { key: 'replay', label: 'リプレイ (ハズレのうち)', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'bellNormal', label: 'ベル揃い 通常時', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'bellAt', label: 'ベル揃い AT中', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'at100', label: 'ATが+100Gになる割合', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'bellStraight', label: 'ベル比率: 直線 (6枚)', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'bellDiagTL', label: 'ベル比率: 斜め左上から (1枚)', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'bellDiagBL', label: 'ベル比率: 斜め左下から (15枚)', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'pullbackG', label: 'AT終了後の引き戻し (G)', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'pullbackMult', label: '引き戻し中の当選確率 (倍)', min: 0, max: 100, step: 0.1, suffix: '' }
 ];
 
 function buildSettingsForm(src = SETTINGS) {
