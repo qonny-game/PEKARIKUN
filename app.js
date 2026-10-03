@@ -36,12 +36,12 @@ const DEFAULT_SETTINGS = {
   bellNormal: 8,       // 通常時: ハズレのうちベルが揃う割合
   bellAt: 50,          // AT中: ハズレのうちベルが揃う割合
   replayAt: 35,        // AT中: ハズレのうちリプレイになる割合 (ベルと合わせてコインがほぼ減らない)
-  atEntry: 30,         // ボーナス終了後にATへ突入する割合
+  atEntry: 50,         // ボーナス終了後にATへ突入する割合 (PEKA RUSH)
   atHitMult: 0.1,      // AT中のボーナス当選確率の倍率 (低いほど当選しにくい)
-  atW10: 50,           // AT継続G数の比率: +10G (基本)
-  atW20: 42,           // +20G (基本)
-  atW50: 6,            // +50G (プレミア)
-  atW100: 2,           // +100G (プレミア)
+  atW50: 80,           // AT継続G数の比率: +50G (ほとんどこれ)
+  atW100: 14,          // +100G (稀)
+  atW200: 5,           // +200G (稀)
+  atW300: 1,           // +300G (ごく稀)
   bellStraight: 60,    // ベルの種類の比率: 直線 (6枚)
   bellDiagTL: 25,      // 斜め 左上から (1枚)
   bellDiagBL: 15,      // 斜め 左下から (15枚)
@@ -49,7 +49,11 @@ const DEFAULT_SETTINGS = {
   cherryMult: 5,       // チェリー後 (内部高確率) のボーナス当選確率の倍率
   cherryG: 30,         // チェリー後の内部高確率の期間 (G)
   cherryAt: 6,         // AT中: ハズレのうちチェリーが揃う割合
-  cherryAtG: 10,       // AT中にチェリーが揃うと増えるG数
+  cherryAtSuccess: 70, // AT中のチェリーでG数が上乗せされる割合 (外れもある)
+  cherryW10: 40,       // 上乗せ量の比率: +10G
+  cherryW20: 30,       // +20G
+  cherryW25: 20,       // +25G
+  cherryW30: 10,       // +30G
   regNextBig: 95,      // REGの次回ボーナスがBIG(777)になる割合
   cherryCoins: 2,      // チェリーの払い出し枚数
   pullbackG: 20,       // AT終了後の引き戻しゾーン (G数)
@@ -80,7 +84,7 @@ function saveSettings() {
 
 let SETTINGS = loadSettings();
 let HIT_RATE, REG_RATE, TIER_RATES;
-let CHERRY_AT_RATE, CHERRY_AT_G, REG_NEXT_BIG, CHERRY_RATE, CHERRY_MULT, CHERRY_G, CHERRY_COINS, PULLBACK_G, PULLBACK_MULT, BELL_NORMAL_RATE, BELL_AT_RATE, AT_ENTRY_RATE, AT_HIT_MULT, AT_WEIGHTS = [50, 42, 6, 2], BELL_WEIGHTS = [60, 25, 15];
+let CHERRY_AT_RATE, CHERRY_AT_SUCCESS, CHERRY_AT_WEIGHTS = [40, 30, 20, 10], REG_NEXT_BIG, CHERRY_RATE, CHERRY_MULT, CHERRY_G, CHERRY_COINS, PULLBACK_G, PULLBACK_MULT, BELL_NORMAL_RATE, BELL_AT_RATE, AT_ENTRY_RATE, AT_HIT_MULT, AT_WEIGHTS = [80, 14, 5, 1], BELL_WEIGHTS = [60, 25, 15];
 let REPLAY_AT_RATE, REPLAY_RATE, SURPRISE_RATE, FREEZE_RATE, FREEZE_MEGA_RATE, REG_FREEZE_RATE, CHAIN_7777_RATE, CHAIN_UP_RATE, CHAIN_CONTINUE;
 
 function applySettings() {
@@ -102,7 +106,8 @@ function applySettings() {
   REPLAY_AT_RATE = clampP(st.replayAt);
   CHERRY_RATE = clampP(st.cherry);
   CHERRY_AT_RATE = clampP(st.cherryAt);
-  CHERRY_AT_G = Math.max(0, Math.round(st.cherryAtG));
+  CHERRY_AT_SUCCESS = clampP(st.cherryAtSuccess);
+  CHERRY_AT_WEIGHTS = [st.cherryW10, st.cherryW20, st.cherryW25, st.cherryW30].map(v => Math.max(0, +v || 0));
   REG_NEXT_BIG = clampP(st.regNextBig);
   CHERRY_MULT = Math.max(0, st.cherryMult);
   CHERRY_G = Math.max(0, Math.round(st.cherryG));
@@ -113,7 +118,7 @@ function applySettings() {
   BELL_AT_RATE = clampP(st.bellAt);
   AT_ENTRY_RATE = clampP(st.atEntry);
   AT_HIT_MULT = Math.max(0, st.atHitMult);
-  AT_WEIGHTS = [st.atW10, st.atW20, st.atW50, st.atW100].map(v => Math.max(0, +v || 0));
+  AT_WEIGHTS = [st.atW50, st.atW100, st.atW200, st.atW300].map(v => Math.max(0, +v || 0));
   BELL_WEIGHTS = [st.bellStraight, st.bellDiagTL, st.bellDiagBL].map(v => Math.max(0, +v || 0));
 }
 applySettings();
@@ -995,7 +1000,20 @@ function updateCherry() {
   cherryStatus.classList.toggle('on', cherryGames > 0 && window.SHOW_INTERNAL === true);   // 内部状態なので通常は表示しない
   cherryRemain.textContent = cherryGames;
 }
+const CHERRY_AT_CHOICES = [10, 20, 25, 30];
+function pickCherryAtG() {
+  const sum = CHERRY_AT_WEIGHTS.reduce((x, y) => x + y, 0);
+  if (sum <= 0) return CHERRY_AT_CHOICES[0];
+  let r = Math.random() * sum;
+  for (let i = 0; i < CHERRY_AT_WEIGHTS.length; i++) {
+    r -= CHERRY_AT_WEIGHTS[i];
+    if (r < 0) return CHERRY_AT_CHOICES[i];
+  }
+  return CHERRY_AT_CHOICES[0];
+}
+
 function hitCherry(isDebugCall, inAT) {
+  let addG = 0;
   const row = Math.floor(Math.random() * 3);
   const idx = row * 3;                                 // 左列のどれか1マス
   let g;
@@ -1012,17 +1030,20 @@ function hitCherry(isDebugCall, inAT) {
     diffCoins += CHERRY_COINS;
     recordPoint();
     if (inAT) {
-      // AT中のチェリー: ATのG数が増える (最終ゲームなら終了を取り消して延長)
-      atGames += CHERRY_AT_G;
-      if (atEnding) { atEnding = false; pullbackGames = 0; }
-      updateAT();
-      showAtToast(`AT +${CHERRY_AT_G}G`);
+      // AT中のチェリー: 70%でATのG数が +10/+20/+25/+30G (外れもある)。最終ゲームなら終了を取り消して延長
+      if (Math.random() < CHERRY_AT_SUCCESS) {
+        addG = pickCherryAtG();
+        atGames += addG;
+        if (atEnding) { atEnding = false; pullbackGames = 0; }
+        updateAT();
+        showAtToast(`AT +${addG}G`);
+      }
     } else {
       cherryGames = CHERRY_G;        // 内部的にボーナス高確率 (画面には出さない)
       updateCherry();
     }
   }
-  bellBadge.textContent = 'CHERRY' + (inAT && !isDebugCall ? ` +${CHERRY_AT_G}G` : CHERRY_COINS > 0 ? ` +${CHERRY_COINS}` : '');
+  bellBadge.textContent = 'CHERRY' + (addG > 0 ? ` +${addG}G` : CHERRY_COINS > 0 ? ` +${CHERRY_COINS}` : '');
   bellBadge.classList.remove('show');
   void bellBadge.offsetWidth;
   bellBadge.classList.add('show');
@@ -1055,7 +1076,7 @@ function showAtToast(text) {
   atToast.classList.add('show');
 }
 /* AT継続G数を比率から抽選: +10G / +20G (基本)、+50G / +100G (プレミア) */
-const AT_CHOICES = [10, 20, 50, 100];
+const AT_CHOICES = [50, 100, 200, 300];
 function pickAtGames() {
   const sum = AT_WEIGHTS.reduce((x, y) => x + y, 0);
   if (sum <= 0) return AT_CHOICES[0];
@@ -1075,7 +1096,7 @@ const rushSub = document.getElementById('rush-sub');
 function startAT(force, games) {
   if (!force && Math.random() >= AT_ENTRY_RATE) return false;
   const n = games || pickAtGames();
-  const premium = n >= 50;
+  const premium = n >= 100;   // +100G以上はプレミア演出
   atEnding = false;                  // AT継続 (上乗せ)
   if (!atRun) atRun = { startDiff: diffCoins, games: 0, bells: 0, bonuses: 0 };
   isRushing = true;
@@ -1714,10 +1735,10 @@ const SETTING_ROWS = [
   { key: 'replayAt', label: 'リプレイ AT中', min: 0, max: 100, step: 0.1, suffix: '%' },
   { key: 'atEntry', label: 'ボーナス後のAT突入率', min: 0, max: 100, step: 0.1, suffix: '%' },
   { key: 'atHitMult', label: 'AT中のボーナス当選確率 (倍)', min: 0, max: 100, step: 0.01, suffix: '' },
-  { key: 'atW10', label: 'AT比率: +10G (基本)', min: 0, max: 1000, step: 1, suffix: '' },
-  { key: 'atW20', label: 'AT比率: +20G (基本)', min: 0, max: 1000, step: 1, suffix: '' },
-  { key: 'atW50', label: 'AT比率: +50G (プレミア)', min: 0, max: 1000, step: 1, suffix: '' },
-  { key: 'atW100', label: 'AT比率: +100G (プレミア)', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'atW50', label: 'AT比率: +50G (基本)', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'atW100', label: 'AT比率: +100G (稀)', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'atW200', label: 'AT比率: +200G (稀)', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'atW300', label: 'AT比率: +300G (ごく稀)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'bellStraight', label: 'ベル比率: 直線 (6枚)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'bellDiagTL', label: 'ベル比率: 斜め左上から (1枚)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'bellDiagBL', label: 'ベル比率: 斜め左下から (15枚)', min: 0, max: 1000, step: 1, suffix: '' },
@@ -1725,7 +1746,11 @@ const SETTING_ROWS = [
   { key: 'cherryMult', label: 'チェリー後の当選確率 (倍)', min: 0, max: 100, step: 0.1, suffix: '' },
   { key: 'cherryG', label: 'チェリー後の期間 (G)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'cherryAt', label: 'チェリー AT中 (ハズレのうち)', min: 0, max: 100, step: 0.1, suffix: '%' },
-  { key: 'cherryAtG', label: 'AT中チェリーで増えるG', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'cherryAtSuccess', label: 'AT中チェリーの上乗せ率', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'cherryW10', label: 'チェリー上乗せ比率: +10G', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'cherryW20', label: 'チェリー上乗せ比率: +20G', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'cherryW25', label: 'チェリー上乗せ比率: +25G', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'cherryW30', label: 'チェリー上乗せ比率: +30G', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'regNextBig', label: 'REG後の次回BIG(777)率', min: 0, max: 100, step: 0.1, suffix: '%' },
   { key: 'cherryCoins', label: 'チェリーの払い出し (枚)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'pullbackG', label: 'AT終了後の引き戻し (G)', min: 0, max: 1000, step: 1, suffix: '' },

@@ -233,10 +233,10 @@
       addFn('チェリー', () => hitCherry(true, false));
       addFn('チェリー (AT中)', () => hitCherry(true, true));
       addFn('ATリザルト表示', () => { if (!isAtResult) showAtResult({ gain: 1234, games: 50, bells: 21, bonuses: 1 }); });
-      addFn('AT突入 +10G', () => { if (!isRushing) startAT(true, 10); });
-      addFn('AT突入 +20G', () => { if (!isRushing) startAT(true, 20); });
-      addFn('AT突入 +50G (プレミア)', () => { if (!isRushing) startAT(true, 50); });
+      addFn('AT突入 +50G', () => { if (!isRushing) startAT(true, 50); });
       addFn('AT突入 +100G (プレミア)', () => { if (!isRushing) startAT(true, 100); });
+      addFn('AT突入 +200G (プレミア)', () => { if (!isRushing) startAT(true, 200); });
+      addFn('AT突入 +300G (プレミア)', () => { if (!isRushing) startAT(true, 300); });
       addFn('ベル 直線6枚', () => hitBell(0));
       addFn('ベル 左上から1枚', () => hitBell(1));
       addFn('ベル 左下から15枚', () => hitBell(2));
