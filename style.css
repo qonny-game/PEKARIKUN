@@ -861,3 +861,14 @@ main { overflow: visible !important; }
   border: 1px solid #3b82f6;
   color: #fff;
 }
+
+/* チェリー後の当選しやすい期間 */
+.cherry-status {
+  display: none;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
+  color: #fecaca;
+  text-shadow: 0 0 8px #ef4444;
+}
+.cherry-status.on { display: flex; animation: at-glow 0.9s ease-in-out infinite alternate; }

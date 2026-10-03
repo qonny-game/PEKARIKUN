@@ -45,6 +45,10 @@ const DEFAULT_SETTINGS = {
   bellStraight: 60,    // ベルの種類の比率: 直線 (6枚)
   bellDiagTL: 25,      // 斜め 左上から (1枚)
   bellDiagBL: 15,      // 斜め 左下から (15枚)
+  cherry: 2,           // ハズレのうちチェリーが揃う割合 (左列に1個で成立)
+  cherryMult: 4,       // チェリー後のボーナス当選確率の倍率
+  cherryG: 8,          // チェリー後に当選しやすい期間 (G)
+  cherryCoins: 2,      // チェリーの払い出し枚数
   pullbackG: 20,       // AT終了後の引き戻しゾーン (G数)
   pullbackMult: 1.5    // 引き戻し中の当選確率の倍率
 };
@@ -73,7 +77,7 @@ function saveSettings() {
 
 let SETTINGS = loadSettings();
 let HIT_RATE, REG_RATE, TIER_RATES;
-let PULLBACK_G, PULLBACK_MULT, BELL_NORMAL_RATE, BELL_AT_RATE, AT_ENTRY_RATE, AT_HIT_MULT, AT_WEIGHTS = [50, 42, 6, 2], BELL_WEIGHTS = [60, 25, 15];
+let CHERRY_RATE, CHERRY_MULT, CHERRY_G, CHERRY_COINS, PULLBACK_G, PULLBACK_MULT, BELL_NORMAL_RATE, BELL_AT_RATE, AT_ENTRY_RATE, AT_HIT_MULT, AT_WEIGHTS = [50, 42, 6, 2], BELL_WEIGHTS = [60, 25, 15];
 let REPLAY_AT_RATE, REPLAY_RATE, SURPRISE_RATE, FREEZE_RATE, FREEZE_MEGA_RATE, REG_FREEZE_RATE, CHAIN_7777_RATE, CHAIN_UP_RATE, CHAIN_CONTINUE;
 
 function applySettings() {
@@ -93,6 +97,10 @@ function applySettings() {
   CHAIN_CONTINUE = clampP(st.chainContinue);
   REPLAY_RATE = clampP(st.replay);
   REPLAY_AT_RATE = clampP(st.replayAt);
+  CHERRY_RATE = clampP(st.cherry);
+  CHERRY_MULT = Math.max(0, st.cherryMult);
+  CHERRY_G = Math.max(0, Math.round(st.cherryG));
+  CHERRY_COINS = Math.max(0, Math.round(st.cherryCoins));
   PULLBACK_G = Math.max(0, Math.round(st.pullbackG));
   PULLBACK_MULT = Math.max(0, st.pullbackMult);
   BELL_NORMAL_RATE = clampP(st.bellNormal);
@@ -173,6 +181,7 @@ let pullbackGames = 0;          // 引き戻しゾーン残りG数 (AT終了後�
 let atRun = null;               // いまのAT中の集計 {startDiff, games, bells, bonuses}
 let atEnding = false;           // ATのG数が0になった (リザルト待ち)
 let isAtResult = false;         // リザルト表示中 (レバー無効)
+let cherryGames = 0;            // チェリー後の当選しやすい期間 (残りG)
 let atGames = 0;                // AT残りG数 (0なら通常時)
 let replayPending = false;      // 次のゲームはリプレイ (3枚を消費しない)
 let isRushing = false;          // PEKA RUSH!!! 演出中 (レバー無効)
@@ -728,7 +737,9 @@ function handleSpin() {
   recordPoint();
 
   // 1/30の超高確率で抽選
-  const hitMult = inAT ? AT_HIT_MULT : inPullback ? PULLBACK_MULT : 1;   // AT中は当選しにくい / 引き戻し中は当選しやすい
+  const inCherry = cherryGames > 0;
+  if (inCherry) { cherryGames--; updateCherry(); }
+  const hitMult = (inAT ? AT_HIT_MULT : inPullback ? PULLBACK_MULT : 1) * (inCherry ? CHERRY_MULT : 1);   // AT中は当選しにくい / 引き戻し中は当選しやすい
   const isHit = Math.random() < Math.min(1, HIT_RATE * hitMult);
 
   if (isHit) {
@@ -764,6 +775,8 @@ function handleSpin() {
     chainUps = 0;
     replayPending = false;
     if (inAT && atRun) atRun.bonuses++;
+    cherryGames = 0;
+    updateCherry();
 
     // ボーナス当選でG数リセット
     totalGames = 0;
@@ -774,6 +787,10 @@ function handleSpin() {
     // ベル揃い: 直線6枚 / 斜め左上から1枚 / 斜め左下から15枚
     if (inAT && atRun) atRun.bells++;
     hitBell();
+    updateUI();
+  } else if (Math.random() < CHERRY_RATE) {
+    // チェリー: 左列に1個あるだけで成立。しばらくボーナスに当選しやすくなる
+    hitCherry();
     updateUI();
   } else if (Math.random() < (inAT ? REPLAY_AT_RATE : REPLAY_RATE)) {
     // リプレイ: 図柄が揃って、次のゲームは投入枚数なし
@@ -852,19 +869,26 @@ function symbolHTML(key, glow) {
   return `<img class="sym-img ${glow || ''}" src="${key}.png" alt="7" onerror="this.outerHTML='<div class=&quot;sym-seven&quot;>7</div>'">`;
 }
 const randSym = () => REEL_SYMBOLS[Math.floor(Math.random() * REEL_SYMBOLS.length)];
+// チェリーは左列に1個あるだけで揃い扱い。だから左列には、チェリー役のとき以外チェリーを出さない
+const LEFT_COL = [0, 3, 6];
+function randSymAt(i) {
+  let k;
+  do { k = randSym(); } while (k === 'cherry' && LEFT_COL.includes(i));
+  return k;
+}
 const lineOf = (g, l) => g[l[0]] === g[l[1]] && g[l[1]] === g[l[2]];
 
 /* ハズレ: どの列・行・斜めも揃わない9マス */
 function loseGrid() {
   let g;
-  do { g = Array.from({ length: 9 }, randSym); } while (REEL_LINES.some(l => lineOf(g, l)));
+  do { g = Array.from({ length: 9 }, (_, i) => randSymAt(i)); } while (REEL_LINES.some(l => lineOf(g, l)));
   return g;
 }
 /* 当たり: 中段だけが揃い、残りの6マスは別の図柄で埋める */
 function winGrid(key) {
   let g;
   do {
-    g = Array.from({ length: 9 }, randSym);
+    g = Array.from({ length: 9 }, (_, i) => randSymAt(i));
     g[3] = g[4] = g[5] = key;
   } while (REEL_LINES.some((l, i) => i !== 1 && lineOf(g, l)));
   return g;
@@ -885,7 +909,7 @@ function showReplayReels() {
   const line = REEL_LINES[Math.floor(Math.random() * REEL_LINES.length)];
   let g;
   do {
-    g = Array.from({ length: 9 }, randSym);
+    g = Array.from({ length: 9 }, (_, i) => randSymAt(i));
     line.forEach(i => { g[i] = 'replay'; });
   } while (REEL_LINES.some(l => l !== line && lineOf(g, l)));
   renderReels(g, line, '');
@@ -924,7 +948,7 @@ function hitBell(forceType) {
   const line = lines[Math.floor(Math.random() * lines.length)];
   let g;
   do {
-    g = Array.from({ length: 9 }, randSym);
+    g = Array.from({ length: 9 }, (_, i) => randSymAt(i));
     line.forEach(i => { g[i] = 'bell'; });
   } while (REEL_LINES.some(l => l.join() !== line.join() && lineOf(g, l)));
   renderReels(g, line, '');
@@ -950,6 +974,44 @@ function playBellSound(coins) {
   const t = audioCtx.currentTime;
   const n = coins >= 15 ? 5 : coins >= 6 ? 3 : 2;   // 枚数が多いほど長いチャイム
   for (let i = 0; i < n; i++) tone(1568 * Math.pow(1.122, i), t + i * 0.07, 0.35, 'sine', 0.16);
+}
+
+/* ---------- チェリー ---------- */
+const cherryStatus = document.getElementById('cherry-status');
+const cherryRemain = document.getElementById('cherry-remain');
+function updateCherry() {
+  if (!cherryStatus) return;
+  cherryStatus.classList.toggle('on', cherryGames > 0);
+  cherryRemain.textContent = cherryGames;
+}
+function hitCherry(isDebugCall) {
+  const row = Math.floor(Math.random() * 3);
+  const idx = row * 3;                                 // 左列のどれか1マス
+  let g;
+  do {
+    g = Array.from({ length: 9 }, (_, i) => randSymAt(i));
+    g[idx] = 'cherry';
+  } while (REEL_LINES.some(l => lineOf(g, l)));
+  renderReels(g, [idx], '');
+  alignDisplay.classList.remove('show-align');
+  alignDisplay.classList.add('show-lose');
+  gogoTextContainer.classList.add('opacity-0');
+
+  if (!isDebugCall) {
+    diffCoins += CHERRY_COINS;
+    recordPoint();
+    cherryGames = CHERRY_G;
+    updateCherry();
+  }
+  bellBadge.textContent = 'CHERRY' + (CHERRY_COINS > 0 ? ` +${CHERRY_COINS}` : '');
+  bellBadge.classList.remove('show');
+  void bellBadge.offsetWidth;
+  bellBadge.classList.add('show');
+  if (soundEnabled) {
+    initAudio();
+    const t = audioCtx.currentTime;
+    [1319, 1760, 2349].forEach((f, i) => tone(f, t + i * 0.06, 0.25, 'triangle', 0.14));
+  }
 }
 
 /* ---------- AT ---------- */
@@ -1580,6 +1642,8 @@ function resetData() {
     replayPending = false;
     atGames = 0;
     pullbackGames = 0;
+    cherryGames = 0;
+    updateCherry();
     atRun = null;
     atEnding = false;
     isAtResult = false;
@@ -1637,6 +1701,10 @@ const SETTING_ROWS = [
   { key: 'bellStraight', label: 'ベル比率: 直線 (6枚)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'bellDiagTL', label: 'ベル比率: 斜め左上から (1枚)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'bellDiagBL', label: 'ベル比率: 斜め左下から (15枚)', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'cherry', label: 'チェリー (ハズレのうち)', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'cherryMult', label: 'チェリー後の当選確率 (倍)', min: 0, max: 100, step: 0.1, suffix: '' },
+  { key: 'cherryG', label: 'チェリー後の期間 (G)', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'cherryCoins', label: 'チェリーの払い出し (枚)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'pullbackG', label: 'AT終了後の引き戻し (G)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'pullbackMult', label: '引き戻し中の当選確率 (倍)', min: 0, max: 100, step: 0.1, suffix: '' }
 ];

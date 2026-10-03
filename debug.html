@@ -47,6 +47,7 @@
         <div class="text-slate-300 font-bold">確率: <span id="display-rate" class="text-yellow-400 font-bold">1/30</span></div>
       </div>
       <div id="at-status" class="at-status"><span id="at-label" class="at-label">AT</span><span>残り <span id="at-remain" class="digital-font">0</span> G</span></div>
+      <div id="cherry-status" class="cherry-status">CHERRY&nbsp;&nbsp;当選率UP 残り <span id="cherry-remain" class="digital-font">0</span> G</div>
       </div>
 
       <!-- GOGO! ランプ表示ボックス -->
@@ -228,6 +229,7 @@
         b.addEventListener('click', fn);
         specialWrap.appendChild(b);
       };
+      addFn('チェリー', () => hitCherry(true));
       addFn('ATリザルト表示', () => { if (!isAtResult) showAtResult({ gain: 1234, games: 50, bells: 21, bonuses: 1 }); });
       addFn('AT突入 +10G', () => { if (!isRushing) startAT(true, 10); });
       addFn('AT突入 +20G', () => { if (!isRushing) startAT(true, 20); });
