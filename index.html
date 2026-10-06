@@ -44,9 +44,10 @@
       <!-- ステータス情報 -->
       <div class="flex justify-between items-center px-2 text-xs">
         <div class="text-slate-300 font-bold">差枚数: <span id="display-diff" class="digital-font font-bold text-white text-sm">0</span> 枚</div>
-        <div class="text-slate-300 font-bold">確率: <span id="display-rate" class="text-yellow-400 font-bold">1/30</span></div>
+        <div class="text-slate-300 font-bold">ゾーン突入: <span id="display-rate" class="text-yellow-400 font-bold">1/30</span></div>
       </div>
       <div id="at-status" class="at-status"><span id="at-label" class="at-label">AT</span><span>残り <span id="at-remain" class="digital-font">0</span> G</span></div>
+      <div id="zone-status" class="zone-status"><span class="zone-label">CHANCE ZONE</span><span id="zone-pips" class="zone-pips"></span><span>残り <span id="zone-remain" class="digital-font">0</span> G</span></div>
       <div id="cherry-status" class="cherry-status">CHERRY&nbsp;&nbsp;当選率UP 残り <span id="cherry-remain" class="digital-font">0</span> G</div>
       </div>
 
@@ -70,6 +71,15 @@
           <div id="reels" class="reels"></div>
           <div id="next-hint" class="next-hint">NEXT ▼</div>
           <div id="bell-badge" class="bell-badge"></div>
+        </div>
+
+        <!-- チャンスゾーン: 扉が閉まる演出レイヤー -->
+        <div id="door-layer" class="door-layer">
+          <div id="door-light" class="door-light"></div>
+          <div id="door-l" class="door door-l"></div>
+          <div id="door-r" class="door door-r"></div>
+          <div class="door-frame"></div>
+          <div id="door-msg" class="door-msg"></div>
         </div>
 
         <!-- 枚数表示レイヤー -->
@@ -137,6 +147,18 @@
         <button type="button" id="settings-default">初期値</button>
         <button type="button" id="settings-apply" class="primary">適用</button>
       </div>
+    </div>
+  </div>
+
+  <!-- レベルアップの風 (下から上へ) -->
+  <div id="wind-layer" class="wind-layer"></div>
+
+  <!-- チャンスゾーン突入演出 -->
+  <div id="zone-overlay" class="rush-overlay zone">
+    <div class="rush-text">
+      <div class="rush-line">CHANCE</div>
+      <div class="rush-line">ZONE!</div>
+      <div id="zone-sub" class="rush-sub"></div>
     </div>
   </div>
 

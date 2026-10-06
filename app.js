@@ -23,7 +23,9 @@ const BIG_TIERS = [
 // ==========================================
 const TIER_LABELS = ['REG', ...BIG_TIERS.map(t => String(t.coins))];
 const DEFAULT_SETTINGS = {
-  hitDenom: 100,                                       // 通常時のボーナス当選確率 1/N (基本はチェリー→高確率で当てる)
+  zoneDenom: 60,                                       // 通常時のチャンスゾーン突入確率 1/N (突破率60%なので、実質のボーナス確率は 1/100)
+  zoneGames: 15,                                       // チャンスゾーンのG数
+  zoneClear: 60,                                       // チャンスゾーンの突破率 (突破=ボーナス)
   weights: [20, 20, 20, 5, 5, 5, 5, 5, 5, 5, 5],      // 当選内訳の比率
   surprise: 10,        // 800枚未満の演出が実は800枚だった割合
   freeze: 5,           // 200枚(ブルー脈動)がフリーズする割合
@@ -83,14 +85,16 @@ function saveSettings() {
 }
 
 let SETTINGS = loadSettings();
-let HIT_RATE, REG_RATE, TIER_RATES;
+let ZONE_RATE, ZONE_GAMES, ZONE_CLEAR, REG_RATE, TIER_RATES;
 let CHERRY_AT_RATE, CHERRY_AT_SUCCESS, CHERRY_AT_WEIGHTS = [40, 30, 20, 10], REG_NEXT_BIG, CHERRY_RATE, CHERRY_MULT, CHERRY_G, CHERRY_COINS, PULLBACK_G, PULLBACK_MULT, BELL_NORMAL_RATE, BELL_AT_RATE, AT_ENTRY_RATE, AT_HIT_MULT, AT_WEIGHTS = [80, 14, 5, 1], BELL_WEIGHTS = [60, 25, 15];
 let REPLAY_AT_RATE, REPLAY_RATE, SURPRISE_RATE, FREEZE_RATE, FREEZE_MEGA_RATE, REG_FREEZE_RATE, CHAIN_7777_RATE, CHAIN_UP_RATE, CHAIN_CONTINUE;
 
 function applySettings() {
   const st = SETTINGS;
   const clampP = v => Math.min(1, Math.max(0, v / 100));
-  HIT_RATE = 1 / Math.max(1, st.hitDenom);
+  ZONE_RATE = 1 / Math.max(1, st.zoneDenom);
+  ZONE_GAMES = Math.max(5, Math.round(st.zoneGames));
+  ZONE_CLEAR = clampP(st.zoneClear);
   const w = st.weights.map(v => Math.max(0, +v || 0));
   const total = w.reduce((x, y) => x + y, 0);
   REG_RATE = total > 0 ? w[0] / total : 0;
@@ -691,7 +695,7 @@ function start4SecLock() {
 
 /* レバーON 処理 */
 function handleSpin() {
-  if (isCooldown || isFreezing || isCounting || isSuspense || isRushing || isAtResult) return;
+  if (isCooldown || isFreezing || isCounting || isSuspense || isRushing || isAtResult || isZoneBusy) return;
 
   // フリーズフェイク: 200枚を見せたあとのレバーONで暗転する
   if (isBonusAligned && pendingFreezeStages.length > 0) {
@@ -748,79 +752,92 @@ function handleSpin() {
   }
   recordPoint();
 
-  // 1/30の超高確率で抽選
+  // チャンスゾーン突入抽選 (ゾーン中は重ねて突入しない)
   const inCherry = cherryGames > 0;
   if (inCherry) { cherryGames--; updateCherry(); }
-  const hitMult = (inAT ? AT_HIT_MULT : inPullback ? PULLBACK_MULT : 1) * (inCherry ? CHERRY_MULT : 1);   // AT中は当選しにくい / 引き戻し中は当選しやすい
-  const isHit = Math.random() < Math.min(1, HIT_RATE * hitMult);
+  const hitMult = (inAT ? AT_HIT_MULT : inPullback ? PULLBACK_MULT : 1) * (inCherry ? CHERRY_MULT : 1);   // AT中は突入しにくい / 引き戻し中は突入しやすい
+  const enterZone = !zone && Math.random() < Math.min(1, ZONE_RATE * hitMult);
 
-  if (isHit) {
-    // REGの次回は、高い確率でBIG(777)になる
-    pendingBonusType = nextBonusBigBoost
-      ? (Math.random() < REG_NEXT_BIG ? 'BIG' : 'REG')
-      : (Math.random() < REG_RATE ? 'REG' : 'BIG');
-    nextBonusBigBoost = pendingBonusType === 'REG';
-    pendingDisplayIndex = pendingBonusType === 'BIG' ? pickTierIndex() : -1;
-    pendingTierIndex = pendingDisplayIndex;
-    pendingFreezeStages = [];
-    pendingChainQueue = [];
+  // ゾーン中: このゲームで扉の演出が起きるか
+  let zoneEv = null;
+  if (zone) {
+    zone.game++;
+    zoneEv = zone.events.find(e => e.game === zone.game) || null;
+    updateZoneBar();
+  }
+  const noReplay = !!zoneEv && zoneEv.result === 'bonus';   // 突破ゲームはリプレイにしない (ボーナスへ繋ぐため)
 
-    if (pendingBonusType === 'REG' && Math.random() < REG_FREEZE_RATE) {
-      // REG(104枚)を見せたあとレバーONでフリーズ → 777枚 → (たまに) さらにフリーズ → 7777枚
-      pendingFreezeStages = [STAGE_777];
-      if (Math.random() < CHAIN_7777_RATE) pendingFreezeStages.push(STAGE_7777);
-    }
-
-    if (pendingBonusType === 'BIG' && Math.random() < CHAIN_UP_RATE) {
-      // 上乗せ連続演出: 開始枚数は 200〜700 のどれでも同じ確率。そこからレバーONのたびに増えていく
-      const startIdx = Math.floor(Math.random() * CHAIN_START_COUNT);
-      pendingDisplayIndex = startIdx;
-      pendingTierIndex = startIdx;
-      pendingChainQueue = makeChainQueue(BIG_TIERS[startIdx].coins);
-    } else if (pendingBonusType === 'BIG' && BIG_TIERS[pendingDisplayIndex].coins < 800) {
-      if (pendingDisplayIndex === 0 && Math.random() < FREEZE_RATE) {
-        // ブルー脈動(200枚): 200枚を見せたあとレバーONでフリーズ → 1000枚 or 2000枚
-        pendingFreezeStages = [tierStage(Math.random() < FREEZE_MEGA_RATE ? FREEZE_MEGA_INDEX : FREEZE_GRAND_INDEX)];
-      } else if (Math.random() < SURPRISE_RATE) {
-        // 10%の確率で、演出は控えめなのに実は800枚だった…!
-        pendingTierIndex = SURPRISE_TIER_INDEX;
-      }
-    }
-
-    chainActive = pendingChainQueue.length > 0;
-    chainUps = 0;
-    replayPending = false;
-    if (inAT && atRun) atRun.bonuses++;
-    cherryGames = 0;
-    updateCherry();
-
-    // ボーナス当選でG数リセット
-    totalGames = 0;
-    updateUI();
-    hideLoseReels();
-    triggerPekari();
-  } else if (Math.random() < (inAT ? BELL_AT_RATE : BELL_NORMAL_RATE)) {
+  // 通常の役 (ベル / チェリー / リプレイ / ハズレ)
+  if (Math.random() < (inAT ? BELL_AT_RATE : BELL_NORMAL_RATE)) {
     // ベル揃い: 直線6枚 / 斜め左上から1枚 / 斜め左下から15枚
     if (inAT && atRun) atRun.bells++;
     hitBell();
-    updateUI();
   } else if (Math.random() < (inAT ? CHERRY_AT_RATE : CHERRY_RATE)) {
-    // チェリー: 左列に1個あるだけで成立。通常時は30G間ボーナス高確率 (内部) / AT中はATのG数が増える
+    // チェリー: 左列に1個あるだけで成立。通常時は30G間ゾーン突入しやすい (内部) / AT中はATのG数が増える
     hitCherry(false, inAT);
-    updateUI();
-  } else if (Math.random() < (inAT ? REPLAY_AT_RATE : REPLAY_RATE)) {
+  } else if (!noReplay && Math.random() < (inAT ? REPLAY_AT_RATE : REPLAY_RATE)) {
     // リプレイ: 図柄が揃って、次のゲームは投入枚数なし
     replayPending = true;
     showReplayReels();
     spinBtn.innerText = 'リプレイ (レバーON)';
     playReplayJingle();
-    updateUI();
   } else {
     showLoseReels();
-    updateUI();
+  }
+  updateUI();
+
+  if (enterZone) startZone();                 // チャンスゾーン突入!
+  else if (zoneEv) runDoorEvent(zoneEv);      // 扉が閉まる演出
+  else maybeShowAtResult();                   // ATの最終ゲームならここでリザルト (ゾーン中は終了まで待つ)
+}
+
+/* チャンスゾーン突破 → ボーナス確定。ここで当たりの種類を決めてペカらせる */
+function winBonus() {
+  const inAT = (atGames > 0 || atEnding) && !!atRun;
+  // REGの次回は、高い確率でBIG(777)になる
+  pendingBonusType = nextBonusBigBoost
+    ? (Math.random() < REG_NEXT_BIG ? 'BIG' : 'REG')
+    : (Math.random() < REG_RATE ? 'REG' : 'BIG');
+  nextBonusBigBoost = pendingBonusType === 'REG';
+  pendingDisplayIndex = pendingBonusType === 'BIG' ? pickTierIndex() : -1;
+  pendingTierIndex = pendingDisplayIndex;
+  pendingFreezeStages = [];
+  pendingChainQueue = [];
+
+  if (pendingBonusType === 'REG' && Math.random() < REG_FREEZE_RATE) {
+    // REG(104枚)を見せたあとレバーONでフリーズ → 777枚 → (たまに) さらにフリーズ → 7777枚
+    pendingFreezeStages = [STAGE_777];
+    if (Math.random() < CHAIN_7777_RATE) pendingFreezeStages.push(STAGE_7777);
   }
 
-  if (!isHit) maybeShowAtResult();   // ATの最終ゲームがボーナス以外ならここでリザルト
+  if (pendingBonusType === 'BIG' && Math.random() < CHAIN_UP_RATE) {
+    // 上乗せ連続演出: 開始枚数は 200〜700 のどれでも同じ確率。そこからレバーONのたびに増えていく
+    const startIdx = Math.floor(Math.random() * CHAIN_START_COUNT);
+    pendingDisplayIndex = startIdx;
+    pendingTierIndex = startIdx;
+    pendingChainQueue = makeChainQueue(BIG_TIERS[startIdx].coins);
+  } else if (pendingBonusType === 'BIG' && BIG_TIERS[pendingDisplayIndex].coins < 800) {
+    if (pendingDisplayIndex === 0 && Math.random() < FREEZE_RATE) {
+      // ブルー脈動(200枚): 200枚を見せたあとレバーONでフリーズ → 1000枚 or 2000枚
+      pendingFreezeStages = [tierStage(Math.random() < FREEZE_MEGA_RATE ? FREEZE_MEGA_INDEX : FREEZE_GRAND_INDEX)];
+    } else if (Math.random() < SURPRISE_RATE) {
+      // 演出は控えめなのに実は800枚だった…!
+      pendingTierIndex = SURPRISE_TIER_INDEX;
+    }
+  }
+
+  chainActive = pendingChainQueue.length > 0;
+  chainUps = 0;
+  replayPending = false;
+  if (inAT) atRun.bonuses++;
+  cherryGames = 0;
+  updateCherry();
+
+  // ボーナス当選でG数リセット
+  totalGames = 0;
+  updateUI();
+  hideLoseReels();
+  triggerPekari();
 }
 
 /* 当選枚数に応じた表示レベル (1:青 2:黄 3:緑 4:赤 5:虹 6:特大虹) */
@@ -1133,13 +1150,386 @@ function startAT(force, games) {
   return true;
 }
 
+/* ==========================================
+   チャンスゾーン (ペカる前の前兆)
+   ・突入すると ZONE_GAMES ゲームの間に「扉が閉まる」演出が何回か起きる
+   ・扉は 青 → 黄 → 緑 → 赤 と閉まるごとにレベルアップ。赤が閉まって「虹」に到達したらボーナス確定 (ペカる)
+   ・突破率は ZONE_CLEAR (初期値60%)
+   ・突破するかどうかは突入した瞬間に決まっている。扉が止まって閉まらなければ失敗
+   ========================================== */
+const DOOR_LEVELS = [
+  { name: 'BLUE',    color: '#3b9bff' },
+  { name: 'YELLOW',  color: '#ffe14d' },
+  { name: 'GREEN',   color: '#34e873' },
+  { name: 'RED',     color: '#ff5252' },
+  { name: 'RAINBOW', color: '#ff2bd6' }   // 虹は到達した時点でボーナス確定 (扉としては閉まらない)
+];
+const DOOR_EVENTS = DOOR_LEVELS.length - 1;       // 扉が閉まる演出は最大4回 (青・黄・緑・赤)
+const ZONE_FAIL_WEIGHTS = [32, 30, 24, 14];       // 失敗する場合、扉が何回閉まってから止まるか (0〜3回)
+const ZONE_TEASE_WEIGHTS = [20, 60, 20];         // 1回の扉演出で何回煽るか (1回 / 2回 / 3回)
+
+let zone = null;          // いまのゾーン {total, game, level, success, events:[{game, level, result}]}
+let isZoneBusy = false;   // 扉演出 / ゾーン突入演出の最中 (レバー無効)
+let zoneTok = 0;          // RESETで進行中の演出を打ち切るための番号
+
+const zoneStatus = document.getElementById('zone-status');
+const zonePips = document.getElementById('zone-pips');
+const zoneRemain = document.getElementById('zone-remain');
+const zoneOverlay = document.getElementById('zone-overlay');
+const zoneSub = document.getElementById('zone-sub');
+const doorLayer = document.getElementById('door-layer');
+const doorL = document.getElementById('door-l');
+const doorR = document.getElementById('door-r');
+const doorMsg = document.getElementById('door-msg');
+const doorLight = document.getElementById('door-light');
+const windLayer = document.getElementById('wind-layer');
+
+if (zonePips) {
+  zonePips.innerHTML = DOOR_LEVELS.map((d, i) => `<span class="zpip" data-l="${i + 1}"></span>`).join('');
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function pickWeighted(weights) {
+  const sum = weights.reduce((x, y) => x + y, 0);
+  let r = Math.random() * sum;
+  for (let i = 0; i < weights.length; i++) {
+    r -= weights[i];
+    if (r < 0) return i;
+  }
+  return weights.length - 1;
+}
+
+function setZoneBusy(b) {
+  isZoneBusy = b;
+  spinBtn.disabled = b;
+}
+
+/* ゾーン表示 (残りG数と、いま何色の扉まで来ているか) */
+function updateZoneBar() {
+  if (!zoneStatus) return;
+  zoneStatus.classList.toggle('on', !!zone);
+  if (!zone) return;
+  zoneRemain.textContent = Math.max(0, zone.total - zone.game);
+  zonePips.querySelectorAll('.zpip').forEach((el, i) => {
+    el.classList.toggle('done', i < zone.level);
+    el.classList.toggle('cur', i === zone.level);
+  });
+}
+
+/* 扉の開き具合: p=0 全開 / p=1 完全に閉まる */
+function setDoor(p, ms, ease) {
+  const tr = ms > 0 ? `transform ${ms}ms ${ease || 'ease'}` : 'none';
+  doorL.style.transition = tr;
+  doorR.style.transition = tr;
+  doorL.style.transform = `translateX(${-(1 - p) * 101}%)`;
+  doorR.style.transform = `translateX(${(1 - p) * 101}%)`;
+  // 閉まるほど、扉の隙間から光が漏れる
+  doorLight.style.transition = ms > 0 ? `opacity ${ms}ms ${ease || 'ease'}` : 'none';
+  doorLight.style.opacity = (p * p * 0.95).toFixed(2);
+}
+
+/* レベルアップ: 画面の下から上へ、風の筋が一気に吹き抜ける */
+function playWind(level) {
+  if (!windLayer) return;
+  const rainbow = level >= DOOR_LEVELS.length - 1;
+  let html = '';
+  for (let i = 0; i < 38; i++) {
+    const col = rainbow ? `hsl(${Math.floor(Math.random() * 360)},100%,65%)` : DOOR_LEVELS[level].color;
+    html += `<i class="wind" style="left:${(Math.random() * 100).toFixed(1)}%;` +
+      `height:${Math.round(70 + Math.random() * 170)}px;width:${(2 + Math.random() * 3).toFixed(1)}px;` +
+      `animation-duration:${(0.5 + Math.random() * 0.4).toFixed(2)}s;` +
+      `animation-delay:${(Math.random() * 0.3).toFixed(2)}s;--wc:${col}"></i>`;
+  }
+  windLayer.innerHTML = html;
+  clearTimeout(playWind.timer);
+  playWind.timer = setTimeout(() => { windLayer.innerHTML = ''; }, 1400);
+  if (!soundEnabled) return;
+  initAudio();
+  const t = audioCtx.currentTime;
+  const sec = 0.9;
+  const size = Math.floor(audioCtx.sampleRate * sec);
+  const buf = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < size; i++) d[i] = Math.random() * 2 - 1;
+  const n = audioCtx.createBufferSource();
+  const bp = audioCtx.createBiquadFilter();
+  const g = audioCtx.createGain();
+  n.buffer = buf;
+  bp.type = 'bandpass';
+  bp.Q.value = 0.8;
+  bp.frequency.setValueAtTime(400, t);
+  bp.frequency.exponentialRampToValueAtTime(3200, t + sec);   // ヒュオオ↑ と上がっていく
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(0.22, t + 0.25);
+  g.gain.linearRampToValueAtTime(0.0001, t + sec);
+  n.connect(bp); bp.connect(g); g.connect(audioCtx.destination);
+  n.start(t);
+}
+
+function showDoorMsg(html, cls) {
+  doorMsg.innerHTML = html;
+  doorMsg.className = 'door-msg' + (cls ? ' ' + cls : '');
+  void doorMsg.offsetWidth;
+  doorMsg.classList.add('show');
+}
+function hideDoorMsg() {
+  doorMsg.className = 'door-msg';
+}
+
+/* ---------- 効果音 ---------- */
+function playDoorMove(sec, depth) {
+  if (!soundEnabled) return;
+  initAudio();
+  const t = audioCtx.currentTime;
+  // ゴゴゴ… という低い唸り
+  const o = audioCtx.createOscillator();
+  const f = audioCtx.createBiquadFilter();
+  const g = audioCtx.createGain();
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(50, t);
+  o.frequency.linearRampToValueAtTime(50 + 55 * depth, t + sec);
+  f.type = 'lowpass';
+  f.frequency.value = 240;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(0.26, t + sec * 0.3);
+  g.gain.linearRampToValueAtTime(0.0001, t + sec + 0.05);
+  o.connect(f); f.connect(g); g.connect(audioCtx.destination);
+  o.start(t); o.stop(t + sec + 0.08);
+  // 金属が擦れる音
+  const size = Math.floor(audioCtx.sampleRate * sec);
+  const buf = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < size; i++) d[i] = Math.random() * 2 - 1;
+  const n = audioCtx.createBufferSource();
+  const bp = audioCtx.createBiquadFilter();
+  const ng = audioCtx.createGain();
+  n.buffer = buf;
+  bp.type = 'bandpass';
+  bp.frequency.setValueAtTime(500, t);
+  bp.frequency.linearRampToValueAtTime(500 + 1400 * depth, t + sec);
+  ng.gain.setValueAtTime(0.0001, t);
+  ng.gain.linearRampToValueAtTime(0.12, t + sec * 0.5);
+  ng.gain.linearRampToValueAtTime(0.0001, t + sec);
+  n.connect(bp); bp.connect(ng); ng.connect(audioCtx.destination);
+  n.start(t);
+}
+
+function playDoorSlam(level) {
+  if (!soundEnabled) return;
+  initAudio();
+  const t = audioCtx.currentTime;
+  // ドォン (重低音) + ガシャン (金属音)
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(140, t);
+  o.frequency.exponentialRampToValueAtTime(34, t + 0.4);
+  g.gain.setValueAtTime(0.9, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(t); o.stop(t + 0.46);
+  tone(190, t, 0.14, 'square', 0.16);
+  tone(1180 + level * 90, t, 0.3, 'triangle', 0.1);
+  tone(1760 + level * 90, t + 0.02, 0.22, 'triangle', 0.07);
+}
+
+function playDoorLevelUp(level) {
+  if (!soundEnabled) return;
+  initAudio();
+  const t = audioCtx.currentTime;
+  const base = 523.25 * Math.pow(2, level / 12);
+  [1, 1.25, 1.5, 2].forEach((r, i) => tone(base * r, t + i * 0.07, 0.28, 'triangle', 0.17));
+  if (level >= 3) [2, 2.5, 3].forEach((r, i) => tone(base * r, t + 0.3 + i * 0.07, 0.4, 'triangle', 0.1));
+}
+
+function playDoorFail() {
+  if (!soundEnabled) return;
+  initAudio();
+  const t = audioCtx.currentTime;
+  [392, 330, 262, 196].forEach((f, i) => tone(f, t + i * 0.14, 0.34, 'sawtooth', 0.13));
+}
+
+function playZoneIntro() {
+  if (!soundEnabled) return;
+  initAudio();
+  const t = audioCtx.currentTime;
+  for (let i = 0; i < 4; i++) tone(i % 2 ? 880 : 660, t + i * 0.16, 0.16, 'square', 0.1);
+  thump(t, 0.8);
+  [1, 1.25, 1.5, 2].forEach((r, i) => tone(523.25 * r, t + 0.7 + i * 0.07, 0.4, 'triangle', 0.14));
+}
+
+/* ---------- ゾーン開始 ---------- */
+async function startZone() {
+  const tok = zoneTok;
+
+  // 突破するか / しないなら扉が何回閉まってから止まるかを、最初に決めてしまう
+  const n = ZONE_GAMES;
+  const success = Math.random() < ZONE_CLEAR;
+  const closes = success ? DOOR_EVENTS : pickWeighted(ZONE_FAIL_WEIGHTS);
+  const count = success ? DOOR_EVENTS : closes + 1;
+
+  // 扉の演出が起きるゲームを、ゾーン内からランダムに選ぶ
+  const pool = Array.from({ length: n }, (_, i) => i + 1);
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const games = pool.slice(0, count).sort((a, b) => a - b);
+  const events = games.map((g, i) => ({
+    game: g,
+    level: i,
+    result: success ? (i === DOOR_EVENTS - 1 ? 'bonus' : 'close') : (i === closes ? 'fail' : 'close')
+  }));
+  zone = { total: n, game: 0, level: 0, success, events };
+
+  // 突入演出
+  setZoneBusy(true);
+  zoneSub.textContent = `${n}G`;
+  zoneOverlay.classList.remove('show');
+  void zoneOverlay.offsetWidth;
+  zoneOverlay.classList.add('show');
+  playZoneIntro();
+  tripleFlash();
+  updateZoneBar();
+  await sleep(2000);
+  if (tok !== zoneTok) return;
+  zoneOverlay.classList.remove('show');
+  setZoneBusy(false);
+}
+
+/* ---------- 扉が閉まる演出 ----------
+   煽り(途中まで閉まって戻る)を1〜3回 → 本番。最後に閉まるところだけスローモーション。
+   閉まればレベルアップ (風が吹き抜ける)。赤が閉まって虹になったらボーナス確定。
+   dbg=true: デバッグ再生 (ゾーンの状態は変えない) */
+async function runDoorEvent(ev, dbg = false) {
+  const tok = zoneTok;
+  const wait = async ms => { await sleep(ms); return tok === zoneTok; };
+  const lv = ev.level;
+  const FAST = 'cubic-bezier(.3,0,.7,.4)';
+
+  setZoneBusy(true);
+  initAudio();
+  doorLayer.className = `door-layer dlv${lv + 1}`;
+  setDoor(0, 0);
+  void doorLayer.offsetWidth;
+  doorLayer.classList.add('on');
+  if (!await wait(80)) return;
+
+  // 煽り: サッと閉まりかけて、また開く (テンポよく)
+  const teases = 1 + pickWeighted(ZONE_TEASE_WEIGHTS);
+  for (let i = 0; i < teases; i++) {
+    const depth = 0.40 + i * 0.14 + Math.random() * 0.06;
+    playDoorMove(0.22, depth);
+    setDoor(depth, 220, FAST);
+    if (!await wait(235)) return;
+    shakeMain(100);
+    if (!await wait(40)) return;
+    playDoorMove(0.18, depth * 0.6);
+    setDoor(0, 170, 'ease-out');
+    if (!await wait(190)) return;
+  }
+
+  // 本番: 勢いよく閉まりかけて、ここから先だけスローモーション (成功でも失敗でもここまでは同じ)
+  playDoorMove(0.25, 0.8);
+  setDoor(0.72, 250, FAST);
+  if (!await wait(260)) return;
+  doorLayer.classList.add('slowmo');
+  playDoorMove(1.1, 1);
+  setDoor(0.95, 1100, 'cubic-bezier(.25,.1,.5,1)');
+  if (!await wait(400)) return;
+  if (soundEnabled) { const t = audioCtx.currentTime; thump(t, 0.7); thump(t + 0.17, 0.5); }
+  if (!await wait(400)) return;
+  shakeMain(250);
+  if (soundEnabled) { const t = audioCtx.currentTime; thump(t, 0.9); thump(t + 0.17, 0.7); }
+  if (!await wait(300)) return;
+
+  // ---- 失敗: 扉が引っかかって、また開いてしまう ----
+  if (ev.result === 'fail') {
+    setDoor(0.96, 90, 'ease-out');
+    if (!await wait(100)) return;
+    doorLayer.classList.remove('slowmo');
+    doorLayer.classList.add('failed');
+    playDoorFail();
+    shakeMain(300);
+    showDoorMsg('MISS…', 'fail');
+    if (!await wait(400)) return;
+    setDoor(0, 330, 'ease-out');
+    if (!await wait(430)) return;
+    hideDoorMsg();
+    doorLayer.classList.remove('on');
+    if (!await wait(200)) return;
+    if (!dbg) { zone = null; updateZoneBar(); }
+    setZoneBusy(false);
+    if (!dbg) maybeShowAtResult();
+    return;
+  }
+
+  // ---- 成功: 最後の数センチをゆっくり、ガシャン! ----
+  setDoor(1, 400, 'cubic-bezier(.5,0,.9,.6)');
+  if (!await wait(410)) return;
+  doorLayer.classList.remove('slowmo');
+  doorLayer.classList.add('thud');
+  playDoorSlam(lv);
+  triggerFlash();
+  shakeMain(450);
+  if (!await wait(100)) return;
+
+  // レベルアップ (虹に到達したらボーナス確定)
+  const toBonus = ev.result === 'bonus';
+  if (!dbg && zone) { zone.level = lv + 1; updateZoneBar(); }
+  if (toBonus) showDoorMsg('RAINBOW!!<small>ZONE CLEAR</small>', 'clear');
+  else showDoorMsg(`LEVEL UP!!<small>${DOOR_LEVELS[lv].name} → ${DOOR_LEVELS[lv + 1].name}</small>`);
+  doorLayer.className = `door-layer on dlv${lv + 2}`;   // 閉じたまま扉の色が変わる
+  triggerFlash();
+  playDoorLevelUp(lv + 1);
+  playWind(lv + 1);
+
+  if (toBonus) {
+    playPayoutFanfare(6);
+    tripleFlash();
+    burstParticles('gold', 80);
+    if (!await wait(1300)) return;
+    hideDoorMsg();
+    doorLayer.classList.remove('on');
+    if (!dbg) { zone = null; updateZoneBar(); }
+    setZoneBusy(false);
+    if (!dbg) winBonus();
+    return;
+  }
+
+  if (!await wait(550)) return;
+  hideDoorMsg();
+  playDoorMove(0.3, 0.5);
+  setDoor(0, 280, 'ease-out');
+  if (!await wait(300)) return;
+  doorLayer.classList.remove('on');
+  if (!await wait(60)) return;
+  setZoneBusy(false);
+}
+
+/* RESET: 進行中のゾーン演出を全部止める */
+function resetZone() {
+  zoneTok++;
+  zone = null;
+  isZoneBusy = false;
+  if (doorLayer) {
+    doorLayer.className = 'door-layer';
+    setDoor(0, 0);
+    hideDoorMsg();
+  }
+  if (windLayer) windLayer.innerHTML = '';
+  if (zoneOverlay) zoneOverlay.classList.remove('show');
+  updateZoneBar();
+}
+
 /* ---------- ATリザルト ---------- */
 const atResultEl = document.getElementById('at-result');
 const atResultGain = document.getElementById('at-result-gain');
 let atResultRAF = null;
 
 function maybeShowAtResult() {
-  if (!atEnding || atGames > 0 || !atRun || isAtResult) return;
+  if (!atEnding || atGames > 0 || !atRun || isAtResult || isPekared || zone || isZoneBusy) return;   // ボーナス/ゾーンが終わるまでリザルトは待つ
   isAtResult = true;                       // 結果表示までレバーを止める
   const run = atRun;
   setTimeout(() => showAtResult(run), 900);
@@ -1688,6 +2078,7 @@ function resetData() {
     atRun = null;
     atEnding = false;
     isAtResult = false;
+    resetZone();
     atResultEl.classList.remove('show');
     updateAT();
     gameHistory.length = 0;
@@ -1721,7 +2112,9 @@ const settingsBody = document.getElementById('settings-body');
 const displayRate = document.getElementById('display-rate');
 
 const SETTING_ROWS = [
-  { key: 'hitDenom', label: 'ボーナス当選確率 (1/N)', min: 1, max: 100000, step: 1, prefix: '1/' },
+  { key: 'zoneDenom', label: 'チャンスゾーン突入確率 (1/N)', min: 1, max: 100000, step: 1, prefix: '1/' },
+  { key: 'zoneGames', label: 'チャンスゾーンのG数', min: 5, max: 100, step: 1, suffix: ' G' },
+  { key: 'zoneClear', label: 'チャンスゾーン突破率 (突破=ボーナス)', min: 0, max: 100, step: 0.1, suffix: '%' },
   { key: 'surprise', label: '演出より多い800枚', min: 0, max: 100, step: 0.1, suffix: '%' },
   { key: 'freeze', label: '200枚からフリーズ', min: 0, max: 100, step: 0.1, suffix: '%' },
   { key: 'freezeMega', label: 'フリーズ時の2000枚割合', min: 0, max: 100, step: 0.1, suffix: '%' },
@@ -1810,7 +2203,7 @@ function applySettingsForm() {
 }
 
 function refreshRateLabel() {
-  if (displayRate) displayRate.textContent = `1/${SETTINGS.hitDenom}`;
+  if (displayRate) displayRate.textContent = `1/${SETTINGS.zoneDenom}`;
 }
 
 // ==========================================

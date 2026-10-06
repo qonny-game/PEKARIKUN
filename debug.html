@@ -44,9 +44,10 @@
       <!-- ステータス情報 -->
       <div class="flex justify-between items-center px-2 text-xs">
         <div class="text-slate-300 font-bold">差枚数: <span id="display-diff" class="digital-font font-bold text-white text-sm">0</span> 枚</div>
-        <div class="text-slate-300 font-bold">確率: <span id="display-rate" class="text-yellow-400 font-bold">1/30</span></div>
+        <div class="text-slate-300 font-bold">ゾーン突入: <span id="display-rate" class="text-yellow-400 font-bold">1/30</span></div>
       </div>
       <div id="at-status" class="at-status"><span id="at-label" class="at-label">AT</span><span>残り <span id="at-remain" class="digital-font">0</span> G</span></div>
+      <div id="zone-status" class="zone-status"><span class="zone-label">CHANCE ZONE</span><span id="zone-pips" class="zone-pips"></span><span>残り <span id="zone-remain" class="digital-font">0</span> G</span></div>
       <div id="cherry-status" class="cherry-status">CHERRY&nbsp;&nbsp;当選率UP 残り <span id="cherry-remain" class="digital-font">0</span> G</div>
       </div>
 
@@ -72,6 +73,15 @@
           <div id="bell-badge" class="bell-badge"></div>
         </div>
 
+        <!-- チャンスゾーン: 扉が閉まる演出レイヤー -->
+        <div id="door-layer" class="door-layer">
+          <div id="door-light" class="door-light"></div>
+          <div id="door-l" class="door door-l"></div>
+          <div id="door-r" class="door door-r"></div>
+          <div class="door-frame"></div>
+          <div id="door-msg" class="door-msg"></div>
+        </div>
+
         <!-- 枚数表示レイヤー -->
         <div id="payout-display" class="payout-display absolute inset-0 z-30 flex flex-col items-center justify-center">
           <div id="payout-label" class="align-sub text-xs font-bold mb-2 tracking-widest uppercase"></div>
@@ -93,6 +103,8 @@
           <div id="debug-big" class="grid grid-cols-5 gap-1"></div>
           <div class="text-[11px] text-slate-400 font-bold">REG / 特殊演出</div>
           <div id="debug-special" class="grid grid-cols-2 sm:grid-cols-4 gap-1"></div>
+          <div class="text-[11px] text-slate-400 font-bold">チャンスゾーン (扉演出)</div>
+          <div id="debug-zone" class="grid grid-cols-2 sm:grid-cols-4 gap-1"></div>
         </div>
       </details>
 
@@ -148,6 +160,18 @@
         <button type="button" id="settings-default">初期値</button>
         <button type="button" id="settings-apply" class="primary">適用</button>
       </div>
+    </div>
+  </div>
+
+  <!-- レベルアップの風 (下から上へ) -->
+  <div id="wind-layer" class="wind-layer"></div>
+
+  <!-- チャンスゾーン突入演出 -->
+  <div id="zone-overlay" class="rush-overlay zone">
+    <div class="rush-text">
+      <div class="rush-line">CHANCE</div>
+      <div class="rush-line">ZONE!</div>
+      <div id="zone-sub" class="rush-sub"></div>
     </div>
   </div>
 
@@ -240,6 +264,22 @@
       addFn('ベル 直線6枚', () => hitBell(0));
       addFn('ベル 左上から1枚', () => hitBell(1));
       addFn('ベル 左下から15枚', () => hitBell(2));
+      // チャンスゾーン (演出のみ。ゾーンの状態は変わらない)
+      const zoneWrap = document.getElementById('debug-zone');
+      const addZ = (label, fn) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = btnClass;
+        b.textContent = label;
+        b.addEventListener('click', () => { if (!isZoneBusy && !isFreezing) fn(); });
+        zoneWrap.appendChild(b);
+      };
+      addZ('ゾーン突入演出', () => { setZoneBusy(true); zoneSub.textContent = ZONE_GAMES + 'G'; zoneOverlay.classList.remove('show'); void zoneOverlay.offsetWidth; zoneOverlay.classList.add('show'); playZoneIntro(); tripleFlash(); setTimeout(() => { zoneOverlay.classList.remove('show'); setZoneBusy(false); }, 2000); });
+      DOOR_LEVELS.slice(0, 3).forEach((d, i) => addZ('扉 ' + d.name + ' 成功', () => runDoorEvent({ level: i, result: 'close' }, true)));
+      addZ('扉 RED→虹 (ボーナス確定)', () => runDoorEvent({ level: 3, result: 'bonus' }, true));
+      addZ('扉 BLUE 失敗', () => runDoorEvent({ level: 0, result: 'fail' }, true));
+      addZ('扉 RED 失敗', () => runDoorEvent({ level: 3, result: 'fail' }, true));
+      addZ('風だけ (青→黄)', () => playWind(1));
       add(specialWrap, 'REG→777', { type: 'REG', freezeStages: [STAGE_777] });
       add(specialWrap, 'REG→777→7777', { type: 'REG', freezeStages: [STAGE_777, STAGE_7777] });
     })();
