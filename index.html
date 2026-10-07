@@ -1,191 +1,634 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ペカり君 - パチスロ エンタメシミュレーター</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>QNPLAYER</title>
+<link rel="icon" type="image/x-icon" href="favicon/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="favicon/android-chrome-192x192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="favicon/android-chrome-512x512.png">
+
+<link rel="stylesheet" href="CSS/style-core.css">
+<link rel="stylesheet" href="CSS/style-playlist.css">
+<link rel="stylesheet" href="CSS/style-markers.css">
+<link rel="stylesheet" href="CSS/style-control-eq.css">
+<link rel="stylesheet" href="CSS/style-controls.css">
+<link rel="stylesheet" href="CSS/style-export.css">
+<link rel="stylesheet" href="CSS/style-text.css">
+<link rel="stylesheet" href="CSS/style-layout-sp.css">
+<link rel="stylesheet" href="CSS/style-layout-pc-v2.css">
+<link rel="stylesheet" href="CSS/style-layout-pc-v2-sp.css">
+<link rel="stylesheet" href="CSS/style-pcv2-panels.css">
+<link rel="stylesheet" href="CSS/style-bars.css">
+<link rel="stylesheet" href="CSS/style-settings.css">
+<link rel="stylesheet" href="CSS/style-quickpop.css">
+<link rel="stylesheet" href="CSS/style-auth.css">
+<link rel="stylesheet" href="CSS/style-shareware.css">
+<link rel="stylesheet" href="CSS/style-theme.css">
+<link rel="stylesheet" href="CSS/style-apps.css">
+<link rel="stylesheet" href="CSS/style-youtube.css">
+<link rel="stylesheet" href="CSS/style-tuner.css">
+<link rel="stylesheet" href="CSS/style-pitch.css">
+<script>
+  // アプリバージョン一元管理(QN_APP_VERSION)。<title>はここで即更新、#splashVersion/#appVersionは各要素直後のinline scriptが反映
+  window.QN_APP_VERSION = "4.14.1";
+  document.title = "QNPLAYER " + window.QN_APP_VERSION;
+
+  window.QN_SHORTCUTS = [
+    { key: "Space", action: "Play / Pause" },
+    { key: "Enter", action: "Seek to Start" },
+    { key: "P / M", action: "Add Marker" },
+    { key: "L", action: "Loop on/off" },
+    { key: "R", action: "Repeat" },
+    { key: "1 - 9", action: "Jump to Marker" },
+    { key: "Ctrl + 1 - 9", action: "Marker on/off" },
+    { key: "→", action: "Next Marker" },
+    { key: "←", action: "Prev Marker" },
+    { key: "↑", action: "First Marker" },
+    { key: "↓", action: "Last Marker" },
+    { key: "Ctrl + → / ←", action: "Speed +1% / -1%" },
+    { key: "Ctrl + ↑ / ↓", action: "Key +1 / -1 semitone" },
+    { key: "Ctrl + R", action: "Reset Speed & Key" }
+  ];
+</script>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-5 select-none">
+<body>
 
-  <div id="fx-overlay"></div>
-  <canvas id="fx-canvas" class="fixed inset-0 pointer-events-none" style="z-index: 5;"></canvas>
-  <div id="flash-overlay" class="fixed inset-0 pointer-events-none z-50"></div>
-  <div id="freeze-overlay"><div id="crt-line"></div><div id="crt-dot"></div></div>
+<div id="splashOverlay">
+  <div id="splashLogo"><span id="splashLogoQN">QN</span>PLAYER</div>
+  <div id="splashVersion">v</div>
+</div>
+<script>
+  document.getElementById("splashVersion").textContent = "v" + window.QN_APP_VERSION;
+</script>
+<script>
+  // セーフティ: onloadでスプラッシュが消えなくても5秒後に必ず消す
+  setTimeout(() => {
+    const splash = document.getElementById("splashOverlay");
+    if (splash && splash.style.display !== "none") {
+      splash.classList.add("splash-fade-out");
+      setTimeout(() => { splash.style.display = "none"; }, 550);
+    }
+  }, 5000);
+</script>
 
-  <main class="w-full max-w-md p-5 flex flex-col gap-5 relative z-10 overflow-hidden">
+<div id="dropOverlay">Drop audio or video files here</div>
 
-    <!-- カウンター & GOGO!ランプ表示 -->
-    <div class="p-4 flex flex-col gap-4">
+<div id="appHeader">
+  <div id="qnMenuMount">
+    <div class="qn-menu-wrapper">
+      <button id="qnMenuBtn" title="Theme & Shortcuts">
+        <svg viewBox="0 0 24 24"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/></svg>
+      </button>
 
-      <div class="ui-shade py-2 flex flex-col gap-2">
-      <!-- カウンターセグ表示 -->
-      <div class="grid grid-cols-4 gap-2 p-3 text-center">
-        <div>
-          <div class="text-[11px] text-slate-400 font-bold">G数</div>
-          <div id="display-games" class="digital-font text-xl text-yellow-400 font-bold">0</div>
-        </div>
-        <div>
-          <div class="text-[11px] text-slate-400 font-bold">BIG</div>
-          <div id="display-big" class="digital-font text-xl text-red-500 font-bold">0</div>
-        </div>
-        <div>
-          <div class="text-[11px] text-slate-400 font-bold">REG</div>
-          <div id="display-reg" class="digital-font text-xl text-green-400 font-bold">0</div>
-        </div>
-        <div>
-          <div class="text-[11px] text-slate-400 font-bold">合算</div>
-          <div id="display-prob" class="digital-font text-xs text-cyan-400 font-bold leading-7">1/0</div>
-        </div>
-      </div>
+      <div class="qn-menu-popup" id="qnMenuPopup">
 
-      <!-- ステータス情報 -->
-      <div class="flex justify-between items-center px-2 text-xs">
-        <div class="text-slate-300 font-bold">差枚数: <span id="display-diff" class="digital-font font-bold text-white text-sm">0</span> 枚</div>
-        <div class="text-slate-300 font-bold">ゾーン突入: <span id="display-rate" class="text-yellow-400 font-bold">1/30</span></div>
-      </div>
-      <div id="at-status" class="at-status"><span id="at-label" class="at-label">AT</span><span>残り <span id="at-remain" class="digital-font">0</span> G</span></div>
-      <div id="zone-status" class="zone-status"><span class="zone-label">CHANCE ZONE</span><span id="zone-pips" class="zone-pips"></span><span>残り <span id="zone-remain" class="digital-font">0</span> G</span></div>
-      <div id="cherry-status" class="cherry-status">CHERRY&nbsp;&nbsp;当選率UP 残り <span id="cherry-remain" class="digital-font">0</span> G</div>
-      </div>
-
-      <!-- GOGO! ランプ表示ボックス -->
-      <div id="gogo-box" class="gogo-lamp w-full h-56 flex flex-col items-center justify-center relative cursor-pointer">
-
-        <!-- GOGO! ロゴ (点灯用) -->
-        <div id="gogo-text-container" class="relative z-10 text-center transition-opacity duration-200">
-          <div id="gogo-text" class="gogo-text font-black text-6xl tracking-tighter italic transform -rotate-3 scale-y-110">
-            GOGO!
+        <div class="qn-menu-section" data-qn-section="theme">
+          <span class="qn-menu-section-label">Color Theme</span>
+          <!-- スウォッチはQN_THEMES(player-theme.js)から動的生成。テーマ追加・編集はそこだけ -->
+          <div class="qn-theme-swatches" id="qnThemeSwatches"></div>
+          <div class="qn-glow-toggle-row">
+            <span class="qn-glow-toggle-label">Glow current color</span>
+            <button id="qnGlowToggleBtn" class="qn-glow-switch" role="switch" aria-checked="false" title="Fade the current color in and out">
+              <span class="qn-glow-switch-knob"></span>
+            </button>
           </div>
-          <div id="gogo-subtext" class="gogo-text font-bold text-xs tracking-widest mt-1 opacity-0 transition-opacity">
-            CHANCE
+          <!-- 行はrenderMarkerPresetColorSettings()が組み立てる -->
+          <div class="qn-marker-preset-colors">
+            <div class="qn-marker-preset-colors-title">Marker Memo Colors</div>
+            <div class="qn-marker-preset-colors-desc">メモのプリセットを選んだ時、マーカーに自動で付く色</div>
+            <div class="qn-marker-preset-color-rows" id="qnMarkerPresetColorRows"></div>
           </div>
         </div>
 
-        <div id="at-toast" class="at-toast"></div>
-
-        <!-- 揃い図柄表示レイヤー (777 / BAR BAR BAR) -->
-        <div id="align-display" class="align-display absolute inset-0 z-20 flex flex-col items-center justify-center">
-          <div id="reels" class="reels"></div>
-          <div id="next-hint" class="next-hint">NEXT ▼</div>
-          <div id="bell-badge" class="bell-badge"></div>
-        </div>
-
-        <!-- チャンスゾーン: 扉が閉まる演出レイヤー -->
-        <div id="door-layer" class="door-layer">
-          <div id="door-light" class="door-light"></div>
-          <div id="door-l" class="door door-l"></div>
-          <div id="door-r" class="door door-r"></div>
-          <div class="door-frame"></div>
-          <div id="door-msg" class="door-msg"></div>
-        </div>
-
-        <!-- 枚数表示レイヤー -->
-        <div id="payout-display" class="payout-display absolute inset-0 z-30 flex flex-col items-center justify-center">
-          <div id="payout-label" class="align-sub text-xs font-bold mb-2 tracking-widest uppercase"></div>
-          <div id="payout-num" class="payout-num pay-l1"><span id="payout-value">0</span><span class="payout-unit">枚</span></div>
+        <div class="qn-menu-section" data-qn-section="shortcuts" id="qnShortcutsSection">
+          <span class="qn-menu-section-label">Keyboard Shortcuts</span>
+          <table class="qn-shortcut-table">
+            <thead>
+              <tr><th>Action</th><th>Key</th></tr>
+            </thead>
+            <tbody id="qnShortcutsTbody">
+              <!-- player-theme.jsがwindow.QN_SHORTCUTSから組み立てる -->
+            </tbody>
+          </table>
         </div>
 
       </div>
-
     </div>
+  </div>
+  <h1 id="appLogo"><button type="button" id="qnAppLogoBtn" aria-haspopup="menu" aria-expanded="false" title="Switch app"><span id="appLogoQN">QN</span><span id="appLogoName">PLAYER</span><svg class="qn-logo-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button><span id="appVersion">v</span></h1>
+  <script>
+    document.getElementById("appVersion").textContent = "v" + window.QN_APP_VERSION;
+  </script>
 
-    <!-- 操作ボタン部 -->
-    <div class="flex flex-col gap-3">
 
-      <!-- メイン レバーON ボタン -->
-      <button id="spin-btn" class="w-full py-6 bg-gradient-to-b from-red-500 via-red-600 to-red-800 hover:from-red-400 hover:to-red-700 active:scale-95 text-white font-black text-2xl tracking-widest rounded-2xl border-t-2 border-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-        レバーON
-      </button>
 
-      <!-- ボーナスを揃える ボタン -->
-      <button id="align-btn" disabled class="w-full py-4 bg-gradient-to-b from-amber-400 to-amber-600 text-slate-900 font-black text-base tracking-wider rounded-xl shadow-md border-t border-amber-200 opacity-40 cursor-not-allowed transition-all">
-        ボーナスを揃える！
-      </button>
 
-    </div>
 
-    <!-- フッター・リセット -->
-    <div class="ui-shade flex justify-between items-center p-2 border-t border-white/20 text-xs text-slate-300">
-      <div class="flex gap-2">
-        <button id="sound-toggle-btn" aria-label="音声 ON/OFF" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center">
+
+
+
+
+
+
+<div id="authContainer">
+  <button id="btnLoginGoogle" title="Googleでログイン">
+    <svg viewBox="0 0 24 24"><path fill="#fff" d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z"/></svg>
+    <span>Googleでログイン</span>
+  </button>
+
+  <div id="userInfo" style="display:none;">
+    <button id="userAvatarBtn" title="アカウントメニュー">
+      <img id="userPhoto" src="" alt="User Photo">
+    </button>
+
+    <div id="userDropdown" class="user-dropdown">
+      <div class="user-dropdown-header">
+        <span id="userName">User Name</span>
+      </div>
+      <div class="user-dropdown-body">
+        <div class="user-dropdown-item">
+          <span class="user-dropdown-label">プラン</span>
+          <span id="userPlanBadge" class="sw-header-plan-badge">Free</span>
+        </div>
+        <div class="user-dropdown-item" id="userPlanRemainingRow" style="display:none;">
+          <span class="user-dropdown-label">残り</span>
+          <span id="userPlanRemaining" class="user-dropdown-val"></span>
+        </div>
+        <div class="user-dropdown-item" id="userPlanEndDateRow" style="display:none;">
+          <span class="user-dropdown-label">利用終了日</span>
+          <span id="userPlanEndDate" class="user-dropdown-val"></span>
+        </div>
+      </div>
+      <div class="user-dropdown-footer">
+        <button id="swUpgradeBtn" title="Upgrade to Premium">Upgrade</button>
+        <button id="btnCancelSubscription" style="display:none;">解約する</button>
+        <button id="btnLogout">
+          <svg viewBox="0 0 24 24"><path fill="currentColor" d="M17 7l-1.41 1.41L17.17 10H9v2h8.17l-1.58 1.58L17 15l4-4zM5 5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h7v-2H5V5z"/></svg>
+          <span>ログアウト</span>
         </button>
-        <button id="graph-btn" aria-label="当選グラフ" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"/><polyline points="15 6 21 6 21 12"/></svg></button>
-        <button id="settings-btn" aria-label="確率設定" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2.2" fill="currentColor"/><circle cx="15" cy="12" r="2.2" fill="currentColor"/><circle cx="8" cy="18" r="2.2" fill="currentColor"/></svg></button>
-      </div>
-      <button id="reset-btn" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20">
-        RESET
-      </button>
-    </div>
-
-  </main>
-
-  <footer class="ui-shade relative z-10 my-2 px-4 py-1 text-[11px] text-slate-400 font-bold text-center">
-    &copy; ペカり君 - GOGO! SIMULATOR
-  </footer>
-
-  <!-- 当選グラフ -->
-  <div id="graph-modal" class="modal">
-    <div class="modal-card">
-      <div class="modal-head"><span>当選グラフ</span><button type="button" data-close-modal aria-label="閉じる">&times;</button></div>
-      <div id="graph-summary" class="graph-summary"></div>
-      <div class="graph-title">差枚数の推移 (縦線は当選)</div>
-      <canvas id="graph-line" class="graph-canvas"></canvas>
-      <div class="graph-title">当選枚数</div>
-      <canvas id="graph-bars" class="graph-canvas"></canvas>
-    </div>
-  </div>
-
-  <!-- 確率設定 -->
-  <div id="settings-modal" class="modal">
-    <div class="modal-card">
-      <div class="modal-head"><span>確率設定</span><button type="button" data-close-modal aria-label="閉じる">&times;</button></div>
-      <div id="settings-body"></div>
-      <div class="modal-foot">
-        <button type="button" id="settings-default">初期値</button>
-        <button type="button" id="settings-apply" class="primary">適用</button>
       </div>
     </div>
   </div>
+</div>
+  
 
-  <!-- レベルアップの風 (下から上へ) -->
-  <div id="wind-layer" class="wind-layer"></div>
 
-  <!-- チャンスゾーン突入演出 -->
-  <div id="zone-overlay" class="rush-overlay zone">
-    <div class="rush-text">
-      <div class="rush-line">CHANCE</div>
-      <div class="rush-line">ZONE!</div>
-      <div id="zone-sub" class="rush-sub"></div>
+
+
+
+</div>
+
+<div class="app-container">
+  <div class="player-section">
+    <p id="appTitle"><span id="appTitleInner"><span id="appTitleText">No file loaded</span></span></p>
+    <div id="vbarContainer">
+      <div id="vbarScroll"><div id="vbarRows"></div></div>
+      <span id="swLoopCounter"></span>
     </div>
-  </div>
-
-  <!-- AT突入演出 -->
-  <div id="rush-overlay" class="rush-overlay">
-    <div class="rush-text">
-      <div class="rush-line">PEKA</div>
-      <div class="rush-line">RUSH!!!</div>
-      <div id="rush-sub" class="rush-sub"></div>
-    </div>
-  </div>
-
-  <!-- ATリザルト -->
-  <div id="at-result" class="at-result">
-    <div class="at-result-card">
-      <div class="at-result-title">AT RESULT</div>
-      <div class="at-result-label">獲得枚数</div>
-      <div id="at-result-gain" class="at-result-gain">+0</div>
-      <div class="at-result-stats">
-        <div><span>AT G数</span><b id="ar-games">0 G</b></div>
-        <div><span>ベル揃い</span><b id="ar-bells">0 回</b></div>
-        <div><span>ボーナス当選</span><b id="ar-bonus">0 回</b></div>
+    
+    <div class="top-controls" id="topControls">
+      <div class="top-controls-row">
+        <div class="tripleNavBtn" id="playbackTripleBtn" title="Prev / Play / Next Track">
+          <button id="prevTrackBtn" class="tripleNavBtn-third tripleNavBtn-left" title="Prev Track">
+            <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            <span class="top-controls-btn-label">Track</span>
+          </button>
+          <span class="tripleNavBtn-divider"></span>
+          <button id="playToggle" class="tripleNavBtn-third tripleNavBtn-center" title="Play / Pause">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <span class="top-controls-btn-label">Play</span>
+          </button>
+          <span class="tripleNavBtn-divider"></span>
+          <button id="nextTrackBtn" class="tripleNavBtn-third tripleNavBtn-right" title="Next Track">
+            <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6h2v12h-2z"/></svg>
+            <span class="top-controls-btn-label">Track</span>
+          </button>
+        </div>
+        <button id="allRepeatToggleBtn" class="loopbtn" title="Toggle All Repeat">
+          <svg viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+          <span class="top-controls-btn-label">Repeat</span>
+        </button>
       </div>
-      <button type="button" id="at-result-close">閉じる</button>
+
+      <div class="top-controls-row">
+        <div class="tripleNavBtn" id="markerNavBtn" title="Prev / Add / Next Marker">
+          <button id="prevMarkerBtn" class="tripleNavBtn-third tripleNavBtn-left" title="Prev Marker">
+            <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            <span class="top-controls-btn-label">Marker</span>
+          </button>
+          <span class="tripleNavBtn-divider"></span>
+          <button id="addPinBtn" class="tripleNavBtn-third tripleNavBtn-center" title="Add Marker">
+            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            <span class="top-controls-btn-label">Marker</span>
+          </button>
+          <span class="tripleNavBtn-divider"></span>
+          <button id="nextMarkerBtn" class="tripleNavBtn-third tripleNavBtn-right" title="Next Marker">
+            <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6h2v12h-2z"/></svg>
+            <span class="top-controls-btn-label">Marker</span>
+          </button>
+        </div>
+        <button id="loopToggleBtn" class="loopbtn" title="Toggle Loop">
+          <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+          <span class="top-controls-btn-label">Loop</span>
+        </button>
+        <div id="loopPreRollControl" class="qn-stepper" title="Loop pre/post-roll seconds">
+          <button id="loopPreRollMinus" class="qn-stepper-btn" type="button" title="Decrease" aria-label="Decrease"><svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></button>
+          <span id="loopPreRollValue" class="qn-stepper-val">0<span class="qn-stepper-unit">s</span></span>
+          <button id="loopPreRollPlus" class="qn-stepper-btn" type="button" title="Increase" aria-label="Increase"><svg viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg></button>
+        </div>
+      </div>
     </div>
+
+    <div class="time-controls-row">
+      <div id="timeDisplay">
+        <span id="currentTimeVal" class="time-val">00:00.0</span>
+        <span class="time-sep">/</span>
+        <span id="durationVal" class="time-dur">00:00.0</span>
+      </div>
+    </div>
+
+    <div class="basic-panel-box">
+      <!-- #fileInputはPlaylistタブのAdd Fileボタン等から参照されるのでdisplay:noneのまま残す -->
+      <div class="time-controls-row adjust-controls-row">
+        <div class="time-controls-buttons">
+          <input type="file" id="fileInput" accept="audio/*,video/*,.mp3,.wav,.ogg,.oga,.m4a,.aac,.flac,.webm,.opus,.mp4,.m4v,.mov,.3gp,.3g2,.mkv,.mka,.weba,.ogv,.aif,.aiff,.aifc,.caf,.mp2,.mpga,.amr" multiple style="display:none;">
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <script src="app.js"></script>
+  <div class="sidebar-section" id="sidebarSection">
+    <div class="mobile-tabs">
+      <button class="mobile-tab-btn" data-tab="control">Control</button>
+      <button class="mobile-tab-btn" data-tab="markers">Markers</button>
+      <button class="mobile-tab-btn active" data-tab="playlist">Playlist</button>
+      <button class="mobile-tab-btn" data-tab="text">Text</button>
+    </div>
+
+    <div class="mobile-tab-panel" data-tab-panel="control">
+      <div class="markers-heading-row">
+        <h3>Control</h3>
+      </div>
+      <div class="control-list">
+        <div class="control-card">
+          <label>Volume <span id="controlVolumeDisplay" style="color:#fff;">0.80</span></label>
+          <input type="range" id="controlVolume" min="0" max="1" step="0.01" value="0.8">
+        </div>
+
+        <div class="control-card" id="controlSpeedCard">
+          <label>
+            Speed <span id="controlSpeedDisplay" style="color:#fff;">1.00</span>x
+            <button class="mini-reset-btn" id="controlSpeedResetBtn" title="Reset speed to 1.00x">Reset</button>
+            <button type="button" class="glow-switch control-effect-toggle" id="controlSpeedEnableToggle" role="switch" aria-checked="true" title="Speed effect on/off"><span class="glow-switch-knob"></span></button>
+          </label>
+          <div class="control-slider-row">
+            <button type="button" class="control-step-btn" id="controlSpeedDownBtn" title="Speed −5%">−</button>
+            <input type="range" id="controlSpeedRange" min="0.5" max="1.5" step="0.01" value="1.0">
+            <button type="button" class="control-step-btn" id="controlSpeedUpBtn" title="Speed +5%">＋</button>
+          </div>
+
+          <div class="auto-speed-card" id="controlAutoSpeedCard">
+            <label class="auto-speed-header">
+              <span>Auto Speed</span>
+              <button class="glow-switch control-effect-toggle" id="controlAutoSpeedToggleBtn" role="switch" aria-checked="false" title="Automatically adjust speed every N loops">
+                <span class="glow-switch-knob"></span>
+              </button>
+            </label>
+            <div class="auto-speed-settings" id="controlAutoSpeedSettings">
+              <div class="auto-speed-row">
+                <div class="auto-speed-direction">
+                  <button type="button" class="auto-speed-dir-btn" data-dir="down">Speed Down</button>
+                  <button type="button" class="auto-speed-dir-btn active" data-dir="up">Speed Up</button>
+                </div>
+              </div>
+              <div class="auto-speed-row auto-speed-row-triple">
+                <div class="auto-speed-field">
+                  <span class="auto-speed-row-label">Every</span>
+                  <div class="auto-speed-field-input">
+                    <input type="number" id="controlAutoSpeedEveryN" class="auto-speed-number" min="1" max="99" step="1" value="5">
+                    <span class="auto-speed-unit">loops</span>
+                  </div>
+                </div>
+                <div class="auto-speed-field">
+                  <span class="auto-speed-row-label">By</span>
+                  <div class="auto-speed-field-input">
+                    <input type="number" id="controlAutoSpeedStepPercent" class="auto-speed-number" min="1" max="50" step="1" value="5">
+                    <span class="auto-speed-unit">%</span>
+                  </div>
+                </div>
+                <div class="auto-speed-field">
+                  <span class="auto-speed-row-label">Limit</span>
+                  <div class="auto-speed-field-input">
+                    <input type="number" id="controlAutoSpeedLimit" class="auto-speed-number" min="50" max="150" step="1" value="150">
+                    <span class="auto-speed-unit">%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="auto-speed-status" id="controlAutoSpeedStatus">Loop progress: 0 / 5</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-card key-control-card">
+          <label>
+            Key <span id="controlKeyDisplay" style="color:#fff;">0</span> st
+            <button class="mini-reset-btn" id="controlKeyResetBtn" title="Reset key to 0">Reset</button>
+            <button type="button" class="glow-switch control-effect-toggle" id="controlKeyEnableToggle" role="switch" aria-checked="true" title="Key effect on/off"><span class="glow-switch-knob"></span></button>
+          </label>
+          <div class="control-slider-row">
+            <button type="button" class="control-step-btn" id="controlKeyDownBtn" title="Key down 1 semitone">−</button>
+            <input type="range" id="controlKeyRange" min="-12" max="12" step="1" value="0">
+            <button type="button" class="control-step-btn" id="controlKeyUpBtn" title="Key up 1 semitone">＋</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-tab-panel" data-tab-panel="markers">
+      <div class="markers-heading-row">
+        <h3>Markers</h3>
+        <span id="loopInfo">Active 0/0</span>
+      </div>
+      <div id="markersNowPlaying" style="display:none"></div>
+      <div id="pinList"></div>
+    </div>
+
+    <div class="mobile-tab-panel" data-tab-panel="playlist">
+      <div class="markers-heading-row">
+        <h3>Library</h3>
+        <span id="playlistInfo">0 tracks</span>
+      </div>
+      <div id="playlistBox"></div>
+    </div>
+
+    <div class="mobile-tab-panel" data-tab-panel="text">
+      <div class="markers-heading-row">
+        <h3>Text</h3>
+        <button id="noteTextFullscreenBtn" class="panel-fab-btn panel-addfile-btn" title="Fullscreen">
+          <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+          <span>Full</span>
+        </button>
+      </div>
+      <textarea id="noteTextArea" class="note-textarea" placeholder="Lyrics, memo, anything…"></textarea>
+    </div>
+  </div>
+</div>
+
+<div id="textFullscreenOverlay" class="text-fullscreen-overlay">
+  <div class="text-fullscreen-header">
+    <div class="text-fullscreen-font-controls">
+      <button id="noteTextFontDecBtn" class="tab-icon-btn" title="Decrease text size">−</button>
+      <button id="noteTextFontIncBtn" class="tab-icon-btn" title="Increase text size">＋</button>
+    </div>
+    <button id="noteTextFullscreenCloseBtn" class="tab-icon-btn" title="Close">✕</button>
+  </div>
+  <textarea id="noteTextAreaFullscreen" class="note-textarea note-textarea-fullscreen" placeholder="Lyrics, memo, anything…"></textarea>
+</div>
+
+<div id="eqModalOverlay" class="export-modal-overlay">
+  <div class="export-modal eq-modal">
+    <div class="export-modal-header">
+      <span>Equalizer</span>
+      <button id="eqModalCloseBtn" class="export-modal-close" title="Close">✕</button>
+    </div>
+
+    <div class="export-modal-body">
+      <div class="export-section" id="eqInlineSection">
+        <div class="basic-panel-divider eq-inline-divider"></div>
+        <div class="eq-inline-title">
+          Equalizer
+          <button class="mini-reset-btn" id="controlEqResetBtn" title="Reset EQ to flat" data-preset="flat">Reset</button>
+          <button class="glow-switch control-effect-toggle" id="controlEqEnableToggle" role="switch" aria-checked="true" title="Toggle EQ effect on/off">
+            <span class="glow-switch-knob"></span>
+          </button>
+        </div>
+        <p class="eq-hint">Drag across the bands to draw a curve</p>
+        <div class="eq-bands" id="eqBands">
+          <div class="eq-band" data-freq="31">
+            <span class="eq-band-gain" id="eqGain0">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand0" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">31</span>
+          </div>
+          <div class="eq-band" data-freq="62">
+            <span class="eq-band-gain" id="eqGain1">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand1" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">62</span>
+          </div>
+          <div class="eq-band" data-freq="125">
+            <span class="eq-band-gain" id="eqGain2">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand2" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">125</span>
+          </div>
+          <div class="eq-band" data-freq="250">
+            <span class="eq-band-gain" id="eqGain3">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand3" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">250</span>
+          </div>
+          <div class="eq-band" data-freq="500">
+            <span class="eq-band-gain" id="eqGain4">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand4" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">500</span>
+          </div>
+          <div class="eq-band" data-freq="1000">
+            <span class="eq-band-gain" id="eqGain5">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand5" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">1k</span>
+          </div>
+          <div class="eq-band" data-freq="2000">
+            <span class="eq-band-gain" id="eqGain6">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand6" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">2k</span>
+          </div>
+          <div class="eq-band" data-freq="4000">
+            <span class="eq-band-gain" id="eqGain7">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand7" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">4k</span>
+          </div>
+          <div class="eq-band" data-freq="8000">
+            <span class="eq-band-gain" id="eqGain8">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand8" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">8k</span>
+          </div>
+          <div class="eq-band" data-freq="16000">
+            <span class="eq-band-gain" id="eqGain9">0</span>
+            <div class="eq-slider-track"><input type="range" class="eq-vslider" id="eqBand9" min="-15" max="15" step="1" value="0" orient="vertical"></div>
+            <span class="eq-band-freq">16k</span>
+          </div>
+        </div>
+        <div class="eq-preset-row">
+          <div class="eq-preset-buttons">
+            <button type="button" class="eq-preset-btn" data-preset="bass">Bass</button>
+            <button type="button" class="eq-preset-btn" data-preset="vocal">Vocal</button>
+            <button type="button" class="eq-preset-btn" data-preset="treble">Treble</button>
+            <button type="button" class="eq-preset-btn" data-preset="vshape">V-Shape</button>
+          </div>
+          <div class="eq-preset-buttons eq-preset-custom-row" id="eqCustomPresetButtons"></div>
+          <button type="button" class="eq-preset-btn eq-preset-save-btn" id="eqSavePresetBtn" title="Save current EQ as a custom preset">Save as Preset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="cancelModalOverlay" class="export-modal-overlay">
+  <div class="export-modal cancel-modal">
+    <div class="export-modal-header">
+      <span>サブスクリプションの解約</span>
+      <button id="cancelModalCloseBtn" class="export-modal-close" title="Close">✕</button>
+    </div>
+
+    <div class="export-modal-body">
+      <div class="cancel-modal-row">
+        <span class="cancel-modal-label">プラン</span>
+        <span class="cancel-modal-val" id="cancelModalPlan">-</span>
+      </div>
+      <div class="cancel-modal-row">
+        <span class="cancel-modal-label">残り期間</span>
+        <span class="cancel-modal-val" id="cancelModalRemaining">-</span>
+      </div>
+      <div class="cancel-modal-row">
+        <span class="cancel-modal-label">次回自動更新日</span>
+        <span class="cancel-modal-val" id="cancelModalNextRenewal">-</span>
+      </div>
+      <div class="cancel-modal-notice">
+        解約手続きを行った場合も、<strong id="cancelModalUntilDate">-</strong>まで引き続きPremium機能をご利用いただけます。それ以降は自動的に無料プランへ切り替わります。
+      </div>
+    </div>
+
+    <div class="export-modal-footer">
+      <button id="cancelModalCancelBtn" class="export-cancel-btn" title="Close">キャンセル</button>
+      <button id="cancelModalConfirmBtn" class="export-run-btn cancel-modal-confirm-btn">解約手続きへ進む</button>
+    </div>
+  </div>
+</div>
+
+<div class="top-controls-spacer" id="topControlsSpacer"></div>
+
+<div id="trackBackupHome" hidden>
+    <div class="export-modal-body">
+      <div class="export-section">
+        <div class="track-backup-tracklist-header">
+          <label class="export-section-label">曲を選択</label>
+          <div class="track-backup-tracklist-actions">
+            <button type="button" id="trackBackupSelectAllBtn" class="track-backup-mini-btn">全選択</button>
+            <button type="button" id="trackBackupSelectNoneBtn" class="track-backup-mini-btn">全解除</button>
+          </div>
+        </div>
+        <div id="trackBackupTrackList" class="track-backup-tracklist"></div>
+        <div class="track-backup-size-row">
+          <span id="trackBackupSelectedCount">0曲選択中</span>
+          <span id="trackBackupTotalSize">0 MB</span>
+        </div>
+      </div>
+
+      <div class="export-section track-backup-options">
+        <label class="export-section-label">含める項目</label>
+        <div class="track-backup-checklist">
+          <label class="track-backup-row">
+            <input type="checkbox" id="trackBackupIncludeAudio" checked>
+            <span class="track-backup-row-label">PLAYER音声データ</span>
+          </label>
+          <label class="track-backup-row">
+            <input type="checkbox" id="trackBackupIncludeSettings" checked>
+            <span class="track-backup-row-label">ユーザー設定データ</span>
+          </label>
+          <label class="track-backup-row">
+            <input type="checkbox" id="trackBackupIncludeYoutube" checked>
+            <span class="track-backup-row-label">YouTube各種データ</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="export-modal-footer">
+      <div id="trackBackupStatus" class="export-status"></div>
+      <button id="trackBackupCancelBtn" class="export-cancel-btn" title="Close">Cancel</button>
+      <button id="trackBackupRunBtn" class="export-run-btn">Download</button>
+    </div>
+</div>
+
+<div id="trackImportHome" hidden>
+    <div class="export-modal-body">
+      <div class="export-section">
+        <div class="track-import-layout">
+          <div class="track-import-col-main">
+            <div id="trackImportDropZone" class="track-import-dropzone">
+              <svg viewBox="0 0 24 24" class="track-import-dropzone-icon"><path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zM13 12.67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2v9.67z"/></svg>
+              <div class="track-import-dropzone-text">ZIP/JSONファイルをドロップ</div>
+              <div class="track-import-dropzone-sub">またはクリックして選択</div>
+              <input type="file" id="trackImportFileInput" accept=".zip,.json" style="display:none;">
+            </div>
+            <div id="trackImportLoadedInfo" class="track-import-loaded-info" style="display:none;">
+              <svg viewBox="0 0 24 24" class="track-import-loaded-info-icon"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              <div class="track-import-loaded-info-text">
+                <div id="trackImportLoadedFileName" class="track-import-loaded-info-name">-</div>
+                <div id="trackImportLoadedFileCount" class="track-import-loaded-info-count"></div>
+              </div>
+            </div>
+            <div id="trackImportSummary" class="track-import-summary" style="display:none;"></div>
+          </div>
+
+          <div id="trackImportDuplicateList" class="track-import-duplicate-list" style="display:none;">
+            <div class="track-import-duplicate-header">
+              <label class="export-section-label">重複する項目</label>
+              <div class="track-import-bulk-toggle-wrap">
+                <span id="trackImportBulkToggleLabel" class="track-import-choice-label">すべて上書き</span>
+                <button type="button" id="trackImportBulkToggle" class="glow-switch track-import-choice-switch" role="switch" aria-checked="true" title="すべてスキップに切り替え">
+                  <span class="glow-switch-knob"></span>
+                </button>
+              </div>
+            </div>
+            <div id="trackImportDuplicateRows"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="export-modal-footer">
+      <div id="trackImportStatus" class="export-status"></div>
+      <button id="trackImportCancelBtn" class="export-cancel-btn" title="Close">Cancel</button>
+      <button id="trackImportRunBtn" class="export-run-btn">Import</button>
+    </div>
+</div>
+
+
+<script src="JS/qn-i18n.js"></script>
+<script src="JS/qn-i18n-apps.js"></script>
+<script src="JS/qn-i18n-ja.js"></script>
+<script src="JS/jszip.min.js"></script>
+<script src="JS/player-shareware.js"></script>
+<script src="JS/qn-marker-core.js"></script>
+<script src="JS/player-core.js"></script>
+<script src="JS/player-bars.js"></script>
+<script src="JS/player-ui-shared.js"></script>
+<script src="JS/player-normalize.js"></script>
+<script src="JS/player-id3.js"></script>
+<script src="JS/player-playlist.js"></script>
+<script src="JS/player-track-backup.js"></script>
+<script src="JS/player-sync.js"></script>
+<script src="JS/player-p2p.js"></script>
+<script src="JS/player-markers.js"></script>
+<script src="JS/player-marker-presets.js"></script>
+<script src="JS/player-control-eq.js"></script>
+<script src="JS/player-controls.js"></script>
+<script src="JS/qn-settings-ui.js"></script>
+<script src="JS/player-text.js"></script>
+<script src="JS/player-ui-pc-v2.js"></script>
+<script src="JS/player-quickpop.js"></script>
+<script src="JS/qn-wakelock.js"></script>
+<script src="JS/qn-apps.js"></script>
+<script src="JS/player-swipe.js"></script>
+<script src="JS/qn-app-youtube.js"></script>
+<script src="JS/qn-pitch-core.js"></script>
+<script src="JS/qn-app-tuner.js"></script>
+<script src="JS/qn-pitch-filters.js"></script>
+<script src="JS/qn-app-pitch.js"></script>
+<script src="JS/player-theme.js"></script>
+<script type="module" src="JS/player-auth.js"></script>
 </body>
 </html>
