@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ペカり君 - パチスロ エンタメシミュレーター</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-5 select-none">
+
+  <div id="fx-overlay"></div>
+  <canvas id="fx-canvas" class="fixed inset-0 pointer-events-none" style="z-index: 5;"></canvas>
+  <div id="flash-overlay" class="fixed inset-0 pointer-events-none z-50"></div>
+  <div id="freeze-overlay"><div id="crt-line"></div><div id="crt-dot"></div></div>
+
+  <main class="w-full max-w-md p-5 flex flex-col gap-5 relative z-10 overflow-hidden">
+
+    <!-- カウンター & GOGO!ランプ表示 -->
+    <div class="p-4 flex flex-col gap-4">
+
+      <div class="ui-shade py-2 flex flex-col gap-2">
+      <!-- カウンターセグ表示 -->
+      <div class="grid grid-cols-4 gap-2 p-3 text-center">
+        <div>
+          <div class="text-[11px] text-slate-400 font-bold">G数</div>
+          <div id="display-games" class="digital-font text-xl text-yellow-400 font-bold">0</div>
+        </div>
+        <div>
+          <div class="text-[11px] text-slate-400 font-bold">BIG</div>
+          <div id="display-big" class="digital-font text-xl text-red-500 font-bold">0</div>
+        </div>
+        <div>
+          <div class="text-[11px] text-slate-400 font-bold">REG</div>
+          <div id="display-reg" class="digital-font text-xl text-green-400 font-bold">0</div>
+        </div>
+        <div>
+          <div class="text-[11px] text-slate-400 font-bold">合算</div>
+          <div id="display-prob" class="digital-font text-xs text-cyan-400 font-bold leading-7">1/0</div>
+        </div>
+      </div>
+
+      <!-- ステータス情報 -->
+      <div class="flex justify-between items-center px-2 text-xs">
+        <div class="text-slate-300 font-bold">差枚数: <span id="display-diff" class="digital-font font-bold text-white text-sm">0</span> 枚</div>
+        <div class="text-slate-300 font-bold">確率: <span id="display-rate" class="text-yellow-400 font-bold">1/30</span></div>
+      </div>
+      <div id="at-status" class="at-status"><span id="at-label" class="at-label">AT</span><span>残り <span id="at-remain" class="digital-font">0</span> G</span></div>
+      <div id="cherry-status" class="cherry-status">CHERRY&nbsp;&nbsp;当選率UP 残り <span id="cherry-remain" class="digital-font">0</span> G</div>
+      </div>
+
+      <!-- GOGO! ランプ表示ボックス -->
+      <div id="gogo-box" class="gogo-lamp w-full h-56 flex flex-col items-center justify-center relative cursor-pointer">
+
+        <!-- GOGO! ロゴ (点灯用) -->
+        <div id="gogo-text-container" class="relative z-10 text-center transition-opacity duration-200">
+          <div id="gogo-text" class="gogo-text font-black text-6xl tracking-tighter italic transform -rotate-3 scale-y-110">
+            GOGO!
+          </div>
+          <div id="gogo-subtext" class="gogo-text font-bold text-xs tracking-widest mt-1 opacity-0 transition-opacity">
+            CHANCE
+          </div>
+        </div>
+
+        <div id="at-toast" class="at-toast"></div>
+
+        <!-- 揃い図柄表示レイヤー (777 / BAR BAR BAR) -->
+        <div id="align-display" class="align-display absolute inset-0 z-20 flex flex-col items-center justify-center">
+          <div id="reels" class="reels"></div>
+          <div id="next-hint" class="next-hint">NEXT ▼</div>
+          <div id="bell-badge" class="bell-badge"></div>
+        </div>
+
+        <!-- 枚数表示レイヤー -->
+        <div id="payout-display" class="payout-display absolute inset-0 z-30 flex flex-col items-center justify-center">
+          <div id="payout-label" class="align-sub text-xs font-bold mb-2 tracking-widest uppercase"></div>
+          <div id="payout-num" class="payout-num pay-l1"><span id="payout-value">0</span><span class="payout-unit">枚</span></div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- 操作ボタン部 -->
+    <div class="flex flex-col gap-3">
+
+      <!-- メイン レバーON ボタン -->
+      <button id="spin-btn" class="w-full py-6 bg-gradient-to-b from-red-500 via-red-600 to-red-800 hover:from-red-400 hover:to-red-700 active:scale-95 text-white font-black text-2xl tracking-widest rounded-2xl border-t-2 border-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+        レバーON
+      </button>
+
+      <!-- ボーナスを揃える ボタン -->
+      <button id="align-btn" disabled class="w-full py-4 bg-gradient-to-b from-amber-400 to-amber-600 text-slate-900 font-black text-base tracking-wider rounded-xl shadow-md border-t border-amber-200 opacity-40 cursor-not-allowed transition-all">
+        ボーナスを揃える！
+      </button>
+
+    </div>
+
+    <!-- フッター・リセット -->
+    <div class="ui-shade flex justify-between items-center p-2 border-t border-white/20 text-xs text-slate-300">
+      <div class="flex gap-2">
+        <button id="sound-toggle-btn" aria-label="音声 ON/OFF" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center">
+        </button>
+        <button id="graph-btn" aria-label="当選グラフ" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"/><polyline points="15 6 21 6 21 12"/></svg></button>
+        <button id="settings-btn" aria-label="確率設定" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2.2" fill="currentColor"/><circle cx="15" cy="12" r="2.2" fill="currentColor"/><circle cx="8" cy="18" r="2.2" fill="currentColor"/></svg></button>
+      </div>
+      <button id="reset-btn" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20">
+        RESET
+      </button>
+    </div>
+
+  </main>
+
+  <footer class="ui-shade relative z-10 my-2 px-4 py-1 text-[11px] text-slate-400 font-bold text-center">
+    &copy; ペカり君 - GOGO! SIMULATOR
+  </footer>
+
+  <!-- 当選グラフ -->
+  <div id="graph-modal" class="modal">
+    <div class="modal-card">
+      <div class="modal-head"><span>当選グラフ</span><button type="button" data-close-modal aria-label="閉じる">&times;</button></div>
+      <div id="graph-summary" class="graph-summary"></div>
+      <div class="graph-title">差枚数の推移 (縦線は当選)</div>
+      <canvas id="graph-line" class="graph-canvas"></canvas>
+      <div class="graph-title">当選枚数</div>
+      <canvas id="graph-bars" class="graph-canvas"></canvas>
+    </div>
+  </div>
+
+  <!-- 確率設定 -->
+  <div id="settings-modal" class="modal">
+    <div class="modal-card">
+      <div class="modal-head"><span>確率設定</span><button type="button" data-close-modal aria-label="閉じる">&times;</button></div>
+      <div id="settings-body"></div>
+      <div class="modal-foot">
+        <button type="button" id="settings-default">初期値</button>
+        <button type="button" id="settings-apply" class="primary">適用</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AT突入演出 -->
+  <div id="rush-overlay" class="rush-overlay">
+    <div class="rush-text">
+      <div class="rush-line">PEKA</div>
+      <div class="rush-line">RUSH!!!</div>
+      <div id="rush-sub" class="rush-sub"></div>
+    </div>
+  </div>
+
+  <!-- ATリザルト -->
+  <div id="at-result" class="at-result">
+    <div class="at-result-card">
+      <div class="at-result-title">AT RESULT</div>
+      <div class="at-result-label">獲得枚数</div>
+      <div id="at-result-gain" class="at-result-gain">+0</div>
+      <div class="at-result-stats">
+        <div><span>AT G数</span><b id="ar-games">0 G</b></div>
+        <div><span>ベル揃い</span><b id="ar-bells">0 回</b></div>
+        <div><span>ボーナス当選</span><b id="ar-bonus">0 回</b></div>
+      </div>
+      <button type="button" id="at-result-close">閉じる</button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
