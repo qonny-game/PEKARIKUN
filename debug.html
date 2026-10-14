@@ -13,7 +13,7 @@
   <div id="fx-overlay"></div>
   <canvas id="fx-canvas" class="fixed inset-0 pointer-events-none" style="z-index: 5;"></canvas>
   <div id="flash-overlay" class="fixed inset-0 pointer-events-none z-50"></div>
-  <div id="freeze-overlay"><div id="crt-line"></div><div id="crt-dot"></div></div>
+  <div id="aura" class="aura"></div>
 
   <main class="w-full max-w-md p-5 flex flex-col gap-5 relative z-10 overflow-hidden">
 
@@ -32,7 +32,7 @@
           <div id="display-big" class="digital-font text-xl text-red-500 font-bold">0</div>
         </div>
         <div>
-          <div class="text-[11px] text-slate-400 font-bold">REG</div>
+          <div class="text-[11px] text-slate-400 font-bold">AT</div>
           <div id="display-reg" class="digital-font text-xl text-green-400 font-bold">0</div>
         </div>
         <div>
@@ -51,7 +51,7 @@
       </div>
 
       <!-- GOGO! ランプ表示ボックス -->
-      <div id="gogo-box" class="gogo-lamp w-full h-56 flex flex-col items-center justify-center relative cursor-pointer">
+      <div id="gogo-box" class="gogo-lamp w-full flex flex-col items-center justify-center relative cursor-pointer">
 
         <!-- GOGO! ロゴ (点灯用) -->
         <div id="gogo-text-container" class="relative z-10 text-center transition-opacity duration-200">
@@ -64,6 +64,7 @@
         </div>
 
         <div id="at-toast" class="at-toast"></div>
+        <div id="get-pop" class="get-pop"></div>
 
         <!-- 揃い図柄表示レイヤー (777 / BAR BAR BAR) -->
         <div id="align-display" class="align-display absolute inset-0 z-20 flex flex-col items-center justify-center">
@@ -90,16 +91,15 @@
         <summary class="cursor-pointer px-3 py-2 font-bold text-slate-300">🛠 DEBUG (全演出テスト)</summary>
         <div class="p-2 flex flex-col gap-2">
           <div class="text-[11px] text-slate-400 font-bold">BIG (演出 = 枚数)</div>
-          <div id="debug-big" class="grid grid-cols-5 gap-1"></div>
-          <div class="text-[11px] text-slate-400 font-bold">REG / 特殊演出</div>
+          <div id="debug-big" class="grid grid-cols-6 gap-1"></div>
+          <div class="text-[11px] text-slate-400 font-bold">ボーナス消化 / その他</div>
           <div id="debug-special" class="grid grid-cols-2 sm:grid-cols-4 gap-1"></div>
         </div>
       </details>
 
-      <!-- メイン レバーON ボタン -->
-      <button id="spin-btn" class="w-full py-6 bg-gradient-to-b from-red-500 via-red-600 to-red-800 hover:from-red-400 hover:to-red-700 active:scale-95 text-white font-black text-2xl tracking-widest rounded-2xl border-t-2 border-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-        レバーON
-      </button>
+      <!-- レバー: リール表示エリアをタップして操作 (状態管理用の非表示ボタン) -->
+      <button id="spin-btn" hidden>レバーON</button>
+      <div id="tap-hint" class="tap-hint">タップ: レバーON</div>
 
       <!-- ボーナスを揃える ボタン -->
       <button id="align-btn" disabled class="w-full py-4 bg-gradient-to-b from-amber-400 to-amber-600 text-slate-900 font-black text-base tracking-wider rounded-xl shadow-md border-t border-amber-200 opacity-40 cursor-not-allowed transition-all">
@@ -160,6 +160,12 @@
     </div>
   </div>
 
+  <!-- PUSHボタン (G数獲得) -->
+  <div id="push-overlay" class="push-overlay">
+    <button type="button" id="push-btn" class="push-btn">PUSH</button>
+    <div id="push-result" class="push-result"></div>
+  </div>
+
   <!-- ATリザルト -->
   <div id="at-result" class="at-result">
     <div class="at-result-card">
@@ -171,6 +177,7 @@
         <div><span>ベル揃い</span><b id="ar-bells">0 回</b></div>
         <div><span>ボーナス当選</span><b id="ar-bonus">0 回</b></div>
       </div>
+      <div class="ar-hint"><span>次回示唆</span><div id="ar-hint-bar" class="ar-hint-bar" data-lv="0"><i></i><i></i><i></i><i></i></div><b id="ar-hint-text" data-lv="0">弱</b></div>
       <button type="button" id="at-result-close">閉じる</button>
     </div>
   </div>
@@ -181,21 +188,22 @@
     // デバッグ: 全演出をボタンで再生 (G数・回数・差枚数は変化しない)
     // ==========================================
     window.SHOW_INTERNAL = true;   // デバッグ版では内部状態 (チェリー後の高確率) も表示
-    function debugStart({ type, display = -1, actual = -1, freezeStages = [], chainQueue = [] }) {
-      if (isFreezing) return; // 暗転中は無視
+    function debugStart({ display, actual }) {
+      if (bonusRun || isRushing || isPushing || isAtResult || isSuspense) return;
       resetPekaState();       // 進行中の状態を初期化
       isDebugRun = true;
-
-      pendingBonusType = type;
-      pendingDisplayIndex = type === 'BIG' ? display : -1;
-      pendingTierIndex = type === 'BIG' ? actual : -1;
-      pendingFreezeStages = freezeStages.slice();
-      pendingChainQueue = chainQueue.slice();
-      chainActive = chainQueue.length > 0;
-      chainUps = 0;
-
+      pendingBonusType = 'BIG';
+      pendingDisplayIndex = display;
+      pendingTierIndex = actual;
       initAudio();
       triggerPekari();
+    }
+
+    /* ボーナス消化のテスト: オーラの最終色とAT当否を指定して開始 (差枚数は変わらない) */
+    function debugBonus(coins, level, atWin) {
+      if (bonusRun || isRushing || isPushing || isAtResult || isSuspense || isPekared) return;
+      initAudio();
+      beginBonus(makeBonusPlan(coins, { level, atWin, debug: true }));
     }
 
     (function buildDebugPanel() {
@@ -203,45 +211,28 @@
       const bigWrap = document.getElementById('debug-big');
       const specialWrap = document.getElementById('debug-special');
 
-      const add = (wrap, label, opts) => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = btnClass;
-        b.textContent = label;
-        b.addEventListener('click', () => debugStart(opts));
-        wrap.appendChild(b);
-      };
-
-      BIG_TIERS.forEach((t, i) => add(bigWrap, t.coins, { type: 'BIG', display: i, actual: i }));
-
-      const idx = c => BIG_TIERS.findIndex(t => t.coins === c);
-      add(specialWrap, 'REG', { type: 'REG' });
-      add(specialWrap, '200→実は800', { type: 'BIG', display: idx(200), actual: idx(800) });
-      add(specialWrap, 'フリーズ→1000', { type: 'BIG', display: idx(200), actual: idx(200), freezeStages: [tierStage(idx(1000))] });
-      add(specialWrap, 'フリーズ→2000', { type: 'BIG', display: idx(200), actual: idx(200), freezeStages: [tierStage(idx(2000))] });
-      add(specialWrap, '上乗せ 200→1000', { type: 'BIG', display: idx(200), actual: idx(200), chainQueue: [300, 400, 500, 600, 700, 800, 900, 1000] });
-      [200, 300, 400, 500, 600, 700].forEach(c =>
-        add(specialWrap, '上乗せ(運) ' + c + '開始', { type: 'BIG', display: idx(c), actual: idx(c), chainQueue: makeChainQueue(c) }));
-      const addFn = (label, fn) => {
+      const addTo = (wrap, label, fn) => {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = btnClass;
         b.textContent = label;
         b.addEventListener('click', fn);
-        specialWrap.appendChild(b);
+        wrap.appendChild(b);
       };
+      BIG_TIERS.forEach((t, i) => addTo(bigWrap, t.coins, () => debugStart({ display: i, actual: i })));
+
+      const addFn = (label, fn) => addTo(specialWrap, label, fn);
+      AURA_NAMES.forEach((n, lv) => addFn(`消化 ${n}→AT`, () => debugBonus(300, lv, true)));
+      [0, 1, 2, 3, 4, 5].forEach(lv => addFn(`消化 ${AURA_NAMES[lv]}→ハズレ`, () => debugBonus(300, lv, false)));
       addFn('チェリー', () => hitCherry(true, false));
-      addFn('チェリー (AT中)', () => hitCherry(true, true));
-      addFn('ATリザルト表示', () => { if (!isAtResult) showAtResult({ gain: 1234, games: 50, bells: 21, bonuses: 1 }); });
-      addFn('AT突入 +50G', () => { if (!isRushing) startAT(true, 50); });
-      addFn('AT突入 +100G (プレミア)', () => { if (!isRushing) startAT(true, 100); });
-      addFn('AT突入 +200G (プレミア)', () => { if (!isRushing) startAT(true, 200); });
-      addFn('AT突入 +300G (プレミア)', () => { if (!isRushing) startAT(true, 300); });
-      addFn('ベル 直線6枚', () => hitBell(0));
-      addFn('ベル 左上から1枚', () => hitBell(1));
-      addFn('ベル 左下から15枚', () => hitBell(2));
-      add(specialWrap, 'REG→777', { type: 'REG', freezeStages: [STAGE_777] });
-      add(specialWrap, 'REG→777→7777', { type: 'REG', freezeStages: [STAGE_777, STAGE_7777] });
+      addFn('チェリー (AT中)', () => { if (!isPushing) hitCherry(false, true); });
+      addFn('PUSH +10G', () => { if (!isPushing) pushReveal('+10G', false); });
+      addFn('PUSH +100G (プレミア)', () => { if (!isPushing) pushReveal('+100G', true); });
+      HINT_LABELS.forEach((l, i) => addFn(`リザルト 示唆${l}`, () => { if (!isAtResult) showAtResult({ gain: 1234, games: 50, bells: 21, bonuses: 1, hint: i }); }));
+      [50, 100, 200, 300].forEach(g => addFn(`AT突入 +${g}G`, () => { if (!isRushing && !isPushing) startAT(g); }));
+      addFn('ベル 直線6枚', () => hitBell(0, true));
+      addFn('ベル 左上から1枚', () => hitBell(1, true));
+      addFn('ベル 左下から15枚', () => hitBell(2, true));
     })();
   </script>
 </body>

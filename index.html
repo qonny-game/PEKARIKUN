@@ -13,7 +13,7 @@
   <div id="fx-overlay"></div>
   <canvas id="fx-canvas" class="fixed inset-0 pointer-events-none" style="z-index: 5;"></canvas>
   <div id="flash-overlay" class="fixed inset-0 pointer-events-none z-50"></div>
-  <div id="freeze-overlay"><div id="crt-line"></div><div id="crt-dot"></div></div>
+  <div id="aura" class="aura"></div>
 
   <main class="w-full max-w-md p-5 flex flex-col gap-5 relative z-10 overflow-hidden">
 
@@ -32,7 +32,7 @@
           <div id="display-big" class="digital-font text-xl text-red-500 font-bold">0</div>
         </div>
         <div>
-          <div class="text-[11px] text-slate-400 font-bold">REG</div>
+          <div class="text-[11px] text-slate-400 font-bold">AT</div>
           <div id="display-reg" class="digital-font text-xl text-green-400 font-bold">0</div>
         </div>
         <div>
@@ -51,7 +51,7 @@
       </div>
 
       <!-- GOGO! ランプ表示ボックス -->
-      <div id="gogo-box" class="gogo-lamp w-full h-56 flex flex-col items-center justify-center relative cursor-pointer">
+      <div id="gogo-box" class="gogo-lamp w-full flex flex-col items-center justify-center relative cursor-pointer">
 
         <!-- GOGO! ロゴ (点灯用) -->
         <div id="gogo-text-container" class="relative z-10 text-center transition-opacity duration-200">
@@ -64,6 +64,7 @@
         </div>
 
         <div id="at-toast" class="at-toast"></div>
+        <div id="get-pop" class="get-pop"></div>
 
         <!-- 揃い図柄表示レイヤー (777 / BAR BAR BAR) -->
         <div id="align-display" class="align-display absolute inset-0 z-20 flex flex-col items-center justify-center">
@@ -85,10 +86,9 @@
     <!-- 操作ボタン部 -->
     <div class="flex flex-col gap-3">
 
-      <!-- メイン レバーON ボタン -->
-      <button id="spin-btn" class="w-full py-6 bg-gradient-to-b from-red-500 via-red-600 to-red-800 hover:from-red-400 hover:to-red-700 active:scale-95 text-white font-black text-2xl tracking-widest rounded-2xl border-t-2 border-red-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-        レバーON
-      </button>
+      <!-- レバー: リール表示エリアをタップして操作 (状態管理用の非表示ボタン) -->
+      <button id="spin-btn" hidden>レバーON</button>
+      <div id="tap-hint" class="tap-hint">タップ: レバーON</div>
 
       <!-- ボーナスを揃える ボタン -->
       <button id="align-btn" disabled class="w-full py-4 bg-gradient-to-b from-amber-400 to-amber-600 text-slate-900 font-black text-base tracking-wider rounded-xl shadow-md border-t border-amber-200 opacity-40 cursor-not-allowed transition-all">
@@ -149,6 +149,12 @@
     </div>
   </div>
 
+  <!-- PUSHボタン (G数獲得) -->
+  <div id="push-overlay" class="push-overlay">
+    <button type="button" id="push-btn" class="push-btn">PUSH</button>
+    <div id="push-result" class="push-result"></div>
+  </div>
+
   <!-- ATリザルト -->
   <div id="at-result" class="at-result">
     <div class="at-result-card">
@@ -160,6 +166,7 @@
         <div><span>ベル揃い</span><b id="ar-bells">0 回</b></div>
         <div><span>ボーナス当選</span><b id="ar-bonus">0 回</b></div>
       </div>
+      <div class="ar-hint"><span>次回示唆</span><div id="ar-hint-bar" class="ar-hint-bar" data-lv="0"><i></i><i></i><i></i><i></i></div><b id="ar-hint-text" data-lv="0">弱</b></div>
       <button type="button" id="at-result-close">閉じる</button>
     </div>
   </div>
