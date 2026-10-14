@@ -59,7 +59,7 @@ const DEFAULT_SETTINGS = {
   modeW3: 3,           // 天国 (50G / 8倍)
   hintTrue: 70         // リザルト示唆が実際のモードと一致する割合
 };
-const APP_VERSION = '1.8.1';
+const APP_VERSION = '1.9.0';
 const SETTINGS_KEY = 'pekari-settings-v4';   // v4: 機械割の調整 (95〜115%) に合わせて保存データを作り直し
 
 // ==========================================

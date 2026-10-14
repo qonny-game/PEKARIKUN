@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ペカり君 攻略ガイド</title>
+<style>
+:root{--bg:#0b0f1a;--card:#141a2b;--line:#27314d;--tx:#e6e9f2;--sub:#98a2bd;--acc:#ffd23f;--blue:#38a8ff;--red:#ff5a5a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.8;font-size:15px}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 48px}
+header{padding:28px 0 12px;text-align:center}
+header .kicker{display:inline-block;background:var(--red);color:#fff;font-weight:800;font-size:11px;letter-spacing:.15em;padding:2px 10px;border-radius:2px}
+header h1{margin:10px 0 4px;font-size:30px;font-weight:900;color:var(--acc);letter-spacing:.04em}
+header p{margin:0;color:var(--sub);font-size:13px}
+nav{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px 0 8px}
+nav a{color:var(--tx);text-decoration:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 14px;font-size:13px;font-weight:700}
+.back{display:block;text-align:center;margin:6px 0 0}
+.back a{color:var(--blue);font-size:13px;font-weight:700}
+section{margin-top:36px}
+h2{font-size:20px;margin:0 0 12px;padding:6px 12px;border-left:6px solid var(--acc);background:linear-gradient(90deg,#222a44,transparent);font-weight:900}
+h3{font-size:16px;margin:22px 0 6px;color:var(--acc);font-weight:800}
+p{margin:8px 0}
+.tbl{overflow-x:auto;margin:10px 0;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:480px;font-size:13px}
+th,td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:#1c2440;color:var(--sub);font-weight:700}
+td:first-child,th:first-child{text-align:left;position:sticky;left:0;background:#171e35}
+tr:last-child td{border-bottom:0}
+.note{font-size:12px;color:var(--sub)}
+.fig{margin:14px 0;text-align:center}
+.fig img{max-width:100%;max-height:340px;border:1px solid var(--line);border-radius:8px;background:#000}
+.fig.pair{display:flex;gap:8px;justify-content:center}
+.fig.pair img{width:calc(50% - 4px);max-height:none;object-fit:contain}
+.fig figcaption{font-size:12px;color:var(--sub);margin-top:4px}
+.tip{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:14px 0}
+.tip b.t{display:block;color:var(--acc);font-size:15px}
+.tip .lbl{display:inline-block;background:var(--blue);color:#06101c;font-weight:900;font-size:11px;padding:0 8px;border-radius:3px;margin-right:6px}
+.tip.hot .lbl{background:var(--red);color:#fff}
+.tip.cool .lbl{background:#7b86a8;color:#06101c}
+.rank{color:var(--acc);letter-spacing:.1em}
+ul{margin:6px 0;padding-left:20px}
+li{margin:3px 0}
+.flow{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.flow div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px}
+.flow div b{color:var(--acc)}
+.flow i{align-self:center;color:var(--sub);font-style:normal;line-height:1}
+.col{border:2px dashed var(--line);border-radius:10px;padding:10px 14px;margin:16px 0;font-size:13.5px;color:var(--sub)}
+.col b{color:var(--tx)}
+footer{text-align:center;color:var(--sub);font-size:12px;margin-top:40px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="kicker">PEKARIKUN GUIDE</span>
+  <h1>ペカり君 攻略ガイド</h1>
+  <p>設定差・ゲーム性・演出の楽しみ方をまとめた読み物</p>
+  <nav>
+    <a href="#system">ゲーム性</a>
+    <a href="#table">設定表</a>
+    <a href="#bonus">ボーナス</a>
+    <a href="#at">AT</a>
+    <a href="#hints">設定示唆</a>
+    <a href="#fx">演出</a>
+    <a href="#tips">立ち回り</a>
+  </nav>
+  <div class="back"><a href="index.html">ゲームに戻る</a></div>
+</header>
+
+<section id="system">
+  <h2>ゲーム性</h2>
+  <p>ペカり君は、GOGOランプの点灯(ペカ)を待つ、ノーマルタイプ寄りのパチスロ。通常時はレバーを叩いてリールを止めるだけ。ランプが光ったら、そこからボーナス、そして AT へとつながっていく。</p>
+  <div class="flow">
+    <div><b>通常時</b> 小役を引きながらペカを待つ</div><i>▼</i>
+    <div><b>ペカ</b> ランプ点灯。次のゲームで 7 を揃える</div><i>▼</i>
+    <div><b>ボーナス</b> ベル 15 枚獲得を続け、最終ゲームでジャッジメント</div><i>▼</i>
+    <div><b>AT</b> 突入すれば PEKA RUSH。上乗せを重ねて伸ばしていく</div><i>▼</i>
+    <div><b>終了</b> 結果画面。次回モードの気配に注目</div>
+  </div>
+  <figure class="fig"><img src="guide_img/main.png" alt="通常時の画面"><figcaption>通常時の画面。左右のサイドランプやデータカウンタにも注目</figcaption></figure>
+
+  <h3>小役とチェリー、スイカ</h3>
+  <p>チェリーとスイカは、取りこぼさず狙うのが基本。チェリーは左リール、スイカは中リールを意識すると拾いやすいはず。チェリーを引いたあとは、しばらくペカりやすい期間に入るという噂もある。</p>
+  <p class="note">7 は自動で揃う仕様なので、目押しは不要。ペカったらレバーを叩くだけ。</p>
+</section>
+
+<section id="table">
+  <h2>設定表</h2>
+  <p>設定は 1〜6 の 6 段階。高いほどボーナスが軽く、ATにも入りやすい…とされている。下の数値は、perfect な打ち方をしたときのシミュレーション値。実戦では多少ブレるので、目安として眺めてほしい。</p>
+  <div class="tbl"><table>
+    <tr><th></th><th>設定1</th><th>設定2</th><th>設定3</th><th>設定4</th><th>設定5</th><th>設定6</th></tr>
+    <tr><td>機械割</td><td>約96.0%</td><td>約99.2%</td><td>約102.4%</td><td>約105.3%</td><td>約109.4%</td><td>約113.7%</td></tr>
+    <tr><td>ボーナス(基本)</td><td>1/379</td><td>1/366</td><td>1/354</td><td>1/346</td><td>1/332</td><td>1/321</td></tr>
+    <tr><td>AT突入率(150枚)</td><td>20%</td><td>21%</td><td>22%</td><td>23%</td><td>24%</td><td>25%</td></tr>
+    <tr><td>AT突入率(400枚)</td><td>76%</td><td>77%</td><td>79%</td><td>80%</td><td>82%</td><td>84%</td></tr>
+    <tr><td>次回:通常</td><td>56%</td><td>55%</td><td>54%</td><td>52%</td><td>50%</td><td>48%</td></tr>
+    <tr><td>次回:好調</td><td>29%</td><td>29%</td><td>29%</td><td>30%</td><td>30%</td><td>30%</td></tr>
+    <tr><td>次回:絶好調</td><td>11%</td><td>12%</td><td>12%</td><td>13%</td><td>14%</td><td>15%</td></tr>
+    <tr><td>次回:天国</td><td>4%</td><td>4%</td><td>5%</td><td>5%</td><td>6%</td><td>7%</td></tr>
+    <tr><td>222 OVER</td><td>出ない</td><td colspan="5">出る可能性あり</td></tr>
+    <tr><td>444 OVER</td><td colspan="3">出ない</td><td colspan="3">出る可能性あり</td></tr>
+    <tr><td>456 OVER</td><td colspan="4">出ない</td><td colspan="2">出る可能性あり</td></tr>
+    <tr><td>666 OVER</td><td colspan="5">出ない</td><td>出る可能性あり</td></tr>
+  </table></div>
+  <p class="note">※ ボーナスは獲得枚数が 150〜400 枚の間で変動。多いほどATに入りやすい。<br>※ 「ランダム」を選ぶと、設定は内部でこっそり決まる。この表が頼りになる場面かも。</p>
+  <p>設定差は、ボーナスの軽さよりも、むしろ AT 突入率と次回モードの引きに表れる印象。1 回では分からなくても、通算で眺めると、じわじわと差が見えてくる…かもしれない。</p>
+</section>
+
+<section id="bonus">
+  <h2>ボーナス中の楽しみ方</h2>
+  <p>ボーナス中は、ベルを押し順どおりに押して 15 枚ずつ獲得。画面の押し順ナビには素直に従っておくのが無難。</p>
+  <figure class="fig pair">
+    <img src="guide_img/chance.png" alt="PEKA CHANCE">
+    <img src="guide_img/result.png" alt="結果画面">
+  </figure>
+  <p class="note" style="text-align:center">左: ボーナス中のロゴ / 右: 結果画面</p>
+
+  <h3>画面のふちのオーラに注目</h3>
+  <p>ボーナス中は、画面のふちが色づく。白 → 青 → 黄 → 緑 → 赤 → 金 → 虹の順に、期待が高まっていくらしい。</p>
+  <ul>
+    <li>白のまま終われば、残念…と思いきや、意外と AT に入ることもあるとか</li>
+    <li>赤以上が出てくると、ちょっと期待してもいいかもしれない</li>
+    <li>虹は、拝んでおきたい色</li>
+  </ul>
+
+  <h3>最終ゲームのジャッジメント</h3>
+  <p>最終ゲームは JUDGEMENT。ここから心臓の鼓動が聞こえてきたら、そのあとの展開は…各自の目で確かめてほしい。</p>
+</section>
+
+<section id="at">
+  <h2>ATの楽しみ方</h2>
+  <p>AT 中は、ベル・チェリー・スイカでゲーム数の上乗せが狙える。PUSH ボタンが出たら、迷わず押したくなるはず。</p>
+  <figure class="fig pair">
+    <img src="guide_img/navi_red.png" alt="赤ナビ">
+    <img src="guide_img/navi_purple.png" alt="紫ナビ">
+  </figure>
+  <p class="note" style="text-align:center">赤のナビ / 紫のナビ</p>
+  <ul>
+    <li><b>赤いナビ</b> チェリー絡み。成立するかは、まだ分からない</li>
+    <li><b>紫のナビ</b> スイカ絡み。ここは期待していいかも</li>
+    <li>ベルは押し順を守るだけ。コツコツ積むのが吉</li>
+  </ul>
+
+  <h3>PEKA! PEKA! MOUNTAIN!</h3>
+  <p>AT 中に当たると、ゾーンに突入。5〜10 ゲームのあいだ、毎ゲーム PUSH のチャンス。ロゴの色(青 / 緑 / 金 / 虹)が、勝負どころを知らせてくれるらしい。</p>
+  <figure class="fig"><img src="guide_img/aura.png" alt="ゾーン画面"><figcaption>ゾーン中。毎ゲームの上乗せに期待</figcaption></figure>
+  <figure class="fig"><img src="guide_img/push.png" alt="PUSHボタン"><figcaption>PUSH ボタン。押した瞬間に結果が分かる</figcaption></figure>
+</section>
+
+<section id="hints">
+  <h2>設定示唆 攻略メモ</h2>
+  <p>ここからは、攻略雑誌風の「言い切らない」情報。確証はない。でも、気になってしまうのが人情というもの。</p>
+
+  <div class="tip hot">
+    <b class="t"><span class="lbl">OVER</span>「222」が出たら…</b>
+    ボーナスから結果画面までの獲得枚数が、ある数字に届いた瞬間に出る OVER 表示。もし <b>222</b> が出たなら、設定 1 ではない可能性が高まる…のかもしれない。ただし出る頻度は少なめ。そもそも見られたらラッキー、くらいの気持ちで。
+  </div>
+  <div class="tip hot">
+    <b class="t"><span class="lbl">OVER</span>「444」「456」なら…</b>
+    <b>444</b> は設定 4 以上に期待。<b>456</b> が出たら、設定 5 以上がグッと近づく気がする。ここまで来ると、そろそろ腰を据えて打ちたくなるところ。
+  </div>
+  <div class="tip hot">
+    <b class="t"><span class="lbl">OVER</span>「666」が出現したら…</b>
+    もし見られたら、それは設定 6 の可能性が…。ただし、ごく稀。出会えたら、その日はいい日になるかもしれない。
+  </div>
+  <p class="note">※ 250 / 500 / 750 / 1000 などの数字は、ただの通過点。設定とは関係ないはず。</p>
+
+  <div class="tip">
+    <b class="t"><span class="lbl">結果画面</span>トロフィーの色</b>
+    結果画面に出る「ペカり君トロフィー」。銅・銀・金・青・赤・虹と色が変わり、おおむね設定 1〜6 に対応しているとされる。
+    <ul>
+      <li>銅は、設定 1 の可能性が高いが…低設定を決めつけるのはまだ早い</li>
+      <li>金以上は、設定 3 以上に期待してもいいかもしれない</li>
+      <li>赤なら設定 5 以上、虹なら設定 6 の香り</li>
+      <li>見せかけの低い色が出ることもあるので、1 回だけで判断しないのがコツ</li>
+    </ul>
+    <span class="note">回転数が増えるほど、トロフィーは本当の設定に寄ってくるという噂も。</span>
+  </div>
+
+  <div class="tip">
+    <b class="t"><span class="lbl">サイドランプ</span>左右のペカランプ</b>
+    ボーナスや AT の終了後、すぐにペカると、筐体の左右のランプが光ることがある。これは「連チャン」のサインかもしれない。逆に、光らないからといって落ち込むことはない。
+  </div>
+
+  <div class="tip">
+    <b class="t"><span class="lbl">次回示唆</span>AT終了後の「弱・中・強・激アツ」</b>
+    AT が終わると、結果画面で次回モードを匂わせてくれる。激アツなら、次回に期待してもいいはず。ただし、全面的に信じすぎると痛い目を見ることも。3 割くらいは、ちょっとだけ意地悪なのかもしれない。
+  </div>
+</section>
+
+<section id="fx">
+  <h2>演出の楽しみ方</h2>
+
+  <div class="tip">
+    <b class="t"><span class="lbl">前兆</span>キャビネットのランプが点いたら</b>
+    スイカやチェリーが成立する前に、キャビネットのランプが点灯することがある。リールが止まるまで光り続けたなら、何かあるかもしれない。…が、ハズレでも光ることがある。ここは気持ちを高めるスパイスくらいに。
+  </div>
+
+  <div class="tip">
+    <b class="t"><span class="lbl">取りこぼし</span>小役を外してしまったら</b>
+    チェリーやスイカをうっかり外すと、画面に取りこぼし演出が出る。実は、ちょっぴり悔しい気持ちになるための演出。次は拾えるように、リールをよく見て。
+  </div>
+
+  <div class="tip hot">
+    <b class="t"><span class="lbl">ペカり方</span>ランプの光り方にバリエーション</b>
+    ペカりには、通常・遅れ・ガクンなどのパターンがある。派手な光り方ほど、いいことがあるかも…と思いたいところ。中には、ごく稀に画面が止まる「フリーズ」も。もし出たなら、その日の運を使い切るかもしれない。
+  </div>
+
+  <div class="tip">
+    <b class="t"><span class="lbl">コイン</span>ベルに合わせて降るコイン</b>
+    ボーナスや AT 中にベルが揃うと、コインが降る。押し順を守れていれば、しっかり降ってくれる。ちょっとした自己満足がここにある。
+  </div>
+
+  <div class="tip">
+    <b class="t"><span class="lbl">ペカり君ロゴ</span>ゾーン中のロゴの色</b>
+    ロゴが青から虹に近づくほど、期待が高まるとされる。ただし、虹は滅多に出ない。出てくれたら、大きく喜んでいいと思う。
+  </div>
+
+  <div class="col"><b>編集部より</b><br>演出の濃さや示唆は、あくまで「そうかもしれない」の積み重ね。1 回の結果で一喜一憂せず、長く遊ぶなかで、ふと気づく楽しさを味わってほしい。</div>
+</section>
+
+<section id="tips">
+  <h2>立ち回りのヒント</h2>
+  <ul>
+    <li>まずは設定 4 前後(初期設定)で、ひととおりの流れを体験してみる</li>
+    <li>慣れたら「ランダム」にして、示唆を頼りに設定を推理してみると面白いかも</li>
+    <li>チェリー後は、ペカりやすい時間帯に入るかもしれない。ここは丁寧に</li>
+    <li>OVER やトロフィーは、1 回ではなく複数回の傾向で見るのがおすすめ</li>
+    <li>ナビが出たら素直に従う。押し順のミスは意外と痛い</li>
+  </ul>
+  <p class="note">※ 本ガイドは非公式の遊び心ある読み物です。数値や挙動は、バージョンアップで変わる場合があります。</p>
+</section>
+
+<footer>&copy; ペカり君 - GOGO! SIMULATOR 攻略ガイド<br><a href="index.html" style="color:var(--blue)">ゲームに戻る</a></footer>
+</div>
+</body>
+</html>
