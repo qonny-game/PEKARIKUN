@@ -59,7 +59,7 @@ const DEFAULT_SETTINGS = {
   modeW3: 3,           // 天国 (50G / 8倍)
   hintTrue: 70         // リザルト示唆が実際のモードと一致する割合
 };
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 const SETTINGS_KEY = 'pekari-settings-v3';
 
 // ==========================================
@@ -1130,6 +1130,7 @@ function reelsPrepareDOM() {
 const colSym = (col, idx) => (col.ov[idx] !== undefined ? col.ov[idx] : stripSym(col.c, idx));
 
 function startReels(plan, onDone) {
+  if (!naviOrder) delete spinBtn.dataset.navi;
   reelsPrepareDOM();
   bellBadge.classList.remove('show');
   alignDisplay.classList.remove('show-align');
@@ -1143,10 +1144,10 @@ function startReels(plan, onDone) {
     reelsEl.appendChild(el);
     return { c, el, cells: [...el.children], pos: Math.random() * STRIP_LEN, state: 'spin', ov: {}, T: 0, t: 0, final: null, shown: [null, null, null, null] };
   });
-  reelSpin = { plan, cols, onDone, last: performance.now(), raf: 0, color: null, timers: [] };
+  reelSpin = { plan, cols, onDone, last: performance.now(), raf: 0, color: null, timers: [], order: [] };
   isReelSpinning = true;
   spinBtn.disabled = false;
-  spinBtn.innerText = 'ストップ';
+  spinBtn.innerText = spinBtn.dataset.navi ? `ストップ ${spinBtn.dataset.navi}` : 'ストップ';
   cols.forEach(drawOverlay);
   reelSpin.raf = requestAnimationFrame(reelFrame);
   if (AUTO_STOP || plan.auto) [0, 1, 2].forEach(c => reelSpin.timers.push(setTimeout(() => stopCol(c, true), 380 + c * 260)));
@@ -1262,6 +1263,8 @@ function stopCol(c, auto) {
     col.shown = [null, null, null, null];
   }
   col.T = T; col.t = t; col.state = 'slip';
+  rs.order.push(c);
+  refreshNavi();
 }
 
 /* レバー/タップで、止まっていないリールを左から順に止める */
@@ -1292,7 +1295,7 @@ function finishReels() {
   spinBtn.innerText = 'レバーON';
   reelLocked = true;
   setTimeout(() => { reelLocked = false; }, 300);
-  setTimeout(() => rs.onDone({ grid, success }), 220);
+  setTimeout(() => rs.onDone({ grid, success, order: rs.order }), 220);
 }
 
 function cancelReels() {
@@ -1563,7 +1566,7 @@ function updateAT() {
 function showAtToast(text) {
   if (!atToast) return;
   atToast.textContent = text;
-  atToast.classList.remove('show', 'miss');
+  atToast.classList.remove('show', 'miss', 'advice');
   void atToast.offsetWidth;
   atToast.classList.add('show');
 }
@@ -1717,17 +1720,53 @@ function beginBonus(plan) {
   updateAT();
 }
 
+/* ---------- 押し順ナビ (ボーナス中: 1→2→3 の順に押すとベルが揃う) ---------- */
+const naviEl = document.getElementById('navi');
+let naviOrder = null;   // 例: [1, 2, 0] = 中→右→左の順に止める
+function showNavi(order) {
+  naviOrder = order;
+  naviEl.classList.add('on');
+  [...naviEl.children].forEach((el, c) => { el.textContent = order.indexOf(c) + 1; el.className = ''; });
+  refreshNavi();
+  spinBtn.dataset.navi = order.map(c => ['左', '中', '右'][c]).join('→');
+}
+function refreshNavi() {
+  if (!naviOrder || !naviEl) return;
+  const done = reelSpin ? reelSpin.order : [];
+  [...naviEl.children].forEach((el, c) => {
+    el.classList.toggle('done', done.includes(c));
+    el.classList.toggle('next', !done.includes(c) && naviOrder[done.length] === c);
+  });
+}
+function hideNavi() { naviOrder = null; if (naviEl) naviEl.classList.remove('on'); }
+function sameOrder(a, b) { return !!a && a.length === b.length && a.every((v, i) => v === b[i]); }
+
 function bonusGame() {
   const b = bonusRun;
   playClickSound();
   setLedWin(0);
   const isFinal = b.played + 1 >= b.games;   // 最終ゲームはジャッジメント (ここでATの当否が決まる)
-  b.played++;
-  const pay = Math.min(BONUS_BELL_PAY, b.total - b.paid);
-  b.paid += pay;
+  const navi = [0, 1, 2].sort(() => Math.random() - 0.5);   // 押し順ナビ
+  showNavi(navi);
   if (isFinal) { startTension('JUDGEMENT'); if (chanceLogo) chanceLogo.classList.add('judge'); }
   updateAT();
-  runRole('bell2', () => {
+  runRole('bell2', res => {
+    hideNavi();
+    // 押し順を間違えた: ベルこぼし (1枚だけ。ゲーム数は消化されない)
+    if (!AUTO_STOP && !sameOrder(res.order, navi)) {
+      const pay1 = Math.max(0, Math.min(1, b.total - b.paid - 1));
+      b.paid += pay1;
+      if (!b.debug && pay1) { diffCoins += pay1; recordPoint(); }
+      setLedWin(pay1);
+      if (isFinal) { stopTension(); if (chanceLogo) chanceLogo.classList.remove('judge'); }
+      missEffect();
+      updateAT();
+      updateUI();
+      return;
+    }
+    b.played++;
+    const pay = Math.min(BONUS_BELL_PAY, b.total - b.paid);
+    b.paid += pay;
     if (!b.debug) {
       diffCoins += pay;
       recordPoint();
@@ -2072,6 +2111,7 @@ function resetPekaState() {
   pendingPlan = null;
   cancelReels();
   hideChance();
+  hideNavi();
   clearPekaTimers();
   omenOff();
   stopTension();
@@ -2179,7 +2219,15 @@ setInterval(syncPanel, 50);
 document.querySelectorAll('.stop-btn').forEach(b => {
   b.addEventListener('pointerdown', e => {
     e.preventDefault();
-    if (isReelSpinning) stopCol(+b.dataset.stop, false);
+    if (!isReelSpinning) return;
+    const c = +b.dataset.stop;
+    const rs = reelSpin;
+    // 第一停止が左以外: 左から押すことを推奨 (ボーナス中は押し順ナビが優先)
+    if (rs && rs.order.length === 0 && c !== 0 && !naviOrder && rs.plan.kind !== 'seven') {
+      showAtToast('左リールから停止を推奨');
+      atToast.classList.add('advice');
+    }
+    stopCol(c, false);
   });
 });
 
@@ -2233,7 +2281,7 @@ spinBtn.addEventListener('click', handleSpin);
 // リール表示エリアをタップ = レバーON (ボタンが無効のときは何もしない)
 // (タップの遅れをなくすため pointerdown で受ける。回転中はタップした位置のリールが止まる)
 gogoBox.addEventListener('pointerdown', e => {
-  if (isReelSpinning) { stopByPointer(e); return; }
+  if (isReelSpinning) { stopNextReel(); return; }   // タップは左から順に止まる
   if (!spinBtn.disabled) handleSpin();
 });
 // 操作ガイド: 状態管理用ボタンの文言を、リール下の表示に反映
