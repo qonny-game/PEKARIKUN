@@ -59,7 +59,7 @@ const DEFAULT_SETTINGS = {
   modeW3: 3,           // 天国 (50G / 8倍)
   hintTrue: 70         // リザルト示唆が実際のモードと一致する割合
 };
-const APP_VERSION = '1.2.6';
+const APP_VERSION = '1.2.7';
 const SETTINGS_KEY = 'pekari-settings-v3';
 
 // ==========================================

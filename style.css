@@ -1291,3 +1291,22 @@ button, .gogo-lamp, .stop-btn { touch-action: manipulation; }
 @keyframes pl-chase { 0% { color: #fff; background: #ff9d00; border-color: #ffd36a; box-shadow: 0 0 8px #ffb300; } 50% { color: #4a3d78; background: #1b1238; border-color: #33265f; box-shadow: none; } }
 .omen .led { animation: led-flash 0.25s steps(1) infinite; }
 @keyframes led-flash { 0% { filter: brightness(1.8); } 50% { filter: brightness(0.6); } }
+
+/* 図柄サイズ: 7とBARは大きく列幅いっぱい、リプレイ(楕円)・ベル・スイカ・チェリーは小さく。
+   リールの左右の端に届くのは7とBARだけにして、目押ししやすくする */
+.reels .sym-replay {
+  width: 46px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.55rem;
+  letter-spacing: 0;
+}
+.reels .sym-emoji { font-size: 32px; }
+.reel.win .sym-emoji { font-size: 36px; }
+.reels .sym-bar { width: 74px; }
+.rv-replay { border: 1px solid #7dd3fc; border-radius: 50%; padding: 0 7px; font-size: 11px; }
+.rv-emoji { font-size: 18px; }
