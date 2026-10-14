@@ -79,6 +79,12 @@
         <div id="side-r" class="side-lamp"><i style="--i:4">!</i><i style="--i:3">A</i><i style="--i:2">K</i><i style="--i:1">E</i><i style="--i:0">P</i></div>
       </div>
 
+      <div class="stop-row">
+        <button type="button" class="stop-btn" data-stop="0" aria-label="左リール停止">STOP</button>
+        <button type="button" class="stop-btn" data-stop="1" aria-label="中リール停止">STOP</button>
+        <button type="button" class="stop-btn" data-stop="2" aria-label="右リール停止">STOP</button>
+      </div>
+
       <!-- 電光掲示 -->
       <div class="cab-panel">
         <div class="panel-lamps">
@@ -92,11 +98,6 @@
           <div class="led"><div class="led-label">PAYOUT</div><div id="led-win" class="led-digits" data-n="3"></div></div>
           <div class="led green"><div class="led-label">MEDAL</div><div id="led-credit" class="led-digits" data-n="4"></div></div>
           <div class="led amber"><div class="led-label">TOTAL GET</div><div id="led-total" class="led-digits" data-n="4"></div></div>
-        </div>
-        <div class="stop-row">
-          <button type="button" class="stop-btn" data-stop="0" aria-label="左リール停止">STOP</button>
-          <button type="button" class="stop-btn" data-stop="1" aria-label="中リール停止">STOP</button>
-          <button type="button" class="stop-btn" data-stop="2" aria-label="右リール停止">STOP</button>
         </div>
         <div id="tap-hint" class="tap-hint">タップ: レバーON</div>
       </div>
@@ -115,6 +116,12 @@
 
     </div>
 
+    <!-- オート -->
+    <div class="ui-shade flex gap-2 p-2 border-t border-white/20 text-xs">
+      <button id="auto-btn" type="button" aria-pressed="false" class="flex-1 px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-black tracking-wider hover:bg-white/20">AUTO</button>
+      <button id="auto-opt-btn" type="button" aria-label="オート設定" class="px-3 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+    </div>
+
     <!-- フッター・リセット -->
     <div class="ui-shade flex justify-between items-center p-2 border-t border-white/20 text-xs text-slate-300">
       <div class="flex gap-2">
@@ -123,7 +130,6 @@
         <button id="graph-btn" aria-label="当選グラフ" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 6"/><polyline points="15 6 21 6 21 12"/></svg></button>
         <button id="reel-btn" aria-label="リール配列" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="9.5" y="3" width="5" height="18" rx="1"/><rect x="16" y="3" width="5" height="18" rx="1"/></svg></button>
         <button id="settings-btn" aria-label="確率設定" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2.2" fill="currentColor"/><circle cx="15" cy="12" r="2.2" fill="currentColor"/><circle cx="8" cy="18" r="2.2" fill="currentColor"/></svg></button>
-        <button id="auto-btn" type="button" aria-pressed="false" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-black tracking-wider hover:bg-white/20">AUTO</button>
       </div>
       <button id="reset-btn" class="px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-bold hover:bg-white/20">
         RESET
@@ -155,6 +161,14 @@
       <div class="modal-head"><span>リール配列</span><button type="button" data-close-modal aria-label="閉じる">&times;</button></div>
       <div class="graph-title">回転は下向き。上の図柄ほど先に中段へ来る。数字は図柄の番号</div>
       <div id="reel-view" class="reel-view"></div>
+    </div>
+  </div>
+
+  <!-- オート設定 -->
+  <div id="auto-modal" class="modal">
+    <div class="modal-card">
+      <div class="modal-head"><span>オート設定</span><button type="button" data-close-modal aria-label="閉じる">&times;</button></div>
+      <div id="auto-body"></div>
     </div>
   </div>
 

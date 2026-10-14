@@ -1415,3 +1415,11 @@ button, .gogo-lamp, .stop-btn { touch-action: manipulation; }
 
 /* オートプレイ */
 #auto-btn[aria-pressed="true"] { background: #f59e0b; color: #1b1300; border-color: #fcd34d; box-shadow: 0 0 10px rgba(245, 158, 11, .6); }
+
+.auto-speeds { display: flex; gap: 6px; margin: 6px 0 12px; }
+.auto-speed { flex: 1; padding: 8px 0; border-radius: 8px; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.08); color: #e2e8f0; font-weight: 800; font-size: 13px; }
+.auto-speed.on { background: #f59e0b; color: #1b1300; border-color: #fcd34d; }
+.set-note { font-size: 11px; color: #94a3b8; margin-top: 8px; }
+
+/* STOPボタンはリール(液晶)のすぐ下 */
+.cabinet > .stop-row { margin: 0; padding: 8px 14px 6px; background: linear-gradient(rgba(23, 16, 47, 0.82), rgba(11, 7, 25, 0.82)); }
