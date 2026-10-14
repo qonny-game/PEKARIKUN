@@ -56,28 +56,74 @@ const DEFAULT_SETTINGS = {
   modeW3: 3,           // 天国 (50G / 8倍)
   hintTrue: 70         // リザルト示唆が実際のモードと一致する割合
 };
-const SETTINGS_KEY = 'pekari-settings-v2';
+const APP_VERSION = '1.0.0';
+const SETTINGS_KEY = 'pekari-settings-v3';
 
+// ==========================================
+// 設定 1〜6 (高設定ほど出玉が良い) と 設定7 (デバッグ用: すぐ当たる)
+// 設定7は画面にボタンが無く、設定ボタンを 6 5 6 6 4 5 6 の順に押したときだけ入る
+// ==========================================
+const LEVEL_VALUES = {
+  //                   S1    S2    S3    S4    S5    S6    S7
+  hitDenom:        [150,  140,  125,  110,   95,   80,    5],   // ボーナス当選確率 1/N
+  cherry:          [2.5,  2.8,  3.1,  3.5,  4.0,  4.6,   30],   // チェリー確率
+  replay:          [13.2, 13.4, 13.6, 13.8, 14.0, 14.3,   14],
+  atEntryMin:      [15,   17,   19,   21,   23,   26,   100],   // AT突入率 (150枚時)
+  atEntryMax:      [70,   73,   76,   79,   83,   88,   100],   // AT突入率 (400枚時)
+  atW50:           [82,   80,   78,   75,   72,   68,    25],
+  atW100:          [13,   14,   15,   16,   17,   18,    25],
+  atW200:          [4,    5,    6,    7,    8,    10,    25],
+  atW300:          [1,    1,    1,    2,    3,    4,     25],
+  cherryAtSuccess: [62,   65,   68,   72,   76,   80,   100],
+  modeW0:          [58,   54,   50,   46,   42,   38,     0],
+  modeW1:          [28,   29,   30,   31,   32,   32,     0],
+  modeW2:          [11,   13,   15,   17,   19,   21,     0],
+  modeW3:          [3,    4,    5,    6,    7,    9,   100]
+};
+const LEVEL_TIER_WEIGHTS = [
+  [34, 26, 20, 11, 6, 3], [32, 25, 21, 12, 7, 3.5], [30, 25, 21, 13, 7.5, 4],
+  [28, 24, 22, 14, 8.5, 4.5], [26, 23, 22, 15, 9, 5], [24, 22, 22, 16, 10, 6], [0, 0, 0, 10, 30, 60]
+];
+const DEFAULT_LEVEL = 4;
+const SECRET_SEQ = [6, 5, 6, 6, 4, 5, 6];
+const DEFAULT_PROFILES = {};
+for (let l = 1; l <= 7; l++) {
+  const p = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+  Object.keys(LEVEL_VALUES).forEach(k => { p[k] = LEVEL_VALUES[k][l - 1]; });
+  p.weights = LEVEL_TIER_WEIGHTS[l - 1].slice();
+  DEFAULT_PROFILES[l] = p;
+}
+
+function mergeProfile(st, raw) {
+  Object.keys(DEFAULT_SETTINGS).forEach(k => {
+    if (k === 'weights') {
+      if (Array.isArray(raw.weights) && raw.weights.length === st.weights.length &&
+          raw.weights.every(v => Number.isFinite(+v) && +v >= 0)) st.weights = raw.weights.map(Number);
+    } else if (Number.isFinite(+raw[k])) {
+      st[k] = +raw[k];
+    }
+  });
+}
 function loadSettings() {
-  const st = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+  const out = { level: DEFAULT_LEVEL, prev: DEFAULT_LEVEL, profiles: {} };
+  for (let l = 1; l <= 7; l++) out.profiles[l] = JSON.parse(JSON.stringify(DEFAULT_PROFILES[l]));
   try {
     const raw = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
-    if (raw && typeof raw === 'object') {
-      Object.keys(DEFAULT_SETTINGS).forEach(k => {
-        if (k === 'weights') {
-          if (Array.isArray(raw.weights) && raw.weights.length === st.weights.length &&
-              raw.weights.every(v => Number.isFinite(+v) && +v >= 0)) st.weights = raw.weights.map(Number);
-        } else if (Number.isFinite(+raw[k])) {
-          st[k] = +raw[k];
-        }
-      });
+    if (raw && typeof raw === 'object' && raw.profiles) {
+      for (let l = 1; l <= 7; l++) if (raw.profiles[l]) mergeProfile(out.profiles[l], raw.profiles[l]);
+      if (raw.level >= 1 && raw.level <= 6) out.level = out.prev = raw.level | 0;
     }
   } catch (e) { /* 保存データが無い/読めない場合は初期値 */ }
-  return st;
+  return out;
 }
 function saveSettings() {
-  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(SETTINGS)); } catch (e) { /* 保存できなくても動作は続ける */ }
+  try {
+    // 設定7は保存しない (次に開いたときは直前の設定1〜6に戻る)
+    const level = SETTINGS.level === 7 ? SETTINGS.prev : SETTINGS.level;
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ level, profiles: SETTINGS.profiles }));
+  } catch (e) { /* 保存できなくても動作は続ける */ }
 }
+function activeProfile() { return SETTINGS.profiles[SETTINGS.level]; }
 
 let SETTINGS = loadSettings();
 let HIT_RATE, TIER_RATES;
@@ -89,7 +135,7 @@ let MODE_WEIGHTS = [55, 28, 14, 3], HINT_TRUE;
 let REPLAY_AT_RATE, REPLAY_RATE;
 
 function applySettings() {
-  const st = SETTINGS;
+  const st = activeProfile();
   const clampP = v => Math.min(1, Math.max(0, v / 100));
   const nz = v => Math.max(0, +v || 0);
   HIT_RATE = 1 / Math.max(1, st.hitDenom);
@@ -1587,7 +1633,11 @@ const SETTING_ROWS = [
   { key: 'hintTrue', label: 'リザルト示唆の的中率', min: 0, max: 100, step: 0.1, suffix: '%' }
 ];
 
-function buildSettingsForm(src = SETTINGS) {
+let formLevel = DEFAULT_LEVEL;   // 設定パネルで編集中の設定
+let secretBuf = [];             // 設定ボタンの押した順 (裏コマンド判定用)
+
+function buildSettingsForm(level = formLevel, src = SETTINGS.profiles[level]) {
+  formLevel = level;
   const rows = SETTING_ROWS.map(r => `
     <label class="set-row">
       <span class="set-label">${r.label}</span>
@@ -1598,7 +1648,10 @@ function buildSettingsForm(src = SETTINGS) {
       <span class="set-label">${l}枚</span>
       <span class="set-field"><input type="number" data-w="${i}" min="0" step="0.1" value="${src.weights[i]}"><span class="set-pct" data-pct="${i}"></span></span>
     </label>`).join('');
+  const levels = [1, 2, 3, 4, 5, 6].map(l =>
+    `<button type="button" data-level="${l}" class="${l === SETTINGS.level ? 'on' : ''}">設定${l}</button>`).join('');
   settingsBody.innerHTML = `
+    <div class="set-levels">${levels}</div>
     <div class="set-group">
       ${rows}
     </div>
@@ -1608,7 +1661,31 @@ function buildSettingsForm(src = SETTINGS) {
       <div class="set-row set-total"><span class="set-label">合計</span><span class="set-field" id="set-total"></span></div>
     </div>`;
   settingsBody.querySelectorAll('input[data-w]').forEach(el => el.addEventListener('input', refreshWeightPct));
+  settingsBody.querySelectorAll('button[data-level]').forEach(el =>
+    el.addEventListener('click', () => pressLevelButton(+el.dataset.level)));
   refreshWeightPct();
+}
+
+/* 設定を切り替える (1〜7)。7は裏コマンドからのみ */
+function setLevel(l) {
+  if (SETTINGS.level !== 7) SETTINGS.prev = SETTINGS.level;
+  SETTINGS.level = l;
+  if (l !== 7) SETTINGS.prev = l;
+  saveSettings();
+  applySettings();
+  refreshRateLabel();
+  buildSettingsForm(l);
+}
+function pressLevelButton(l) {
+  secretBuf.push(l);
+  if (secretBuf.length > SECRET_SEQ.length) secretBuf.shift();
+  if (secretBuf.join() === SECRET_SEQ.join()) {
+    setLevel(7);
+    secretBuf = [];
+    if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; [1047, 1319, 1568].forEach((f, i) => tone(f, t + i * 0.08, 0.2, 'triangle', 0.14)); }
+  } else {
+    setLevel(l);
+  }
 }
 
 function readWeightInputs() {
@@ -1625,14 +1702,14 @@ function refreshWeightPct() {
 }
 
 function applySettingsForm() {
-  const next = JSON.parse(JSON.stringify(SETTINGS));
+  const next = JSON.parse(JSON.stringify(SETTINGS.profiles[formLevel]));
   settingsBody.querySelectorAll('input[data-key]').forEach(el => {
     const v = parseFloat(el.value);
     if (Number.isFinite(v)) next[el.dataset.key] = Math.min(+el.max, Math.max(+el.min, v));
   });
   const w = readWeightInputs();
   if (w.reduce((x, y) => x + y, 0) > 0) next.weights = w;
-  SETTINGS = next;
+  SETTINGS.profiles[formLevel] = next;
   saveSettings();
   applySettings();
   refreshRateLabel();
@@ -1640,7 +1717,7 @@ function applySettingsForm() {
 }
 
 function refreshRateLabel() {
-  if (displayRate) displayRate.textContent = `1/${SETTINGS.hitDenom}`;
+  if (displayRate) displayRate.textContent = `1/${activeProfile().hitDenom}`;
 }
 
 // ==========================================
@@ -1773,10 +1850,10 @@ function drawGraphs() {
 function openModal(m) { m.classList.add('open'); }
 function closeModal(m) { m.classList.remove('open'); }
 
-document.getElementById('settings-btn').addEventListener('click', () => { buildSettingsForm(); openModal(settingsModal); });
+document.getElementById('settings-btn').addEventListener('click', () => { secretBuf = []; buildSettingsForm(SETTINGS.level); openModal(settingsModal); });
 document.getElementById('settings-apply').addEventListener('click', applySettingsForm);
 document.getElementById('settings-default').addEventListener('click', () => {
-  buildSettingsForm(DEFAULT_SETTINGS);   // 入力欄だけ初期値に戻す (適用を押すまで反映されない)
+  buildSettingsForm(formLevel, DEFAULT_PROFILES[formLevel]);   // 入力欄だけ、この設定の初期値に戻す (適用を押すまで反映されない)
 });
 document.getElementById('graph-btn').addEventListener('click', () => { openModal(graphModal); drawGraphs(); });
 document.querySelectorAll('[data-close-modal]').forEach(el =>
@@ -1785,3 +1862,6 @@ document.querySelectorAll('.modal').forEach(m =>
   m.addEventListener('click', e => { if (e.target === m) closeModal(m); }));
 window.addEventListener('resize', () => { if (graphModal.classList.contains('open')) drawGraphs(); });
 refreshRateLabel();
+
+const versionEl = document.getElementById('app-version');
+if (versionEl) versionEl.textContent = `v${APP_VERSION}`;
