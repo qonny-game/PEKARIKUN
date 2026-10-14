@@ -307,7 +307,7 @@ body {
   overflow: visible;
 }
 .reel.win { z-index: 2; }
-.reel.dim { opacity: 0.6; filter: saturate(0.75); }
+.reel.dim { opacity: 0.35; filter: saturate(0.5) brightness(0.55); }
 .show-align .reel { animation: reel-pop 0.35s cubic-bezier(0.2, 1.5, 0.4, 1) both; animation-delay: calc(var(--i, 0) * 0.05s); }
 @keyframes reel-pop {
   from { transform: scale(0.2) rotateX(90deg); opacity: 0; }
@@ -1206,3 +1206,56 @@ main { overflow: visible !important; }
 .ar-trophy.t6 svg { animation: rb-hue 1.2s linear infinite; }
 .at-result-gain.lucky { text-shadow: 0 0 14px #fde047, 0 0 28px #f59e0b; box-shadow: none; }
 .at-result-stats { flex-wrap: wrap; }
+
+/* PEKA CHANCE! (ボーナス消化中のロゴ。PEKA RUSHとは別演出) */
+.chance-logo {
+  position: absolute;
+  left: 0; right: 0;
+  top: 5px;
+  z-index: 36;
+  display: none;
+  justify-content: center;
+  align-items: baseline;
+  gap: 8px;
+  pointer-events: none;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-style: italic;
+  white-space: nowrap;
+  transform-origin: 50% 0;
+}
+.chance-logo.on { display: flex; animation: chance-in 1.7s cubic-bezier(0.2, 1, 0.4, 1) both; }
+.chance-logo span {
+  font-size: 25px;
+  letter-spacing: 0;
+  background: linear-gradient(100deg, #22d3ee 0%, #a78bfa 30%, #f472b6 55%, #fde047 80%, #22d3ee 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 1.5px #ffffff;
+  filter: drop-shadow(0 0 6px #22d3ee) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.9));
+  animation: chance-shine 1.6s linear infinite;
+}
+.chance-logo .cl-chance { font-size: 28px; }
+.gogo-lamp:has(.chance-logo.on) .at-toast { top: 50px; }
+.chance-logo.judge span { animation: chance-shine 0.5s linear infinite, chance-judge 0.4s ease-in-out infinite alternate; filter: drop-shadow(0 0 10px #ef4444) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.9)); }
+@keyframes chance-in {
+  0%   { opacity: 0; top: 36%; transform: scale(0.2) rotate(-8deg); }
+  18%  { opacity: 1; top: 30%; transform: scale(1.25) rotate(-4deg); }
+  30%  { top: 30%; transform: scale(1.25) rotate(-4deg); }
+  70%  { opacity: 1; top: 30%; transform: scale(1.25) rotate(-4deg); }
+  100% { opacity: 1; top: 5px; transform: scale(1) rotate(0deg); }
+}
+@keyframes chance-shine { from { background-position: 0% 0; } to { background-position: -250% 0; } }
+@keyframes chance-judge { from { transform: scale(1); } to { transform: scale(1.12); } }
+
+/* 揃ったラインを点滅 (図柄 + ライン) */
+.reels .reel.win, .show-lose .reels .reel.win, .show-align .reels .reel.win { animation: win-blink 0.42s steps(1) infinite; }
+@keyframes win-blink {
+  0%   { filter: brightness(1.9) drop-shadow(0 0 8px #fff3a0) drop-shadow(0 0 16px #ffd23f); }
+  50%  { filter: brightness(0.95) drop-shadow(0 0 0 transparent); }
+}
+.payline { position: absolute; left: 0; top: 0; width: 198px; height: 174px; z-index: 4; pointer-events: none; overflow: visible; }
+.payline line { stroke: #fff3a0; stroke-width: 4; stroke-linecap: round; filter: drop-shadow(0 0 5px #ffb300) drop-shadow(0 0 10px #ff8a00); animation: payline-blink 0.42s steps(1) infinite; }
+@keyframes payline-blink { 0% { opacity: 1; } 50% { opacity: 0.15; } }

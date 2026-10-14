@@ -59,7 +59,7 @@ const DEFAULT_SETTINGS = {
   modeW3: 3,           // 天国 (50G / 8倍)
   hintTrue: 70         // リザルト示唆が実際のモードと一致する割合
 };
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.2.3';
 const SETTINGS_KEY = 'pekari-settings-v3';
 
 // ==========================================
@@ -815,7 +815,7 @@ function attemptBonus() {
     recordPoint();
     updateUI();
   }
-  startReels({ kind: 'seven' }, res => {
+  startReels({ kind: 'seven', auto: true }, res => {
     if (res.success) {
       onBonusAligned();
     } else {
@@ -1101,6 +1101,7 @@ function renderReels(grid, winIdx, glow) {
     const cls = winIdx ? (isWin ? 'win' : 'dim') : '';
     return `<div class="reel ${cls}" style="--i:${i}">${symbolHTML(key, isWin ? glow : '')}</div>`;
   }).join('');
+  drawPayline(winIdx);
 }
 
 /* ---------- リール回転: レバーONで回り、自分で3つ止める ---------- */
@@ -1141,7 +1142,7 @@ function startReels(plan, onDone) {
   spinBtn.innerText = 'ストップ';
   cols.forEach(drawOverlay);
   reelSpin.raf = requestAnimationFrame(reelFrame);
-  if (AUTO_STOP) [0, 1, 2].forEach(c => reelSpin.timers.push(setTimeout(() => stopCol(c, true), 380 + c * 260)));
+  if (AUTO_STOP || plan.auto) [0, 1, 2].forEach(c => reelSpin.timers.push(setTimeout(() => stopCol(c, true), 380 + c * 260)));
 }
 
 function drawOverlay(col) {
@@ -1187,6 +1188,7 @@ function landCol(col) {
 function stopCol(c, auto) {
   const rs = reelSpin;
   if (!rs) return;
+  if (rs.plan.auto) auto = true;     // ボーナスの7揃えは自動で揃う
   const col = rs.cols[c];
   if (!col || col.state !== 'spin') return;
   const s = Math.round(col.pos);
@@ -1291,6 +1293,26 @@ function markWin(winIdx, glow) {
     const img = el.querySelector('.sym-img');
     if (img && glow) img.classList.toggle(glow, w);
   });
+  drawPayline(winIdx);
+}
+/* 揃ったラインを光る線で示す (チェリーは1コマなので線なし) */
+function drawPayline(winIdx) {
+  const old = reelsEl.querySelector(':scope > .payline');
+  if (old) old.remove();
+  if (!winIdx || winIdx.length < 3) return;
+  const c = i => [(i % 3) * 66 + 33, Math.floor(i / 3) * 58 + 29];
+  const [x1, y1] = c(winIdx[0]);
+  const [x2, y2] = c(winIdx[winIdx.length - 1]);
+  const dx = (x2 - x1) * 0.28, dy = (y2 - y1) * 0.28;   // 両端を少し延ばす
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('class', 'payline');
+  svg.setAttribute('viewBox', '0 0 198 174');
+  const ln = document.createElementNS(ns, 'line');
+  ln.setAttribute('x1', x1 - dx); ln.setAttribute('y1', y1 - dy);
+  ln.setAttribute('x2', x2 + dx); ln.setAttribute('y2', y2 + dy);
+  svg.appendChild(ln);
+  reelsEl.appendChild(svg);
 }
 
 /* 回さずに、止まった状態で表示 (デバッグ用) */
@@ -1576,8 +1598,26 @@ function playAuraUp(level) {
   if (level >= 5) [0, 4, 7, 12].forEach((st, i) => tone(base * 2 * Math.pow(1.0595, st), t + 0.25 + i * 0.07, 0.35, 'sine', 0.12));
 }
 
+/* PEKA CHANCE! ロゴ: ボーナス消化の開始から、最終ゲーム(ジャッジメント)の結果まで */
+const chanceLogo = document.getElementById('chance-logo');
+function showChance() {
+  if (!chanceLogo) return;
+  chanceLogo.classList.remove('on', 'judge');
+  void chanceLogo.offsetWidth;
+  chanceLogo.classList.add('on');
+  if (soundEnabled) {
+    initAudio();
+    const t = audioCtx.currentTime;
+    [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, t + i * 0.06, 0.28, 'sawtooth', 0.07));
+    tone(130, t, 0.4, 'sine', 0.2);
+  }
+  triggerFlash();
+}
+function hideChance() { if (chanceLogo) chanceLogo.classList.remove('on', 'judge'); }
+
 function beginBonus(plan) {
   bonusRun = plan;
+  showChance();
   sinceEnd = null;
   // ボーナス開始からリザルトまでの獲得枚数を数える
   if (!atRun && !plan.debug) atRun = { startDiff: diffCoins, games: 0, bells: 0, bonuses: 0 };
@@ -1593,7 +1633,7 @@ function bonusGame() {
   b.played++;
   const pay = Math.min(BONUS_BELL_PAY, b.total - b.paid);
   b.paid += pay;
-  if (isFinal) startTension('JUDGEMENT');
+  if (isFinal) { startTension('JUDGEMENT'); if (chanceLogo) chanceLogo.classList.add('judge'); }
   updateAT();
   runRole('bell2', () => {
     if (!b.debug) {
@@ -1633,6 +1673,7 @@ function finishBonus() {
     stopTension();
     isSuspense = false;
     bonusRun = null;
+    hideChance();
     updateAT();
     if (b.atWin) {
       setAura(b.aura, true);
@@ -1938,6 +1979,7 @@ function resetPekaState() {
   pendingDisplayIndex = -1;
   pendingPlan = null;
   cancelReels();
+  hideChance();
   clearPekaTimers();
   sideLampOff();
   stopTension();
