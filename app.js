@@ -59,7 +59,7 @@ const DEFAULT_SETTINGS = {
   modeW3: 3,           // 天国 (50G / 8倍)
   hintTrue: 70         // リザルト示唆が実際のモードと一致する割合
 };
-const APP_VERSION = '1.2.7';
+const APP_VERSION = '1.3.0';
 const SETTINGS_KEY = 'pekari-settings-v3';
 
 // ==========================================
@@ -937,16 +937,22 @@ function handleSpin() {
       if (res.success) {
         cherryEffects(inAT, true, MELON_COINS);
         showRoleBadge('MELON', MELON_COINS, MELON_NOTES);
+      } else {
+        missEffect();
       }
       updateUI();
       maybeShowAtResult();
     });
   } else if (Math.random() < (inAT ? CHERRY_AT_RATE : CHERRY_RATE)) {
     // チェリー: 左列に1個あるだけで成立。通常時は30G間ボーナス高確率 (内部) / AT中はPUSHでG数上乗せ
-    runRole('cherry', () => {
+    runRole('cherry', res => {
       stopTension();
-      cherryEffects(inAT, false, CHERRY_COINS);
-      showRoleBadge('CHERRY', CHERRY_COINS, CHERRY_NOTES);
+      if (res.success) {
+        cherryEffects(inAT, false, CHERRY_COINS);
+        showRoleBadge('CHERRY', CHERRY_COINS, CHERRY_NOTES);
+      } else {
+        missEffect();
+      }
       updateUI();
       maybeShowAtResult();
     });
@@ -1086,6 +1092,7 @@ function pickMelonPlan() {
   return { kind: 'melon', t0: o[0], t2: o[1] };
 }
 function planFor(kind) {
+  if (kind === 'cherry') return { kind: 'cherry', ts: pickCombo('cherry') };
   return kind === 'melon' ? pickMelonPlan() : { kind: 'fixed', ts: pickCombo(kind) };
 }
 function winIdxOf(kind, g) {
@@ -1209,6 +1216,24 @@ function stopCol(c, auto) {
         T = (ok.length ? ok : cands)[0]; t = mod(T);
       }
     }
+  } else if (p.kind === 'cherry') {   // チェリー: 左リールで狙う (取りこぼしあり)
+    if (auto) { tele = true; t = p.ts[c]; }
+    else if (c === 0) {
+      const a = cands.find(x => windowOf(0, x).includes('cherry'));
+      if (a !== undefined) { T = a; t = mod(a); }
+      else {
+        const ok = cands.filter(x => !windowOf(0, x).includes('cherry'));
+        T = (ok.length ? ok : cands)[0]; t = mod(T);
+      }
+    } else {
+      let pool = cands;
+      const others = [0, 1, 2].filter(i => i !== c);
+      if (others.every(i => rs.cols[i].state !== 'spin')) {
+        const good = pool.filter(x => alignedLines(gridOf([0, 1, 2].map(i => (i === c ? mod(x) : rs.cols[i].t)))).length === 0);
+        if (good.length) pool = good;
+      }
+      T = pool[0]; t = mod(T);
+    }
   } else {   // seven: 同じ色の7を3つ揃える
     const want = rs.color;
     const a = cands.find(x => { const k = stripSym(c, x); return isSeven(k) && (!want || k === want); });
@@ -1262,6 +1287,7 @@ function finishReels() {
   const grid = [f[0][0], f[1][0], f[2][0], f[0][1], f[1][1], f[2][1], f[0][2], f[1][2], f[2][2]];
   let success = false;
   if (rs.plan.kind === 'seven') success = isSeven(f[0][1]) && f[1][1] === f[0][1] && f[2][1] === f[0][1];
+  else if (rs.plan.kind === 'cherry') success = f[0].includes('cherry');
   else if (rs.plan.kind === 'melon') success = f[0][1] === 'melon' && f[1][1] === 'melon' && f[2][1] === 'melon';
   spinBtn.innerText = 'レバーON';
   reelLocked = true;
@@ -1276,10 +1302,25 @@ function cancelReels() {
   reelLocked = false;
 }
 
+/* 取りこぼし演出: 暗転 + 下降音 + 「取りこぼし」 */
+function missEffect() {
+  showAtToast('取りこぼし');
+  atToast.classList.add('miss');
+  cabinetEl.classList.remove('omen-miss');
+  void cabinetEl.offsetWidth;
+  cabinetEl.classList.add('omen-miss');
+  pekaLater(() => cabinetEl.classList.remove('omen-miss'), 900);
+  if (soundEnabled) {
+    initAudio();
+    const t0 = audioCtx.currentTime;
+    [392, 330, 262, 196].forEach((f, i) => tone(f, t0 + i * 0.09, 0.22, 'sawtooth', 0.08));
+  }
+}
+
 /* チェリー/スイカ成立時: リール回転の前に、筐体まわりのランプが光って予告する */
 const cabinetEl = document.querySelector('.cabinet');
 function omenOff() {
-  if (cabinetEl) cabinetEl.classList.remove('omen', 'omen-melon', 'omen-cherry');
+  if (cabinetEl) cabinetEl.classList.remove('omen', 'omen-melon', 'omen-cherry', 'omen-miss');
   sideLampOff();
 }
 const FAKE_OMEN_RATE = 0.07;   // ハズレ時のフェイク予告 (外れても予告だけ出ることがある)
@@ -1300,12 +1341,13 @@ function omenThen(kind, go) {
     notes.forEach((f, i) => tone(f, t + 0.08 + i * (melon ? 0.16 : 0.2), 0.2, 'triangle', 0.1));
     if (melon) tone(98, t, 1.2, 'sine', 0.18);
   }
-  pekaLater(() => { omenOff(); reelLocked = false; go(); }, melon ? 1500 : 1000);
+  pekaLater(() => { reelLocked = false; go(); }, melon ? 1500 : 1000);   // ランプはリールが止まるまで点灯したまま
 }
 
 /* 役の抽選結果を持って回転開始。止まったら done(結果) */
 function runRole(kind, done) {
   omenThen(kind, () => startReels(planFor(kind), res => {
+    omenOff();
     markWin(winIdxOf(kind, res.grid), '');
     done(res);
   }));
@@ -1377,8 +1419,30 @@ const bellBadge = document.getElementById('bell-badge');
 const getPop = document.getElementById('get-pop');
 
 /* ボーナス中・AT中のベル払い出し: 「15枚 GET」とでっかく表示 */
+let getRAF = null;
+/* コインをばら撒く (画面の上から降ってくる) */
+function rainCoins(n) {
+  const w = fxCanvas.width;
+  for (let i = 0; i < n; i++) {
+    particles.push(makeParticle('gold', Math.random() * w, -10 - Math.random() * 140, (Math.random() - 0.5) * 2.4, 2 + Math.random() * 4, 0.28));
+  }
+  ensureParticleLoop();
+  if (soundEnabled) {
+    initAudio();
+    const t0 = audioCtx.currentTime;
+    for (let i = 0; i < 6; i++) tone(2093 + Math.random() * 900, t0 + 0.05 + i * 0.06, 0.12, 'triangle', 0.06);
+  }
+}
 function showGet(coins) {
-  getPop.innerHTML = `${coins}<span>枚 GET</span>`;
+  getPop.innerHTML = `0<span>枚 GET</span>`;
+  cancelAnimationFrame(getRAF);
+  const g0 = performance.now();
+  const gfr = now => {
+    const pr = Math.min(1, (now - g0) / 420);
+    getPop.firstChild.nodeValue = Math.round(coins * (1 - Math.pow(1 - pr, 3)));
+    if (pr < 1) getRAF = requestAnimationFrame(gfr);
+  };
+  getRAF = requestAnimationFrame(gfr);
   getPop.className = 'get-pop ' + (coins >= 15 ? 'g-big' : coins >= 6 ? 'g-mid' : 'g-small');
   void getPop.offsetWidth;
   getPop.classList.add('show');
@@ -1387,6 +1451,7 @@ function showBellResult(coins, inAT) {
   bellBadge.classList.remove('show');
   if (inAT) {
     showGet(coins);
+    rainCoins(Math.min(44, coins * 2));     // ボーナス/AT中のベル: コインをばら撒く
   } else {
     bellBadge.textContent = `BELL +${coins}`;
     void bellBadge.offsetWidth;
@@ -1498,7 +1563,7 @@ function updateAT() {
 function showAtToast(text) {
   if (!atToast) return;
   atToast.textContent = text;
-  atToast.classList.remove('show');
+  atToast.classList.remove('show', 'miss');
   void atToast.offsetWidth;
   atToast.classList.add('show');
 }
@@ -2063,7 +2128,7 @@ const ledWinEl = document.getElementById('led-win');
 const ledCreditEl = document.getElementById('led-credit');
 const ledTotalEl = document.getElementById('led-total');
 let ledWin = 0;
-function setLedWin(n) { ledWin = n; setLed(ledWinEl, n, 3); }
+function setLedWin(n) { ledWin = n; tweenLed('win', ledWinEl, n, 3); }
 /* メダル枚数: 50枚から。足りなくなったら50枚ずつ補充した扱い */
 function creditNow() {
   let v = 50 + diffCoins;
@@ -2077,9 +2142,31 @@ function totalGetNow() {
   return 0;
 }
 const plIds = ['insert', 'bet', 'replay', 'start', 'wait'].reduce((o, k) => (o[k] = document.getElementById('pl-' + k), o), {});
+/* 枚数が増えるときは、カウントアップで表示する (減るとき・リセットは即時) */
+const ledShown = { win: 0, credit: null, total: 0, diff: 0 };
+function tweenLed(key, el, target, digits) {
+  let s = ledShown[key];
+  if (s === null || target < s) s = target;
+  else if (target > s) s = Math.min(target, s + Math.max(1, Math.ceil((target - s) / 5)));
+  ledShown[key] = s;
+  setLed(el, s, digits);
+  const box = el.parentElement;
+  if (box) box.classList.toggle('counting', s !== target);
+  return s;
+}
+function tickDiff() {
+  let s = ledShown.diff;
+  if (diffCoins < s) s = diffCoins;
+  else if (diffCoins > s) s = Math.min(diffCoins, s + Math.max(1, Math.ceil((diffCoins - s) / 5)));
+  ledShown.diff = s;
+  displayDiff.textContent = s >= 0 ? `+${s}` : `${s}`;
+  displayDiff.className = `digital-font font-bold text-sm ${diffCoins >= 0 ? 'text-green-400' : 'text-red-400'}`;
+}
 function syncPanel() {
-  setLed(ledCreditEl, creditNow(), 4);
-  setLed(ledTotalEl, totalGetNow(), 4);
+  tweenLed('credit', ledCreditEl, creditNow(), 4);
+  tweenLed('total', ledTotalEl, totalGetNow(), 4);
+  tweenLed('win', ledWinEl, ledWin, 3);
+  tickDiff();
   const idle = !isReelSpinning && !spinBtn.disabled && !reelLocked;
   const betting = isReelSpinning || (replayPending ? false : false);
   plIds.insert.classList.toggle('on', idle && !replayPending && !bonusRun);
@@ -2088,7 +2175,7 @@ function syncPanel() {
   plIds.start.classList.toggle('on', idle);
   plIds.wait.classList.toggle('on', reelLocked || isCounting || isSuspense || isRushing || isPushing);
 }
-setInterval(syncPanel, 120);
+setInterval(syncPanel, 50);
 document.querySelectorAll('.stop-btn').forEach(b => {
   b.addEventListener('pointerdown', e => {
     e.preventDefault();
@@ -2104,8 +2191,6 @@ function updateUI() {
 
   displayProb.textContent = bigCount > 0 ? `1/${(cumulativeGames / bigCount).toFixed(1)}` : `1/0`;
 
-  displayDiff.textContent = (diffCoins >= 0 ? `+${diffCoins}` : `${diffCoins}`);
-  displayDiff.className = `digital-font font-bold text-sm ${diffCoins >= 0 ? 'text-green-400' : 'text-red-400'}`;
 }
 
 /* データリセット */
