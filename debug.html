@@ -261,6 +261,8 @@
       addFn('PUSH +100G (プレミア)', () => { if (!isPushing) pushReveal('+100G', true); });
       HINT_LABELS.forEach((l, i) => addFn(`リザルト 示唆${l}`, () => { if (!isAtResult) showAtResult({ gain: 1234, games: 50, bells: 21, bonuses: 1, hint: i }); }));
       [50, 100, 200, 300].forEach(g => addFn(`AT突入 +${g}G`, () => { if (!isRushing && !isPushing) startAT(g); }));
+      addFn('AT突入 HEAVEN', () => { if (!isRushing && !isPushing) startAT(100, 1); });
+      addFn('AT突入 DEATH', () => { if (!isRushing && !isPushing) startAT(100, 2); });
       [['normal','通常ペカ'],['late','後ペカ'],['gakkun','ガックン'],['hanabi','花火ペカ'],['double','Wペカ'],['rainbow','虹ペカ'],['freeze','フリーズ風']].forEach(([id, l]) =>
         addFn(l, () => debugStart({ display: 2, actual: 2, fx: id })));
       addFn('スイカ予告', () => { if (!isReelSpinning) omenThen('melon', () => setTimeout(omenOff, 2500)); });

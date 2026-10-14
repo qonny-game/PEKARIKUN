@@ -59,7 +59,7 @@ const DEFAULT_SETTINGS = {
   modeW3: 3,           // 天国 (50G / 8倍)
   hintTrue: 70         // リザルト示唆が実際のモードと一致する割合
 };
-const APP_VERSION = '1.11.0';
+const APP_VERSION = '1.12.0';
 const SETTINGS_KEY = 'pekari-settings-v4';   // v4: 機械割の調整 (95〜115%) に合わせて保存データを作り直し
 
 // ==========================================
@@ -69,7 +69,7 @@ const SETTINGS_KEY = 'pekari-settings-v4';   // v4: 機械割の調整 (95〜115
 const LEVEL_VALUES = {
   // 機械割 (シミュレーション値): 設定1=約96% / 2=約99% / 3=約102% / 4=約105% / 5=約109% / 6=約114% (設定7はデバッグ用)
   //                   S1    S2    S3    S4    S5    S6    S7
-  hitDenom:        [379,  366,  354,  346,  332,  321,    5],   // ボーナス当選確率 1/N (基本。チェリー後はさらに上がる)
+  hitDenom:        [597,  579,  576,  567,  551,  543,    5],   // ボーナス当選確率 1/N (基本。チェリー後はさらに上がる)
   cherry:          [3.2,  3.2,  3.2,  3.2,  3.2,  3.2,   30],   // チェリー確率
   melon:           [2.2,  2.2,  2.2,  2.2,  2.2,  2.2,   20],   // スイカ確率
   atHitMult:       [0.40, 0.40, 0.40, 0.40, 0.40, 0.40,   3],   // AT中のボーナス(ゾーン)当選確率の倍率
@@ -223,6 +223,7 @@ let atRun = null;                  // いまのAT中の集計 {startDiff, games,
 let atEnding = false;              // ATのG数が0になった (リザルト待ち)
 let isAtResult = false;            // リザルト表示中 (レバー無効)
 let cherryGames = 0;               // チェリー後の当選しやすい期間 (残りG)
+let cherryM = 1;                   // その期間のボーナス当選倍率 (役の強さで変わる)
 let atGames = 0;                   // AT残りG数 (0なら通常時)
 let replayPending = false;         // 次のゲームはリプレイ (3枚を消費しない)
 let isRushing = false;             // PEKA RUSH!!! 演出中 (レバー無効)
@@ -766,6 +767,19 @@ function triggerPekari(forceFx) {
   }
 }
 
+/* ---------- ATの出玉タイプ (平均獲得枚数が3種類) ----------
+   RUSH: 標準 / HEAVEN: 天国的出玉 / DEATH: 悪魔的出玉 (ごく稀。荒れる)
+   hit: ゾーン当選の倍率 / up: チェリー・スイカ上乗せG数の倍率 / zg: ゾーンのG数の倍率 / minG: 突入時の最低G数 */
+const AT_TYPES = [
+  { id: 'rush',   name: 'AT',     line1: 'PEKA',       line2: 'RUSH!!!',  hit: 1,   up: 1,   zg: 1,   minG: 0,   zlv: [50, 30, 15, 5] },
+  { id: 'heaven', name: 'HEAVEN', line1: 'PEKA RUSH!', line2: 'HEAVEN!',  hit: 1.15, up: 1, zg: 1.15, minG: 150, zlv: [20, 30, 30, 20] },
+  { id: 'death',  name: 'DEATH',  line1: 'PEKA RUSH!', line2: 'DEATH!',   hit: 1.2, up: 1,   zg: 1.2, minG: 250, zlv: [5, 20, 35, 40] }
+];
+// ATタイプの出現比率 [RUSH, HEAVEN, DEATH] (設定1〜6 / 設定7)
+const AT_TYPE_WEIGHTS = [[84, 12, 4], [83, 13, 4], [81, 14, 5], [79, 15, 6], [76, 17, 7], [72, 20, 8], [34, 33, 33]];
+let atType = 0;   // いまのATのタイプ (0:RUSH 1:HEAVEN 2:DEATH)
+function pickAtType() { return weightedPick(AT_TYPE_WEIGHTS[Math.min(7, Math.max(1, SETTINGS.level)) - 1]); }
+
 /* ---------- フリーズ → PEKA! PEKA! MOUNTAIN! 直撃 ---------- */
 const FREEZE_RATE = 1 / 1500;   // 通常時1ゲームあたりのフリーズ確率
 function freezeToZone(debug) {
@@ -927,7 +941,7 @@ function handleSpin() {
   const inCherry = cherryGames > 0;
   if (inCherry) { cherryGames--; updateCherry(); }
   // AT中は当選しにくい / 次回モード中は当選しやすい / チェリー後は当選しやすい
-  const hitMult = (inAT ? AT_HIT_MULT : inMode ? modeMult : 1) * (inCherry ? CHERRY_MULT : 1);
+  const hitMult = (inAT ? AT_HIT_MULT * AT_TYPES[atType].hit : inMode ? modeMult : 1) * (inCherry ? cherryM : 1);
   const isHit = Math.random() < Math.min(1, HIT_RATE * hitMult);
 
   if (isHit) {
@@ -969,31 +983,11 @@ function handleSpin() {
       maybeShowAtResult();
     });
   } else if (Math.random() < (inAT ? MELON_AT_RATE : MELON_RATE)) {
-    // スイカ: 中リールを狙って中段に揃える。取りこぼしたら何も起きない
-    runRole('melon', res => {
-      stopTension();
-      if (res.success) {
-        cherryEffects(inAT, true, MELON_COINS);
-        showRoleBadge('MELON', MELON_COINS, MELON_NOTES);
-      } else {
-        missEffect();
-      }
-      updateUI();
-      maybeShowAtResult();
-    }, inAT ? naviFor('purple') : null);     // AT中のスイカ(上乗せ確定): 紫の押し順ナビ
+    // スイカ: 強=中段(中リールを狙う。取りこぼしあり) / 弱=斜め(自動で揃う)
+    playRole(Math.random() < MELON_STRONG_P ? 'melon' : 'melonW', inAT);
   } else if (Math.random() < (inAT ? CHERRY_AT_RATE : CHERRY_RATE)) {
-    // チェリー: 左列に1個あるだけで成立。通常時は30G間ボーナス高確率 (内部) / AT中はPUSHでG数上乗せ
-    runRole('cherry', res => {
-      stopTension();
-      if (res.success) {
-        cherryEffects(inAT, false, CHERRY_COINS);
-        showRoleBadge('CHERRY', CHERRY_COINS, CHERRY_NOTES);
-      } else {
-        missEffect();
-      }
-      updateUI();
-      maybeShowAtResult();
-    }, inAT ? naviFor('red') : null);        // AT中のチェリー: 赤の押し順ナビ
+    // チェリー: 強=中段 / 弱=上下段 (左リールを狙う。取りこぼしあり)
+    playRole(Math.random() < CHERRY_STRONG_P ? 'cherryS' : 'cherryW', inAT);
   } else if (Math.random() < (inAT ? REPLAY_AT_RATE : REPLAY_RATE)) {
     // リプレイ: 図柄が揃って、次のゲームは投入枚数なし
     replayPending = true;
@@ -1004,6 +998,10 @@ function handleSpin() {
       updateUI();
       maybeShowAtResult();
     });
+  } else if (!inAT && Math.random() < CHANCE_S_P) {
+    playRole('chanceS', false);     // 強チャンス目
+  } else if (!inAT && Math.random() < CHANCE_W_P / (1 - CHANCE_S_P)) {
+    playRole('chanceW', false);     // 弱チャンス目
   } else {
     runRole('lose', () => {
       stopTension();
@@ -1091,7 +1089,10 @@ const leftCherries = g => [0, 3, 6].filter(i => g[i] === 'cherry').length;
 
 /* 役ごとに、成立する停止位置の組み合わせ (3リール分の中段位置) を全部数えておく。
    ハズレ・ベル・リプレイ・チェリーは、必ずこの中から選ぶ (配列どおりの図柄で止まる) */
-const ROLE_COMBOS = { lose: [], replay: [], cherry: [], bell0: [], bell1: [], bell2: [] };
+const ROLE_COMBOS = { lose: [], replay: [], cherry: [], cherryW: [], cherryS: [], melonW: [], chanceW: [], chanceS: [], bell0: [], bell1: [], bell2: [] };
+/* チャンス目 (ハズレ目の特定パターン): 弱=各リールのどこかにスイカがバラけて停止 / 強=各リールのどこかに7がバラけて停止 */
+const colHas = (g, c, f) => [c, 3 + c, 6 + c].some(i => f(g[i]));
+
 (function buildCombos() {
   for (let a = 0; a < STRIP_LEN; a++) for (let b = 0; b < STRIP_LEN; b++) for (let c = 0; c < STRIP_LEN; c++) {
     const ts = [a, b, c];
@@ -1099,10 +1100,17 @@ const ROLE_COMBOS = { lose: [], replay: [], cherry: [], bell0: [], bell1: [], be
     const L = alignedLines(g);
     const lc = leftCherries(g);
     if (L.length === 0) {
-      if (lc === 0) ROLE_COMBOS.lose.push(ts);
-      else if (lc === 1) ROLE_COMBOS.cherry.push(ts);
+      if (lc === 0) {
+        if ([0, 1, 2].every(k => colHas(g, k, isSeven))) ROLE_COMBOS.chanceS.push(ts);
+        else if ([0, 1, 2].every(k => colHas(g, k, s => s === 'melon'))) ROLE_COMBOS.chanceW.push(ts);
+        else ROLE_COMBOS.lose.push(ts);
+      } else if (lc === 1) {
+        ROLE_COMBOS.cherry.push(ts);
+        (g[3] === 'cherry' ? ROLE_COMBOS.cherryS : ROLE_COMBOS.cherryW).push(ts);   // 中段=強 / 上下段=弱
+      }
     } else if (L.length === 1 && lc === 0) {
       const { i, sym } = L[0];
+      if (sym === 'melon' && (i === 6 || i === 7)) ROLE_COMBOS.melonW.push(ts);   // 斜めスイカ=弱スイカ
       if (sym === 'replay') ROLE_COMBOS.replay.push(ts);
       else if (sym === 'bell') {
         if (i <= 2) ROLE_COMBOS.bell0.push(ts);
@@ -1130,11 +1138,12 @@ function pickMelonPlan() {
   return { kind: 'melon', t0: o[0], t2: o[1] };
 }
 function planFor(kind) {
-  if (kind === 'cherry') return { kind: 'cherry', ts: pickCombo('cherry') };
+  if (kind === 'cherry' || kind === 'cherryW' || kind === 'cherryS') return { kind: 'cherry', ts: pickCombo(kind), strong: kind === 'cherryS' };
   return kind === 'melon' ? pickMelonPlan() : { kind: 'fixed', ts: pickCombo(kind) };
 }
 function winIdxOf(kind, g) {
-  if (kind === 'cherry') { const i = [0, 3, 6].find(k => g[k] === 'cherry'); return i === undefined ? null : [i]; }
+  if (kind === 'cherry' || kind === 'cherryW' || kind === 'cherryS') { const i = [0, 3, 6].find(k => g[k] === 'cherry'); return i === undefined ? null : [i]; }
+  if (kind === 'chanceW' || kind === 'chanceS') return null;
   const L = alignedLines(g);
   return L.length ? REEL_LINES[L[0].i] : null;
 }
@@ -1264,7 +1273,8 @@ function stopCol(c, auto) {
   } else if (p.kind === 'cherry') {   // チェリー: 左リールで狙う (取りこぼしあり)
     if (auto) { tele = true; t = p.ts[c]; }
     else if (c === 0) {
-      const a = cands.find(x => windowOf(0, x).includes('cherry'));
+      const a = (p.strong ? cands.find(x => stripSym(0, x) === 'cherry') : cands.find(x => { const w = windowOf(0, x); return w.includes('cherry') && w[1] !== 'cherry'; }))
+        ?? cands.find(x => windowOf(0, x).includes('cherry'));
       if (a !== undefined) { T = a; t = mod(a); }
       else {
         const ok = cands.filter(x => !windowOf(0, x).includes('cherry'));
@@ -1376,8 +1386,11 @@ function omenOff() {
   sideLampOff();
 }
 const FAKE_OMEN_RATE = 0.07;   // ハズレ時のフェイク予告 (外れても予告だけ出ることがある)
+/* 役ごとの予告: 弱は軽い(チェリー予告) / 強は重い(スイカ予告) */
+const OMEN_OF = { cherryW: 'cherry', cherryS: 'melon', melonW: 'cherry', chanceW: 'chance', chanceS: 'melon' };
 function omenThen(kind, go) {
-  let shown = kind;
+  let shown = OMEN_OF[kind] === undefined ? kind : OMEN_OF[kind];
+  if (shown === 'chance') shown = Math.random() < 0.5 ? 'cherry' : null;
   if (kind === 'lose' && Math.random() < FAKE_OMEN_RATE) shown = Math.random() < 0.7 ? 'cherry' : 'melon';
   if (shown !== 'melon' && shown !== 'cherry') { go(); return; }
   const melon = shown === 'melon';
@@ -1558,22 +1571,73 @@ function pickCherryAtG() {
 
 /* チェリー/スイカの効果: 払い出し + 通常時は30G間ボーナス高確率 (内部) / AT中はPUSH → G数上乗せ
    strong: スイカ (AT中の上乗せが確定) */
+/* 当選しやすい期間 (内部): 強い役ほど倍率が高い。重ねたときは強いほうの倍率を残し、期間は長いほうに揃える */
+function setBoost(m, g) {
+  if (cherryGames <= 0 || m >= cherryM) cherryM = m;
+  cherryGames = Math.max(cherryGames, g);
+  updateCherry();
+}
 function cherryEffects(inAT, strong, coins) {
   diffCoins += coins;
   setLedWin(coins);
   recordPoint();
   if (inAT) {
     if (strong || Math.random() < CHERRY_AT_SUCCESS) {
-      const addG = pickCherryAtG();
+      const addG = Math.round(pickCherryAtG() * AT_TYPES[atType].up);
       atEnding = false;     // 最終ゲームなら終了を取り消して延長
       pushReveal(`+${addG}G`, false, () => { atGames += addG; updateAT(); });
       return addG;
     }
   } else {
-    cherryGames = CHERRY_G;
+    setBoost(CHERRY_MULT, CHERRY_G);
     updateCherry();
   }
   return 0;
+}
+/* 弱/強の役: 払い出し・通常時の当選しやすさ(倍率/G数)・AT中の上乗せ成立率 */
+const ROLE_INFO = {
+  cherryW: { label: '弱チェリー',   coins: () => CHERRY_COINS, m: () => CHERRY_MULT, g: 15, atP: () => CHERRY_AT_SUCCESS, notes: [1319, 1760, 2349] },
+  cherryS: { label: '強チェリー',   coins: () => CHERRY_COINS * 2, m: () => CHERRY_MULT * 2.5, g: 15, atP: () => 1, notes: [1319, 1760, 2349, 2637] },
+  melonW:  { label: '弱スイカ',     coins: () => Math.max(1, MELON_COINS - 2), m: () => 2, g: 15, atP: () => 0.6, notes: [1047, 1319, 1568] },
+  melon:   { label: '強スイカ',     coins: () => MELON_COINS, m: () => 4, g: 15, atP: () => 1, notes: [1047, 1319, 1568, 2093] },
+  chanceW: { label: '弱チャンス目', coins: () => 0, m: () => 3, g: 8, atP: () => 0, notes: [523, 659, 784] },
+  chanceS: { label: '強チャンス目', coins: () => 0, m: () => 8, g: 8, atP: () => 0, notes: [523, 659, 784, 1047, 1319] }
+};
+const CHERRY_STRONG_P = 0.12;   // チェリーのうち強の割合
+const MELON_STRONG_P = 0.35;    // スイカのうち強の割合
+const CHANCE_S_P = 0.008, CHANCE_W_P = 0.035;   // ハズレ目のうち強/弱チャンス目になる割合 (通常時のみ)
+function roleEffects(role, inAT) {
+  const R = ROLE_INFO[role];
+  const coins = R.coins();
+  diffCoins += coins;
+  setLedWin(coins);
+  recordPoint();
+  if (inAT) {
+    if (R.atP() > 0 && Math.random() < R.atP()) {
+      const addG = Math.round(pickCherryAtG() * AT_TYPES[atType].up);
+      atEnding = false;
+      pushReveal(`+${addG}G`, false, () => { atGames += addG; updateAT(); });
+    }
+  } else if (R.m() > 0) {
+    setBoost(R.m(), R.g);
+  }
+}
+/* 役の実行: リールを回し、止まったら払い出し・演出。チェリー/強スイカは目押し成否あり */
+function playRole(role, inAT) {
+  const R = ROLE_INFO[role];
+  const aimed = role === 'cherryW' || role === 'cherryS' || role === 'melon';
+  const navi = inAT ? (role === 'melon' ? naviFor('purple') : (role === 'cherryW' || role === 'cherryS') ? naviFor('red') : null) : null;
+  runRole(role, res => {
+    stopTension();
+    if (!aimed || res.success) {
+      roleEffects(role, inAT);
+      showRoleBadge(R.label, R.coins(), R.notes);
+    } else {
+      missEffect();
+    }
+    updateUI();
+    maybeShowAtResult();
+  }, navi);
 }
 function showRoleBadge(label, coins, notes) {
   bellBadge.textContent = label + (coins > 0 ? ` +${coins}` : '');
@@ -1615,7 +1679,9 @@ function updateAT() {
   atStatus.classList.remove('bonus');
   atStatus.classList.toggle('low', atGames > 0 && atGames <= 5);
   atStatus.classList.toggle('on', atGames > 0);
-  atLabel.textContent = 'AT';
+  atLabel.textContent = AT_TYPES[atType].name;
+  atStatus.classList.toggle('heaven', atType === 1);
+  atStatus.classList.toggle('death', atType === 2);
   atRemain.textContent = atGames;
 }
 function showAtToast(text) {
@@ -1660,17 +1726,24 @@ function pushReveal(text, premium, onDone) {
 
 const rushOverlay = document.getElementById('rush-overlay');
 const rushSub = document.getElementById('rush-sub');
+const rushLines = rushOverlay.querySelectorAll('.rush-line');
 
 /* AT突入 (PEKA RUSH!!!): 演出のあとPUSHボタン → 獲得G数をでかでかと表示 */
-function startAT(games) {
-  const n = games || pickAtGames();
-  const premium = n >= 100;   // +100G以上はプレミア演出
+function startAT(games, typeId) {
+  atType = typeId !== undefined ? typeId : pickAtType();
+  const T = AT_TYPES[atType];
+  const n = Math.max(games || pickAtGames(), T.minG);
+  const premium = n >= 100 || atType > 0;   // +100G以上・HEAVEN/DEATH はプレミア演出
   atEnding = false;
   sinceEnd = null;
   if (!atRun) atRun = { startDiff: diffCoins, games: 0, bells: 0, bonuses: 0 };
+  atRun.type = atType;
   isRushing = true;
   rushSub.textContent = '';
-  rushOverlay.classList.remove('show', 'premium');
+  rushLines[0].textContent = T.line1;
+  rushLines[1].textContent = T.line2;
+  rushOverlay.classList.remove('show', 'premium', 't-heaven', 't-death');
+  if (atType > 0) rushOverlay.classList.add('t-' + T.id);
   void rushOverlay.offsetWidth;
   rushOverlay.classList.add('show');
   if (premium) rushOverlay.classList.add('premium');
@@ -1689,7 +1762,7 @@ function startAT(games) {
 
   const ms = premium ? 3000 : 2200;
   setTimeout(() => {
-    rushOverlay.classList.remove('show', 'premium');
+    rushOverlay.classList.remove('show', 'premium', 't-heaven', 't-death');
     stopParticles();
     mainEl.classList.remove('shake-main');
     isRushing = false;
@@ -1737,7 +1810,7 @@ function makeBonusPlan(coins, opts = {}) {
   }
   const promo = pool.slice(0, level).sort((a, b) => a - b);
   return { total: coins, paid: 0, games, played: 0, atWin, level, promo, aura: 0, debug: !!opts.debug, zone: !!opts.zone, zoneG: 0,
-    zlv: opts.zlv !== undefined ? opts.zlv : weightedPick([50, 30, 15, 5]), zonePay: Math.ceil(coins / games) };
+    zlv: opts.zlv !== undefined ? opts.zlv : weightedPick(AT_TYPES[atType].zlv), zonePay: Math.ceil(coins / games) };
 }
 function setAura(level, pop) {
   if (level === null) { auraEl.className = 'aura'; return; }
@@ -1862,7 +1935,7 @@ function bonusGame() {
         playAuraUp(b.zlv + 2);
         triggerFlash();
       }
-      const g = ZONE_G_CHOICES[weightedPick(ZONE_G_WEIGHTS[b.zlv])];
+      const g = Math.round(ZONE_G_CHOICES[weightedPick(ZONE_G_WEIGHTS[b.zlv])] * AT_TYPES[atType].zg);
       b.zoneG += g;
       const last = b.played >= b.games;
       pushReveal(`+${g}G`, g >= 50, () => {
@@ -2013,7 +2086,11 @@ function showAtResult(run) {
   const only = !!run.bonusOnly;
   let gain = run.gain !== undefined ? run.gain : diffCoins - run.startDiff;
   const hint = only ? 0 : (run.hint !== undefined ? run.hint : decideNextMode());
-  document.getElementById('at-result-title').textContent = only ? 'BONUS RESULT' : 'AT RESULT';
+  const resType = run.type || 0;
+  document.getElementById('at-result-title').textContent = only ? 'BONUS RESULT' : (resType ? `${AT_TYPES[resType].name} RESULT` : 'AT RESULT');
+  atResultEl.classList.toggle('t-heaven', !only && resType === 1);
+  atResultEl.classList.toggle('t-death', !only && resType === 2);
+  atType = 0;
   document.getElementById('ar-row-games').style.display = only ? 'none' : '';
   document.getElementById('ar-row-bells').style.display = only ? 'none' : '';
   document.getElementById('ar-hint-row').style.display = only ? 'none' : '';

@@ -1423,3 +1423,21 @@ button, .gogo-lamp, .stop-btn { touch-action: manipulation; }
 
 /* STOPボタンはリール(液晶)のすぐ下 */
 .cabinet > .stop-row { margin: 0; padding: 8px 14px 6px; background: linear-gradient(rgba(23, 16, 47, 0.82), rgba(11, 7, 25, 0.82)); }
+
+/* ATタイプ: HEAVEN (天国的出玉) / DEATH (悪魔的出玉) */
+.rush-overlay.t-heaven .rush-line:nth-child(1), .rush-overlay.t-death .rush-line:nth-child(1) { font-size: clamp(2.4rem, 13vw, 4.4rem); }
+.rush-overlay.t-heaven .rush-line:nth-child(2), .rush-overlay.t-death .rush-line:nth-child(2) { font-size: clamp(3.4rem, 19vw, 6.4rem); }
+.rush-overlay.t-heaven { background: radial-gradient(circle at 50% 40%, rgba(120, 200, 255, 0.55), rgba(0, 10, 40, 0.85)); }
+.rush-overlay.t-heaven .rush-line, .rush-overlay.show.t-heaven .rush-line {
+  color: #fff; background: none; -webkit-background-clip: border-box; background-clip: border-box;
+  text-shadow: 0 0 10px #fff, 0 0 26px #7dd3fc, 0 0 56px #38bdf8, 0 0 90px #fde68a, 0 4px 0 #0b3a66; filter: none;
+}
+.rush-overlay.t-death { background: radial-gradient(circle at 50% 40%, rgba(120, 0, 30, 0.6), rgba(10, 0, 10, 0.92)); }
+.rush-overlay.t-death .rush-line, .rush-overlay.show.t-death .rush-line {
+  color: #ffd9e0; background: none; -webkit-background-clip: border-box; background-clip: border-box;
+  text-shadow: 0 0 10px #ff2d55, 0 0 26px #d1003a, 0 0 56px #7a0030, 0 0 90px #5b00a0, 0 4px 0 #2b0010; filter: none;
+}
+.at-status.heaven { border-color: #7dd3fc; color: #e0f2fe; box-shadow: 0 0 10px rgba(125, 211, 252, .6); }
+.at-status.death { border-color: #ff2d55; color: #ffd9e0; box-shadow: 0 0 10px rgba(255, 45, 85, .7); }
+.at-result.t-heaven .at-result-card, .at-result.t-heaven > div { box-shadow: 0 0 30px rgba(125, 211, 252, .6); }
+.at-result.t-death .at-result-card, .at-result.t-death > div { box-shadow: 0 0 30px rgba(255, 45, 85, .6); }
