@@ -264,6 +264,11 @@
         addFn(l, () => debugStart({ display: 2, actual: 2, fx: id })));
       addFn('スイカ予告', () => { if (!isReelSpinning) omenThen('melon', () => setTimeout(omenOff, 2500)); });
       addFn('チェリー予告', () => { if (!isReelSpinning) omenThen('cherry', () => setTimeout(omenOff, 2500)); });
+      ['青', '緑', '金', '虹'].forEach((n, lv) => addFn(`マウンテン ${n}`, () => { if (!bonusRun && !isPushing && !isRushing) { initAudio(); beginBonus(makeBonusPlan(300, { zone: true, zlv: lv, atWin: false, level: 0, debug: true })); } }));
+      addFn('フリーズ→マウンテン', () => { if (!bonusRun && !isPushing && !isRushing && !isSuspense && !isPekared) { initAudio(); freezeToZone(true); } });
+      addFn('ナビ 赤(チェリー)', () => showNavi([1, 2, 0], 'red'));
+      addFn('ナビ 紫(スイカ)', () => showNavi([2, 0, 1], 'purple'));
+      addFn('ナビ 消す', () => hideNavi());
       addFn('左右ペカ(32G内)', () => sideLampShow('early'));
       addFn('左右ペカ(天国)', () => sideLampShow('heaven'));
       addFn('左右ペカ消灯', () => sideLampOff());

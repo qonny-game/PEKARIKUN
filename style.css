@@ -1386,3 +1386,29 @@ button, .gogo-lamp, .stop-btn { touch-action: manipulation; }
   80%  { opacity: 1; transform: scale(1) rotate(-4deg); }
   100% { opacity: 0; transform: scale(1.1) rotate(-4deg); }
 }
+
+/* チェリー=赤 / スイカ(上乗せ確定)=紫 の押し順ナビ */
+.navi.red b { color: #fff; background: radial-gradient(circle at 35% 30%, #ff9a9a, #dc2626 70%); border-color: #fff; box-shadow: 0 0 12px #ff4d4d; }
+.navi.purple b { width: 40px; height: 40px; font-size: 19px; color: #fff; background: radial-gradient(circle at 35% 30%, #f0c6ff, #7e22ce 70%); border-color: #fff; box-shadow: 0 0 16px #c084fc; }
+.navi.purple b.next { animation: navi-next-p 0.3s ease-in-out infinite alternate; }
+@keyframes navi-next-p { from { transform: scale(1); } to { transform: scale(1.3); box-shadow: 0 0 26px #e9b6ff; } }
+
+/* 上乗せ特化ゾーンのロゴ (PEKA CHANCE! とは別配色) */
+.chance-logo.zone span {
+  background: linear-gradient(100deg, #4ade80 0%, #fde047 35%, #ffffff 55%, #4ade80 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 0 6px #22c55e) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.9));
+  -webkit-text-stroke: 1.5px #14532d;
+}
+.chance-logo.zone .cl-peka { font-size: 22px; }
+
+/* PEKA! PEKA! MOUNTAIN! (ロゴの色 = 上乗せ期待度: 青 < 緑 < 金 < 虹) */
+.chance-logo.zone { gap: 6px; }
+.chance-logo.zone .cl-peka { font-size: 17px; }
+.chance-logo.zone .cl-chance { font-size: 21px; }
+.chance-logo.zone.z0 span { background-image: linear-gradient(100deg, #67e8f9, #ffffff 50%, #38bdf8); filter: drop-shadow(0 0 6px #38bdf8) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.9)); -webkit-text-stroke: 1.5px #0c4a6e; }
+.chance-logo.zone.z1 span { background-image: linear-gradient(100deg, #4ade80, #ecfccb 50%, #22c55e); filter: drop-shadow(0 0 8px #22c55e) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.9)); -webkit-text-stroke: 1.5px #14532d; }
+.chance-logo.zone.z2 span { background-image: linear-gradient(100deg, #fde047, #ffffff 50%, #f59e0b); filter: drop-shadow(0 0 10px #ffb300) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.9)); -webkit-text-stroke: 1.5px #92400e; }
+.chance-logo.zone.z3 span { background-image: linear-gradient(100deg, #ff5a5a, #ffd800, #3be07a, #38a8ff, #d946ef, #ff5a5a); background-size: 300% 100%; filter: drop-shadow(0 0 12px #f0abfc) drop-shadow(0 2px 3px rgba(0, 0, 0, 0.9)); -webkit-text-stroke: 1.5px #fff; }
