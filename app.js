@@ -29,7 +29,7 @@ const DEFAULT_SETTINGS = {
   bellNormal: 8,       // 通常時: ハズレのうちベルが揃う割合
   bellAt: 50,          // AT中: ハズレのうちベルが揃う割合
   replayAt: 35,        // AT中: ハズレのうちリプレイになる割合
-  atHitMult: 0.1,      // AT中のボーナス当選確率の倍率 (低いほど当選しにくい)
+  atHitMult: 0.4,      // AT中のボーナス当選確率の倍率 (低いほど当選しにくい)
   atW50: 80,           // AT継続G数の比率: +50G (ほとんどこれ)
   atW100: 14,          // +100G (稀)
   atW200: 5,           // +200G (稀)
@@ -50,13 +50,16 @@ const DEFAULT_SETTINGS = {
   cherryW25: 20,       // +25G
   cherryW30: 10,       // +30G
   cherryCoins: 2,      // チェリーの払い出し枚数
+  melon: 2,            // 通常時: ハズレのうちスイカが成立する割合 (中リールを狙わないと揃わない)
+  melonAt: 4,          // AT中: ハズレのうちスイカが成立する割合 (揃うとG数上乗せ確定)
+  melonCoins: 5,       // スイカの払い出し枚数
   modeW0: 55,          // AT終了後の次回モード比率: 通常 (示唆: 弱)
   modeW1: 28,          // 好調 (30G / 当選率2倍)
   modeW2: 14,          // 絶好調 (40G / 4倍)
   modeW3: 3,           // 天国 (50G / 8倍)
   hintTrue: 70         // リザルト示唆が実際のモードと一致する割合
 };
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.2.0';
 const SETTINGS_KEY = 'pekari-settings-v3';
 
 // ==========================================
@@ -67,6 +70,8 @@ const LEVEL_VALUES = {
   //                   S1    S2    S3    S4    S5    S6    S7
   hitDenom:        [150,  140,  125,  110,   95,   80,    5],   // ボーナス当選確率 1/N
   cherry:          [2.5,  2.8,  3.1,  3.5,  4.0,  4.6,   30],   // チェリー確率
+  melon:           [1.6,  1.8,  2.0,  2.3,  2.6,  3.0,   20],   // スイカ確率
+  atHitMult:       [0.30, 0.34, 0.38, 0.42, 0.46, 0.50,   3],   // AT中のボーナス当選確率の倍率
   replay:          [13.2, 13.4, 13.6, 13.8, 14.0, 14.3,   14],
   atEntryMin:      [15,   17,   19,   21,   23,   26,   100],   // AT突入率 (150枚時)
   atEntryMax:      [70,   73,   76,   79,   83,   88,   100],   // AT突入率 (400枚時)
@@ -132,7 +137,7 @@ let CHERRY_AT_RATE, CHERRY_AT_SUCCESS, CHERRY_AT_WEIGHTS = [40, 30, 20, 10], CHE
 let BELL_NORMAL_RATE, BELL_AT_RATE, AT_HIT_MULT, AT_WEIGHTS = [80, 14, 5, 1];
 let BELL_WEIGHTS = [60, 25, 15], AT_BELL_WEIGHTS = [30, 10, 60];
 let MODE_WEIGHTS = [55, 28, 14, 3], HINT_TRUE;
-let REPLAY_AT_RATE, REPLAY_RATE;
+let REPLAY_AT_RATE, REPLAY_RATE, MELON_RATE, MELON_AT_RATE, MELON_COINS;
 
 function applySettings() {
   const st = activeProfile();
@@ -150,6 +155,9 @@ function applySettings() {
   CHERRY_AT_RATE = clampP(st.cherryAt);
   CHERRY_AT_SUCCESS = clampP(st.cherryAtSuccess);
   CHERRY_AT_WEIGHTS = [st.cherryW10, st.cherryW20, st.cherryW25, st.cherryW30].map(nz);
+  MELON_RATE = clampP(st.melon);
+  MELON_AT_RATE = clampP(st.melonAt);
+  MELON_COINS = Math.max(0, Math.round(st.melonCoins));
   CHERRY_MULT = Math.max(0, st.cherryMult);
   CHERRY_G = Math.max(0, Math.round(st.cherryG));
   CHERRY_COINS = Math.max(0, Math.round(st.cherryCoins));
@@ -203,6 +211,9 @@ let bonusRun = null;               // ボーナス消化中の状態 {total, pai
 let currentShownCoins = 0;
 let isCounting = false;            // 数字カウントアップ中
 let countRAF = null;
+let sinceEnd = null;               // ボーナス/AT終了からのゲーム数 (32G以内の当選で左右ペカ)
+let pekaSpecial = null;            // 'early' | 'heaven': 左右ペカ演出
+let pekaTimers = [];
 let modeGames = 0;                 // AT終了後の「次回モード」の残りG数 (当選率アップ・画面には出さない)
 let modeMult = 1;                  // 次回モードの当選確率の倍率
 let atRun = null;                  // いまのAT中の集計 {startDiff, games, bells, bonuses}
@@ -647,21 +658,41 @@ function stopParticles() {
 // ゲーム進行
 // ==========================================
 
-/* ペカリ発生処理 */
-function triggerPekari() {
-  isPekared = true;
-  isBonusAligned = false;
+/* ---------- ペカ演出 (いろいろ) ----------
+   normal: 通常点灯 / late: 後ペカ / gakkun: ガックン点灯 / hanabi: 花火 /
+   double: Wペカ / rainbow: 虹ペカ / freeze: フリーズ風 */
+const PEKA_FX = [['normal', 38], ['late', 16], ['gakkun', 14], ['hanabi', 12], ['double', 9], ['rainbow', 6], ['freeze', 5]];
+function pickPekaFx(tierN) {
+  const boost = 1 + tierN * 0.18;   // 大きい枚数ほどプレミア系が出やすい
+  const w = PEKA_FX.map(([id, x]) => (id === 'rainbow' || id === 'freeze' || id === 'double') ? x * boost : x);
+  return PEKA_FX[weightedPick(w)][0];
+}
+function pekaLater(fn, ms) { pekaTimers.push(setTimeout(fn, ms)); }
+function clearPekaTimers() { pekaTimers.forEach(clearTimeout); pekaTimers = []; }
 
+/* 左右のPEKAランプ (沖スロ風): ボーナス終了32G以内の当選 / 天国中の当選 */
+const sideL = document.getElementById('side-l');
+const sideR = document.getElementById('side-r');
+function sideLampShow(kind) {
+  [sideL, sideR].forEach(el => { el.classList.remove('on', 'heaven'); void el.offsetWidth; el.classList.add('on'); if (kind === 'heaven') el.classList.add('heaven'); });
+  if (soundEnabled) {
+    initAudio();
+    const t = audioCtx.currentTime;
+    const notes = kind === 'heaven' ? [523, 659, 784, 1047, 1319, 1568] : [784, 988, 1175, 1568];
+    notes.forEach((f, i) => tone(f, t + i * 0.07, 0.22, 'square', 0.08));
+  }
+}
+function sideLampOff() { [sideL, sideR].forEach(el => el && el.classList.remove('on', 'heaven')); }
+
+/* ランプ点灯そのもの */
+function lightLamp(extra) {
   const tier = BIG_TIERS[pendingDisplayIndex];
   const n = pendingDisplayIndex + 1;
-
-  // 表示と音を同じタイミングで実行 (GOGO!ランプが光る音は gako.mp3)
-  gogoBox.className = `${GOGO_BASE} peka tier-${n}`;
+  gogoBox.className = `${GOGO_BASE} peka tier-${n}${extra ? ' ' + extra : ''}`;
   gogoBox.style.setProperty('--glow', tier.glow);
   fxOverlay.className = '';   // 背景エフェクトは枚数表示の時だけ。ペカリ中は文字ランプが光る
   gogoSubtext.textContent = tier.sub;
   gogoSubtext.style.opacity = '1';
-
   playGakoSound('gako');
   if (tier.grand) {
     tripleFlash();
@@ -669,17 +700,134 @@ function triggerPekari() {
   } else {
     triggerFlash();
   }
-
-  start4SecLock();
+}
+/* 次のレバーONで、同じ色の7を狙って揃える */
+function armPekari() {
+  reelLocked = false;
+  spinBtn.disabled = false;
+  spinBtn.innerText = '7を揃える (レバーON)';
 }
 
-/* ペカり直後: レバーを止めて「揃える」ボタンだけ押せるようにする */
-function start4SecLock() {
-  spinBtn.disabled = true;
-  spinBtn.innerText = "ボーナスを揃えてください";
-  alignBtn.disabled = false;
-  alignBtn.classList.remove('opacity-40', 'cursor-not-allowed');
-  alignBtn.classList.add('animate-bounce', 'from-yellow-400', 'to-amber-500', 'text-black');
+/* ペカリ発生処理 */
+function triggerPekari(forceFx) {
+  isPekared = true;
+  isBonusAligned = false;
+  const n = pendingDisplayIndex + 1;
+  const fx = forceFx || pickPekaFx(n);
+  if (pekaSpecial) { sideLampShow(pekaSpecial); pekaSpecial = null; }
+  reelLocked = true;           // 演出が終わるまでレバーは効かない
+  clearPekaTimers();
+
+  if (fx === 'late') {
+    // 後ペカ: 止まってしばらく経ってから光る
+    pekaLater(() => { lightLamp(); armPekari(); }, 1500);
+  } else if (fx === 'gakkun') {
+    // ガックン: ランプが点いたり消えたりして、最後にしっかり点灯
+    gogoBox.className = `${GOGO_BASE} fx-gakkun`;
+    playTick(0);
+    pekaLater(() => playTick(1), 350);
+    pekaLater(() => { lightLamp(); armPekari(); }, 950);
+  } else if (fx === 'hanabi') {
+    // 花火: 点灯と同時に連続で打ち上がる
+    lightLamp();
+    burstParticles('gold', 50);
+    pekaLater(() => { burstParticles('gold', 50); triggerFlash(); }, 380);
+    pekaLater(() => { burstParticles('mega', 70); triggerFlash(); }, 760);
+    pekaLater(armPekari, 800);
+  } else if (fx === 'double') {
+    // Wペカ: 点灯 → 消灯 → もう一度点灯
+    lightLamp();
+    pekaLater(() => { gogoBox.className = `${GOGO_BASE} fx-dark`; fxOverlay.className = ''; }, 650);
+    pekaLater(() => { lightLamp(); tripleFlash(); armPekari(); }, 1150);
+  } else if (fx === 'rainbow') {
+    // 虹ペカ
+    lightLamp('peka-rainbow');
+    playAuraUp(6);
+    tripleFlash();
+    pekaLater(armPekari, 500);
+  } else if (fx === 'freeze') {
+    // フリーズ風: 暗転 → 鼓動 → ドン! と点灯
+    startTension('FREEZE');
+    pekaLater(() => {
+      stopTension();
+      lightLamp('peka-rainbow');
+      tripleFlash();
+      shakeMain(600);
+      burstParticles('mega', 110);
+      playPayoutSound(5);
+      armPekari();
+    }, 2000);
+  } else {
+    lightLamp();
+    armPekari();
+  }
+}
+
+/* ---------- 緊張演出 (ボーナス最終ゲームのジャッジメント / AT最終ゲーム) ---------- */
+const judgeEl = document.getElementById('judge-overlay');
+const judgeText = document.getElementById('judge-text');
+function startTension(label) {
+  judgeEl.classList.add('tense');
+  judgeText.textContent = label;
+  judgeText.classList.remove('show');
+  void judgeText.offsetWidth;
+  judgeText.classList.add('show');
+  startHeartbeat(5000, 150);
+}
+function stopTension() {
+  judgeEl.classList.remove('tense');
+  judgeText.classList.remove('show');
+  stopHeartbeat();
+}
+function playTick(level) {
+  if (!soundEnabled) return;
+  initAudio();
+  const t = audioCtx.currentTime;
+  tone(660 + level * 90, t, 0.12, 'square', 0.1);
+  tone(990 + level * 90, t + 0.1, 0.12, 'square', 0.1);
+}
+/* ATの残りG数が少ないとき */
+function atTension(n) {
+  if (n === 0) { startTension('FINAL'); }
+  else if (n <= 3) { showAtToast(`LAST ${n}G`); playTick(4 - n); }
+}
+
+/* ボーナス揃い (7が揃った) */
+function onBonusAligned() {
+  alignStage = 1;
+  const tier = BIG_TIERS[pendingTierIndex];
+  markWin([3, 4, 5], tier.grand ? 'sym-glow-gold' : '');
+  alignDisplay.classList.remove('show-lose');
+  alignDisplay.classList.add('show-align');
+  playAlignChime();
+  triggerFlash();
+  spinBtn.disabled = false;
+  spinBtn.innerText = 'NEXT';
+}
+
+/* ペカっている間のレバーON: 7を狙って揃える (取りこぼしたら、もう一度) */
+function attemptBonus() {
+  playClickSound();
+  setLedWin(0);
+  if (!isDebugRun) {
+    diffCoins -= 3;
+    cumulativeGames++;
+    recordPoint();
+    updateUI();
+  }
+  startReels({ kind: 'seven' }, res => {
+    if (res.success) {
+      onBonusAligned();
+    } else {
+      showAtToast('MISS');
+      reelLocked = true;
+      setTimeout(() => {
+        reelLocked = false;
+        hideLoseReels();
+        spinBtn.innerText = '7を揃える (レバーON)';
+      }, 800);
+    }
+  });
 }
 
 /* レバーON 処理 */
@@ -689,7 +837,9 @@ function handleSpin() {
     if (pushOverlay.classList.contains('waiting')) pushBtn.click();
     return;
   }
-  if (isCooldown || isCounting || isSuspense || isRushing || isAtResult) return;
+  // リール回転中は、止まっていないリールを左から止める
+  if (isReelSpinning) { stopNextReel(); return; }
+  if (isCooldown || isCounting || isSuspense || isRushing || isAtResult || reelLocked) return;
 
   // 枚数表示のあとのレバーON: ボーナス消化(ベルでの枚数獲得)が始まる
   if (isBonusAligned) {
@@ -699,9 +849,10 @@ function handleSpin() {
     if (!wasDebug && plan) beginBonus(plan);
   }
 
-  // ペカっている途中の誤操作防止
+  // ペカっている間: 7を揃える (揃ったらNEXTで枚数表示)
   if (isPekared && !isBonusAligned) {
-    alert("GOGO!ランプが点灯しています！「ボーナスを揃える！」を押してください。");
+    if (alignStage === 1) { showPayout(); return; }
+    attemptBonus();
     return;
   }
 
@@ -712,9 +863,11 @@ function handleSpin() {
   }
 
   playClickSound();
+  setLedWin(0);
 
   totalGames++;
   cumulativeGames++;
+  if (sinceEnd !== null) sinceEnd++;
   const inAT = atGames > 0;
   const inMode = !inAT && modeGames > 0;
   if (inAT) {
@@ -722,16 +875,17 @@ function handleSpin() {
     if (atRun) atRun.games++;
     if (atGames === 0) atEnding = true;   // リザルトはこのゲームの結果が出たあとに表示
     updateAT();
+    atTension(atGames);
   } else if (inMode) {
     modeGames--;
   }
   if (replayPending) {
     replayPending = false;       // リプレイ: このゲームは投入なし
-    spinBtn.innerText = 'レバーON';
   } else {
     diffCoins -= 3;              // 3枚消費
   }
   recordPoint();
+  updateUI();
 
   const inCherry = cherryGames > 0;
   if (inCherry) { cherryGames--; updateCherry(); }
@@ -740,6 +894,9 @@ function handleSpin() {
   const isHit = Math.random() < Math.min(1, HIT_RATE * hitMult);
 
   if (isHit) {
+    // 天国中の当選 / ボーナス終了後32G以内の当選: 左右のPEKAランプ
+    pekaSpecial = (inMode && modeMult >= 8) ? 'heaven' : (sinceEnd !== null && sinceEnd <= 32) ? 'early' : null;
+    sinceEnd = null;
     pendingBonusType = 'BIG';
     pendingDisplayIndex = pickTierIndex();
     pendingTierIndex = pendingDisplayIndex;
@@ -748,34 +905,68 @@ function handleSpin() {
     if (inAT && atRun) atRun.bonuses++;
     cherryGames = 0;
     updateCherry();
-
-    // ボーナス当選でG数リセット
-    totalGames = 0;
-    updateUI();
-    hideLoseReels();
-    triggerPekari();
+    // 今回はハズレ目で止まり、止まったあとにGOGO!ランプが光る
+    runRole('lose', () => {
+      stopTension();
+      totalGames = 0;
+      updateUI();
+      reelLocked = true;
+      setTimeout(() => {
+        reelLocked = false;
+        hideLoseReels();
+        triggerPekari();
+      }, 600);
+    });
   } else if (Math.random() < (inAT ? BELL_AT_RATE : BELL_NORMAL_RATE)) {
     // ベル揃い: 直線 / 斜め左上から1枚 / 斜め左下から15枚 (AT中は左下が出やすい)
     if (inAT && atRun) atRun.bells++;
-    hitBell(undefined, inAT);
-    updateUI();
+    const type = pickBellType(inAT);
+    runRole('bell' + type, () => {
+      stopTension();
+      diffCoins += BELL_TYPES[type].coins;
+      setLedWin(BELL_TYPES[type].coins);
+      recordPoint();
+      showBellResult(BELL_TYPES[type].coins, inAT);
+      updateUI();
+      maybeShowAtResult();
+    });
+  } else if (Math.random() < (inAT ? MELON_AT_RATE : MELON_RATE)) {
+    // スイカ: 中リールを狙って中段に揃える。取りこぼしたら何も起きない
+    runRole('melon', res => {
+      stopTension();
+      if (res.success) {
+        cherryEffects(inAT, true, MELON_COINS);
+        showRoleBadge('MELON', MELON_COINS, MELON_NOTES);
+      }
+      updateUI();
+      maybeShowAtResult();
+    });
   } else if (Math.random() < (inAT ? CHERRY_AT_RATE : CHERRY_RATE)) {
     // チェリー: 左列に1個あるだけで成立。通常時は30G間ボーナス高確率 (内部) / AT中はPUSHでG数上乗せ
-    hitCherry(false, inAT);
-    updateUI();
+    runRole('cherry', () => {
+      stopTension();
+      cherryEffects(inAT, false, CHERRY_COINS);
+      showRoleBadge('CHERRY', CHERRY_COINS, CHERRY_NOTES);
+      updateUI();
+      maybeShowAtResult();
+    });
   } else if (Math.random() < (inAT ? REPLAY_AT_RATE : REPLAY_RATE)) {
     // リプレイ: 図柄が揃って、次のゲームは投入枚数なし
     replayPending = true;
-    showReplayReels();
-    spinBtn.innerText = 'リプレイ (レバーON)';
-    playReplayJingle();
-    updateUI();
+    runRole('replay', () => {
+      stopTension();
+      spinBtn.innerText = 'リプレイ (レバーON)';
+      playReplayJingle();
+      updateUI();
+      maybeShowAtResult();
+    });
   } else {
-    showLoseReels();
-    updateUI();
+    runRole('lose', () => {
+      stopTension();
+      updateUI();
+      maybeShowAtResult();
+    });
   }
-
-  if (!isHit) maybeShowAtResult();   // ATの最終ゲームがボーナス以外ならここでリザルト
 }
 
 /* 当選枚数に応じた表示レベル (1〜6。枚数が大きいほど派手) */
@@ -816,15 +1007,7 @@ function playPayoutSound(level) {
   }
 }
 
-/* ボーナスを揃える！ ボタン処理: 1回目=図柄表示 / 2回目(NEXT)=枚数表示 */
-function handleAlignBonus() {
-  if (!isPekared || !pendingBonusType) return;
-  if (alignStage === 0) showSymbols();
-  else if (alignStage === 1) showPayout();
-}
-
 /* ---------- リール (3行3列) ---------- */
-const REEL_SYMBOLS = ['7red', '7blue', '7white', 'bar', 'bell', 'cherry', 'melon'];
 const REEL_LINES = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
 const EMOJI = { bell: '🔔', cherry: '🍒', melon: '🍉' };
 
@@ -833,32 +1016,82 @@ function symbolHTML(key, glow) {
   if (key === 'bar') return '<div class="sym-bar">BAR</div>';
   if (EMOJI[key]) return `<div class="sym-emoji">${EMOJI[key]}</div>`;
   // 画像が無い場合は文字の7で代用
-  return `<img class="sym-img ${glow || ''}" src="${key}.png" alt="7" onerror="this.outerHTML='<div class=&quot;sym-seven&quot;>7</div>'">`;
-}
-const randSym = () => REEL_SYMBOLS[Math.floor(Math.random() * REEL_SYMBOLS.length)];
-// チェリーは左列に1個あるだけで揃い扱い。だから左列には、チェリー役のとき以外チェリーを出さない
-const LEFT_COL = [0, 3, 6];
-function randSymAt(i) {
-  let k;
-  do { k = randSym(); } while (k === 'cherry' && LEFT_COL.includes(i));
-  return k;
+  return `<img class="sym-img ${glow || ''}" src="${key}.png" alt="7" onerror="if(this.parentNode)this.outerHTML='<div class=&quot;sym-seven&quot;>7</div>'">`;
 }
 const lineOf = (g, l) => g[l[0]] === g[l[1]] && g[l[1]] === g[l[2]];
 
-/* ハズレ: どの列・行・斜めも揃わない9マス */
-function loseGrid() {
-  let g;
-  do { g = Array.from({ length: 9 }, (_, i) => randSymAt(i)); } while (REEL_LINES.some(l => lineOf(g, l)));
-  return g;
+/* ---------- リール配列 (各21コマ) ----------
+   回転は下向き。windowOf(c, t) = [上段, 中段, 下段] = [t+1, t, t-1] 番目の図柄。
+   7は各色1個ずつ。第1リールのBARの上下は必ずチェリーとスイカ。 */
+const STRIP_LEN = 21;
+const STRIPS = [
+  ['7red', 'replay', 'bell', 'cherry', 'bar', 'melon', 'replay', 'bell', '7blue', 'replay', 'bell', 'melon', 'cherry', 'replay', 'bell', '7white', 'replay', 'bell', 'melon', 'replay', 'bell'],
+  ['replay', 'bell', '7blue', 'replay', 'melon', 'bell', 'bar', 'replay', 'cherry', 'bell', '7white', 'replay', 'bell', 'melon', 'replay', '7red', 'bell', 'replay', 'cherry', 'bell', 'replay'],
+  ['bell', '7white', 'replay', 'melon', 'bell', 'replay', 'bar', 'bell', 'melon', 'replay', '7red', 'bell', 'melon', 'replay', 'cherry', 'bell', 'melon', 'replay', '7blue', 'bell', 'replay']
+];
+const SEVENS = ['7red', '7blue', '7white'];
+const isSeven = k => SEVENS.includes(k);
+const mod = i => ((i % STRIP_LEN) + STRIP_LEN) % STRIP_LEN;
+const stripSym = (c, i) => STRIPS[c][mod(i)];
+const windowOf = (c, t) => [stripSym(c, t + 1), stripSym(c, t), stripSym(c, t - 1)];
+function gridOf(ts) {
+  const w = ts.map((t, c) => windowOf(c, t));
+  return [w[0][0], w[1][0], w[2][0], w[0][1], w[1][1], w[2][1], w[0][2], w[1][2], w[2][2]];
 }
-/* 当たり: 中段だけが揃い、残りの6マスは別の図柄で埋める */
-function winGrid(key) {
-  let g;
-  do {
-    g = Array.from({ length: 9 }, (_, i) => randSymAt(i));
-    g[3] = g[4] = g[5] = key;
-  } while (REEL_LINES.some((l, i) => i !== 1 && lineOf(g, l)));
-  return g;
+function alignedLines(g) {
+  const out = [];
+  REEL_LINES.forEach((l, i) => { if (lineOf(g, l)) out.push({ i, sym: g[l[0]] }); });
+  return out;
+}
+const leftCherries = g => [0, 3, 6].filter(i => g[i] === 'cherry').length;
+
+/* 役ごとに、成立する停止位置の組み合わせ (3リール分の中段位置) を全部数えておく。
+   ハズレ・ベル・リプレイ・チェリーは、必ずこの中から選ぶ (配列どおりの図柄で止まる) */
+const ROLE_COMBOS = { lose: [], replay: [], cherry: [], bell0: [], bell1: [], bell2: [] };
+(function buildCombos() {
+  for (let a = 0; a < STRIP_LEN; a++) for (let b = 0; b < STRIP_LEN; b++) for (let c = 0; c < STRIP_LEN; c++) {
+    const ts = [a, b, c];
+    const g = gridOf(ts);
+    const L = alignedLines(g);
+    const lc = leftCherries(g);
+    if (L.length === 0) {
+      if (lc === 0) ROLE_COMBOS.lose.push(ts);
+      else if (lc === 1) ROLE_COMBOS.cherry.push(ts);
+    } else if (L.length === 1 && lc === 0) {
+      const { i, sym } = L[0];
+      if (sym === 'replay') ROLE_COMBOS.replay.push(ts);
+      else if (sym === 'bell') {
+        if (i <= 2) ROLE_COMBOS.bell0.push(ts);
+        else if (i === 6) ROLE_COMBOS.bell1.push(ts);
+        else if (i === 7) ROLE_COMBOS.bell2.push(ts);
+      }
+    }
+  }
+})();
+const pickCombo = kind => { const l = ROLE_COMBOS[kind]; return l[Math.floor(Math.random() * l.length)]; };
+
+/* スイカ: 中段に揃う。第1・第3リールは自動で揃うが、中リールは自分で狙わないと揃わない */
+function pickMelonPlan() {
+  const idxs = c => STRIPS[c].map((k, i) => (k === 'melon' ? i : -1)).filter(i => i >= 0);
+  const opts = [];
+  idxs(0).forEach(t0 => idxs(2).forEach(t2 => {
+    const ok = idxs(1).every(t1 => {
+      const g = gridOf([t0, t1, t2]);
+      const L = alignedLines(g);
+      return leftCherries(g) === 0 && L.length === 1 && L[0].i === 1 && L[0].sym === 'melon';
+    });
+    if (ok) opts.push([t0, t2]);
+  }));
+  const o = opts[Math.floor(Math.random() * opts.length)];
+  return { kind: 'melon', t0: o[0], t2: o[1] };
+}
+function planFor(kind) {
+  return kind === 'melon' ? pickMelonPlan() : { kind: 'fixed', ts: pickCombo(kind) };
+}
+function winIdxOf(kind, g) {
+  if (kind === 'cherry') { const i = [0, 3, 6].find(k => g[k] === 'cherry'); return i === undefined ? null : [i]; }
+  const L = alignedLines(g);
+  return L.length ? REEL_LINES[L[0].i] : null;
 }
 
 /* winIdx: 揃ったマスの番号の配列 (null ならハズレ表示) */
@@ -870,19 +1103,211 @@ function renderReels(grid, winIdx, glow) {
   }).join('');
 }
 
-/* リプレイ: ランダムな1ラインにREPLAYが揃う */
-function showReplayReels() {
+/* ---------- リール回転: レバーONで回り、自分で3つ止める ---------- */
+const OPT_KEY = 'pekari-opt-v1';
+let AUTO_STOP = false;   // 自動停止 (目押しなし。7もスイカも必ず揃う)
+try { AUTO_STOP = !!JSON.parse(localStorage.getItem(OPT_KEY) || '{}').autoStop; } catch (e) { /* 初期値 */ }
+function saveOpt() { try { localStorage.setItem(OPT_KEY, JSON.stringify({ autoStop: AUTO_STOP })); } catch (e) { /* 無視 */ } }
+
+const SPIN_SPEED = 18;    // 1秒に流れる図柄の数
+const SLIP_MAX = 4;       // 目押し: 狙った図柄が中段の4コマ手前までなら引き込める
+const CELL_H = 58;
+let reelSpin = null;
+let isReelSpinning = false;
+let reelLocked = false;   // 停止直後の誤タップ防止
+
+function reelsPrepareDOM() {
+  reelsEl.innerHTML = Array.from({ length: 9 }, (_, i) => `<div class="reel" style="--i:${i}"></div>`).join('');
+}
+const colSym = (col, idx) => (col.ov[idx] !== undefined ? col.ov[idx] : stripSym(col.c, idx));
+
+function startReels(plan, onDone) {
+  reelsPrepareDOM();
   bellBadge.classList.remove('show');
-  const line = REEL_LINES[Math.floor(Math.random() * REEL_LINES.length)];
-  let g;
-  do {
-    g = Array.from({ length: 9 }, (_, i) => randSymAt(i));
-    line.forEach(i => { g[i] = 'replay'; });
-  } while (REEL_LINES.some(l => l !== line && lineOf(g, l)));
-  renderReels(g, line, '');
   alignDisplay.classList.remove('show-align');
   alignDisplay.classList.add('show-lose');
   gogoTextContainer.classList.add('opacity-0');
+  const cols = [0, 1, 2].map(c => {
+    const el = document.createElement('div');
+    el.className = 'reel-ov';
+    el.style.left = `${c * 66}px`;
+    el.innerHTML = '<div class="reel"></div><div class="reel"></div><div class="reel"></div><div class="reel"></div>';
+    reelsEl.appendChild(el);
+    return { c, el, cells: [...el.children], pos: Math.random() * STRIP_LEN, state: 'spin', ov: {}, T: 0, t: 0, final: null, shown: [null, null, null, null] };
+  });
+  reelSpin = { plan, cols, onDone, last: performance.now(), raf: 0, color: null, timers: [] };
+  isReelSpinning = true;
+  spinBtn.disabled = false;
+  spinBtn.innerText = 'ストップ';
+  cols.forEach(drawOverlay);
+  reelSpin.raf = requestAnimationFrame(reelFrame);
+  if (AUTO_STOP) [0, 1, 2].forEach(c => reelSpin.timers.push(setTimeout(() => stopCol(c, true), 380 + c * 260)));
+}
+
+function drawOverlay(col) {
+  const mid = Math.floor(col.pos);
+  const f = col.pos - mid;
+  for (let j = 0; j < 4; j++) {
+    const k = 2 - j;                       // 上のはみ出し(2) / 上段(1) / 中段(0) / 下段(-1)
+    const idx = mid + k;
+    if (col.shown[j] !== idx) {
+      col.cells[j].innerHTML = symbolHTML(colSym(col, idx), '');
+      col.shown[j] = idx;
+    }
+    col.cells[j].style.transform = `translateY(${(1 - k + f) * CELL_H}px)`;
+  }
+}
+
+function reelFrame(now) {
+  const rs = reelSpin;
+  if (!rs) return;
+  const dt = Math.min(0.05, (now - rs.last) / 1000);
+  rs.last = now;
+  rs.cols.forEach(col => {
+    if (col.state === 'landed') return;
+    col.pos += SPIN_SPEED * dt;
+    if (col.state === 'slip' && col.pos >= col.T) { landCol(col); return; }
+    drawOverlay(col);
+  });
+  if (rs.cols.every(col => col.state === 'landed')) { finishReels(); return; }
+  rs.raf = requestAnimationFrame(reelFrame);
+}
+
+function landCol(col) {
+  col.pos = col.T;
+  col.state = 'landed';
+  col.final = [colSym(col, col.T + 1), colSym(col, col.T), colSym(col, col.T - 1)];
+  col.el.remove();
+  const cells = reelsEl.querySelectorAll(':scope > .reel');
+  col.final.forEach((k, r) => { cells[r * 3 + col.c].innerHTML = symbolHTML(k, ''); });
+  playStopSound();
+}
+
+/* c番目のリールを止める。引き込める範囲(4コマ)で、役に合う位置を選ぶ */
+function stopCol(c, auto) {
+  const rs = reelSpin;
+  if (!rs) return;
+  const col = rs.cols[c];
+  if (!col || col.state !== 'spin') return;
+  const s = Math.round(col.pos);
+  const cands = [0, 1, 2, 3, 4].map(d => s + d);
+  const p = rs.plan;
+  let T = null, t = 0, tele = false;
+  if (p.kind === 'fixed') {
+    tele = true; t = p.ts[c];
+  } else if (p.kind === 'melon') {
+    if (c === 0) { tele = true; t = p.t0; }
+    else if (c === 2) { tele = true; t = p.t2; }
+    else {
+      const a = cands.find(x => stripSym(1, x) === 'melon');
+      if (a !== undefined) { T = a; t = mod(a); }
+      else if (auto) { tele = true; t = STRIPS[1].indexOf('melon'); }
+      else {
+        const ok = cands.filter(x => alignedLines(gridOf([p.t0, mod(x), p.t2])).length === 0);
+        T = (ok.length ? ok : cands)[0]; t = mod(T);
+      }
+    }
+  } else {   // seven: 同じ色の7を3つ揃える
+    const want = rs.color;
+    const a = cands.find(x => { const k = stripSym(c, x); return isSeven(k) && (!want || k === want); });
+    if (a !== undefined) {
+      T = a; t = mod(a);
+      if (!rs.color) rs.color = stripSym(c, a);
+    } else if (auto) {
+      const color = want || SEVENS[Math.floor(Math.random() * 3)];
+      tele = true; t = STRIPS[c].indexOf(color); rs.color = color;
+    } else {
+      let pool = cands.filter(x => c !== 0 || !windowOf(0, x).includes('cherry'));
+      if (!pool.length) pool = cands;
+      const others = [0, 1, 2].filter(i => i !== c);
+      if (others.every(i => rs.cols[i].state !== 'spin')) {
+        const good = pool.filter(x => alignedLines(gridOf([0, 1, 2].map(i => (i === c ? mod(x) : rs.cols[i].t)))).length === 0);
+        if (good.length) pool = good;
+      }
+      T = pool[0]; t = mod(T);
+    }
+  }
+  if (tele) {
+    // 配列どおりの図柄(3コマ)が、4コマ先に流れてきて止まる
+    T = Math.floor(col.pos) + SLIP_MAX;
+    const w = windowOf(c, t);
+    col.ov = { [T + 1]: w[0], [T]: w[1], [T - 1]: w[2] };
+    col.shown = [null, null, null, null];
+  }
+  col.T = T; col.t = t; col.state = 'slip';
+}
+
+/* レバー/タップで、止まっていないリールを左から順に止める */
+function stopNextReel() {
+  if (!reelSpin) return;
+  const col = reelSpin.cols.find(x => x.state === 'spin');
+  if (col) stopCol(col.c, false);
+}
+function stopByPointer(e) {
+  const rs = reelSpin;
+  if (!rs) return;
+  const r = reelsEl.getBoundingClientRect();
+  const c = Math.min(2, Math.max(0, Math.floor(((e.clientX - r.left) / r.width) * 3)));
+  if (rs.cols[c].state === 'spin') stopCol(c, false); else stopNextReel();
+}
+
+function finishReels() {
+  const rs = reelSpin;
+  reelSpin = null;
+  isReelSpinning = false;
+  rs.timers.forEach(clearTimeout);
+  const f = rs.cols.map(col => col.final);
+  const grid = [f[0][0], f[1][0], f[2][0], f[0][1], f[1][1], f[2][1], f[0][2], f[1][2], f[2][2]];
+  let success = false;
+  if (rs.plan.kind === 'seven') success = isSeven(f[0][1]) && f[1][1] === f[0][1] && f[2][1] === f[0][1];
+  else if (rs.plan.kind === 'melon') success = f[0][1] === 'melon' && f[1][1] === 'melon' && f[2][1] === 'melon';
+  spinBtn.innerText = 'レバーON';
+  reelLocked = true;
+  setTimeout(() => { reelLocked = false; }, 300);
+  setTimeout(() => rs.onDone({ grid, success }), 220);
+}
+
+function cancelReels() {
+  if (reelSpin) { cancelAnimationFrame(reelSpin.raf); reelSpin.timers.forEach(clearTimeout); }
+  reelSpin = null;
+  isReelSpinning = false;
+  reelLocked = false;
+}
+
+/* 役の抽選結果を持って回転開始。止まったら done(結果) */
+function runRole(kind, done) {
+  startReels(planFor(kind), res => {
+    markWin(winIdxOf(kind, res.grid), '');
+    done(res);
+  });
+}
+
+/* 揃ったマスを光らせる / ほかを暗くする */
+function markWin(winIdx, glow) {
+  reelsEl.querySelectorAll(':scope > .reel').forEach((el, i) => {
+    const w = !!winIdx && winIdx.includes(i);
+    el.classList.toggle('win', w);
+    el.classList.toggle('dim', !!winIdx && !w);
+    const img = el.querySelector('.sym-img');
+    if (img && glow) img.classList.toggle(glow, w);
+  });
+}
+
+/* 回さずに、止まった状態で表示 (デバッグ用) */
+function showStatic(g, winIdx, glow) {
+  bellBadge.classList.remove('show');
+  renderReels(g, winIdx, glow || '');
+  alignDisplay.classList.remove('show-align');
+  alignDisplay.classList.add('show-lose');
+  gogoTextContainer.classList.add('opacity-0');
+}
+
+function playStopSound() {
+  if (!soundEnabled) return;
+  initAudio();
+  const t = audioCtx.currentTime;
+  tone(180, t, 0.07, 'square', 0.16);
+  tone(90, t, 0.1, 'sine', 0.3);
 }
 
 /* ---------- ベル ---------- */
@@ -921,37 +1346,14 @@ function showBellResult(coins, inAT) {
   playBellSound(coins);
 }
 
-function renderBellGrid(type) {
-  const lines = BELL_LINES[type];
-  const line = lines[Math.floor(Math.random() * lines.length)];
-  let g;
-  do {
-    g = Array.from({ length: 9 }, (_, i) => randSymAt(i));
-    line.forEach(i => { g[i] = 'bell'; });
-  } while (REEL_LINES.some(l => l.join() !== line.join() && lineOf(g, l)));
-  renderReels(g, line, '');
-  alignDisplay.classList.remove('show-align');
-  alignDisplay.classList.add('show-lose');
-  gogoTextContainer.classList.add('opacity-0');
-}
-
-/* forceType: デバッグ再生 (差枚数は変えない) / inAT: AT中 (でっかく表示) */
+/* デバッグ用: 回さずに、止まった状態でベルを表示 (forceType 指定時は差枚数を変えない) */
 function hitBell(forceType, inAT) {
-  const isDebugCall = forceType !== undefined;
-  const type = isDebugCall ? forceType : pickBellType(inAT);
-  renderBellGrid(type);
+  const type = forceType !== undefined ? forceType : pickBellType(inAT);
+  const g = gridOf(pickCombo('bell' + type));
+  showStatic(g, winIdxOf('bell' + type, g));
   const coins = BELL_TYPES[type].coins;
-  if (!isDebugCall) {
-    diffCoins += coins;
-    recordPoint();
-  }
+  if (forceType === undefined) { diffCoins += coins; setLedWin(coins); recordPoint(); }
   showBellResult(coins, inAT);
-}
-
-/* ボーナス中のベル (斜め左下から揃う)。枚数は残りの枚数を超えない */
-function hitBonusBell(coins) {
-  renderBellGrid(2);
-  showBellResult(coins, true);
 }
 
 function playBellSound(coins) {
@@ -982,44 +1384,45 @@ function pickCherryAtG() {
   return CHERRY_AT_CHOICES[0];
 }
 
-function hitCherry(isDebugCall, inAT) {
-  let addG = 0;
-  const row = Math.floor(Math.random() * 3);
-  const idx = row * 3;                                 // 左列のどれか1マス
-  let g;
-  do {
-    g = Array.from({ length: 9 }, (_, i) => randSymAt(i));
-    g[idx] = 'cherry';
-  } while (REEL_LINES.some(l => lineOf(g, l)));
-  renderReels(g, [idx], '');
-  alignDisplay.classList.remove('show-align');
-  alignDisplay.classList.add('show-lose');
-  gogoTextContainer.classList.add('opacity-0');
-
-  if (!isDebugCall) {
-    diffCoins += CHERRY_COINS;
-    recordPoint();
-    if (inAT) {
-      // AT中のチェリー: 70%でPUSHボタン → ATのG数が +10/+20/+25/+30G (外れもある)。最終ゲームなら終了を取り消して延長
-      if (Math.random() < CHERRY_AT_SUCCESS) {
-        addG = pickCherryAtG();
-        atEnding = false;
-        pushReveal(`+${addG}G`, false, () => { atGames += addG; updateAT(); });
-      }
-    } else {
-      cherryGames = CHERRY_G;        // 内部的にボーナス高確率 (画面には出さない)
-      updateCherry();
+/* チェリー/スイカの効果: 払い出し + 通常時は30G間ボーナス高確率 (内部) / AT中はPUSH → G数上乗せ
+   strong: スイカ (AT中の上乗せが確定) */
+function cherryEffects(inAT, strong, coins) {
+  diffCoins += coins;
+  setLedWin(coins);
+  recordPoint();
+  if (inAT) {
+    if (strong || Math.random() < CHERRY_AT_SUCCESS) {
+      const addG = pickCherryAtG();
+      atEnding = false;     // 最終ゲームなら終了を取り消して延長
+      pushReveal(`+${addG}G`, false, () => { atGames += addG; updateAT(); });
+      return addG;
     }
+  } else {
+    cherryGames = CHERRY_G;
+    updateCherry();
   }
-  bellBadge.textContent = 'CHERRY' + (CHERRY_COINS > 0 ? ` +${CHERRY_COINS}` : '');
+  return 0;
+}
+function showRoleBadge(label, coins, notes) {
+  bellBadge.textContent = label + (coins > 0 ? ` +${coins}` : '');
   bellBadge.classList.remove('show');
   void bellBadge.offsetWidth;
   bellBadge.classList.add('show');
   if (soundEnabled) {
     initAudio();
     const t = audioCtx.currentTime;
-    [1319, 1760, 2349].forEach((f, i) => tone(f, t + i * 0.06, 0.25, 'triangle', 0.14));
+    notes.forEach((f, i) => tone(f, t + i * 0.06, 0.25, 'triangle', 0.14));
   }
+}
+const CHERRY_NOTES = [1319, 1760, 2349];
+const MELON_NOTES = [1047, 1319, 1568, 2093];
+
+/* デバッグ用: 回さずに、止まった状態でチェリーを表示 */
+function hitCherry(isDebugCall, inAT) {
+  const g = gridOf(pickCombo('cherry'));
+  showStatic(g, winIdxOf('cherry', g));
+  if (!isDebugCall) cherryEffects(inAT, false, CHERRY_COINS);
+  showRoleBadge('CHERRY', CHERRY_COINS, CHERRY_NOTES);
 }
 
 /* ---------- AT ---------- */
@@ -1034,9 +1437,11 @@ function updateAT() {
     atStatus.classList.add('on', 'bonus');
     atLabel.textContent = 'BONUS';
     atRemain.textContent = Math.max(0, bonusRun.games - bonusRun.played);
+    atStatus.classList.toggle('low', bonusRun.games - bonusRun.played <= 3);
     return;
   }
   atStatus.classList.remove('bonus');
+  atStatus.classList.toggle('low', atGames > 0 && atGames <= 5);
   atStatus.classList.toggle('on', atGames > 0);
   atLabel.textContent = 'AT';
   atRemain.textContent = atGames;
@@ -1089,6 +1494,7 @@ function startAT(games) {
   const n = games || pickAtGames();
   const premium = n >= 100;   // +100G以上はプレミア演出
   atEnding = false;
+  sinceEnd = null;
   if (!atRun) atRun = { startDiff: diffCoins, games: 0, bells: 0, bonuses: 0 };
   isRushing = true;
   rushSub.textContent = '';
@@ -1172,6 +1578,9 @@ function playAuraUp(level) {
 
 function beginBonus(plan) {
   bonusRun = plan;
+  sinceEnd = null;
+  // ボーナス開始からリザルトまでの獲得枚数を数える
+  if (!atRun && !plan.debug) atRun = { startDiff: diffCoins, games: 0, bells: 0, bonuses: 0 };
   setAura(0);
   updateAT();
 }
@@ -1179,32 +1588,49 @@ function beginBonus(plan) {
 function bonusGame() {
   const b = bonusRun;
   playClickSound();
+  setLedWin(0);
+  const isFinal = b.played + 1 >= b.games;   // 最終ゲームはジャッジメント (ここでATの当否が決まる)
   b.played++;
   const pay = Math.min(BONUS_BELL_PAY, b.total - b.paid);
   b.paid += pay;
-  if (!b.debug) {
-    diffCoins += pay;
-    recordPoint();
-  }
-  hitBonusBell(pay);
-  if (b.promo.includes(b.played)) {
-    b.aura++;
-    setAura(b.aura, true);
-    playAuraUp(b.aura);
-    if (b.aura >= 4) triggerFlash();
-  }
+  if (isFinal) startTension('JUDGEMENT');
   updateAT();
-  updateUI();
-  if (b.paid >= b.total) finishBonus();
+  runRole('bell2', () => {
+    if (!b.debug) {
+      diffCoins += pay;
+      recordPoint();
+    }
+    setLedWin(pay);
+    showBellResult(pay, true);
+    if (b.promo.includes(b.played)) {
+      b.aura++;
+      setAura(b.aura, true);
+      playAuraUp(b.aura);
+      if (b.aura >= 4) triggerFlash();
+    }
+    updateAT();
+    updateUI();
+    if (b.paid >= b.total) {
+      finishBonus();
+    } else {
+      // 残りが少ないときの演出: 残り枚数を表示。次がジャッジメント
+      const rem = b.games - b.played;
+      if (rem <= 3) {
+        showAtToast(rem === 1 ? 'NEXT JUDGEMENT' : `REMAIN ${b.total - b.paid}`);
+        playTick(4 - rem);
+      }
+    }
+  });
 }
 
 /* 全ゲーム消化: 鼓動のあと、AT突入かどうかを見せる */
 function finishBonus() {
   const b = bonusRun;
   isSuspense = true;
-  startHeartbeat(1700, 500);
+  startHeartbeat(2400, 400);
   suspenseTimer = setTimeout(() => {
     stopHeartbeat();
+    stopTension();
     isSuspense = false;
     bonusRun = null;
     updateAT();
@@ -1217,9 +1643,10 @@ function finishBonus() {
     } else {
       setAura(null);
       showAtToast('BONUS END');
+      if (atRun && atRun.games === 0 && !b.debug) { atRun.bonusOnly = true; atEnding = true; }
       maybeShowAtResult();
     }
-  }, 2000);
+  }, 2800);
 }
 
 /* ---------- ATリザルト ---------- */
@@ -1250,18 +1677,68 @@ function maybeShowAtResult() {
 }
 
 /* PEKA RUSH 開始から終了までの獲得枚数と、次回の当たりやすさ(示唆)を表示 */
+/* ペカり君トロフィー: 総回転数が多いほど出やすく、色が設定を示唆 (設定を超える色は出ない) */
+const TROPHIES = [
+  { name: '銅', c: '#cd7f32' }, { name: '銀', c: '#d5dbe3' }, { name: '金', c: '#ffd23f' },
+  { name: '青', c: '#38bdf8' }, { name: '赤', c: '#ff4040' }, { name: '虹', c: '#f0abfc' }
+];
+function pickTrophy(totalG) {
+  const lv = Math.min(6, SETTINGS.level);
+  if (Math.random() > Math.min(0.95, 0.08 + totalG / 1200)) return 0;
+  const truth = Math.random() < Math.min(0.92, 0.3 + totalG / 2000);
+  return truth ? lv : Math.max(1, lv - 1);
+}
+function trophySVG(c, rainbow) {
+  const fill = rainbow ? 'url(#trg)' : c;
+  return `<svg viewBox="0 0 24 24"><defs><linearGradient id="trg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a5a"/><stop offset=".25" stop-color="#ffd800"/><stop offset=".5" stop-color="#3be07a"/><stop offset=".75" stop-color="#38a8ff"/><stop offset="1" stop-color="#d946ef"/></linearGradient></defs><path fill="${fill}" d="M7 3h10v2h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V17h3v2h1v2H7v-2h1v-2h3v-2.1A5 5 0 0 1 7.3 11H7a4 4 0 0 1-4-4V6a1 1 0 0 1 1-1h3V3zm-2 4a2 2 0 0 0 2 2V7H5zm14 0h-2v2a2 2 0 0 0 2-2z"/></svg>`;
+}
+
+/* 獲得枚数のゾロ目で設定示唆: 222(設定2以上) / 444(設定4以上) / 456(設定5以上) / 666(設定6のみ) */
+const LUCKY_NUMS = [{ n: 222, min: 2 }, { n: 444, min: 4 }, { n: 456, min: 5 }, { n: 666, min: 6 }];
+function luckyAdjust(gain) {
+  const lv = SETTINGS.level;
+  let out = gain;
+  const hit = LUCKY_NUMS.find(x => x.n === gain);
+  if (hit && lv < hit.min) out = gain + 1;                       // 低い設定では偶然出ない
+  else if (!hit) {
+    const near = LUCKY_NUMS.filter(x => lv >= x.min && Math.abs(x.n - gain) <= 40)
+      .sort((a, b) => Math.abs(a.n - gain) - Math.abs(b.n - gain))[0];
+    if (near && Math.random() < 0.35 + 0.05 * lv) out = near.n;
+  }
+  if (out !== gain) { diffCoins += out - gain; recordPoint(); updateUI(); }
+  return out;
+}
+const isLuckyNum = g => LUCKY_NUMS.some(x => x.n === g);
+
+/* PEKA RUSH 開始から終了までの獲得枚数と、次回の当たりやすさ(示唆)を表示 */
 function showAtResult(run) {
   isAtResult = true;
-  const gain = run.gain !== undefined ? run.gain : diffCoins - run.startDiff;
-  const hint = run.hint !== undefined ? run.hint : decideNextMode();
+  const only = !!run.bonusOnly;
+  let gain = run.gain !== undefined ? run.gain : diffCoins - run.startDiff;
+  if (run.gain === undefined) gain = luckyAdjust(gain);
+  const hint = only ? 0 : (run.hint !== undefined ? run.hint : decideNextMode());
+  document.getElementById('at-result-title').textContent = only ? 'BONUS RESULT' : 'AT RESULT';
+  document.getElementById('ar-row-games').style.display = only ? 'none' : '';
+  document.getElementById('ar-row-bells').style.display = only ? 'none' : '';
+  document.getElementById('ar-hint-row').style.display = only ? 'none' : '';
   document.getElementById('ar-games').textContent = `${run.games} G`;
   document.getElementById('ar-bells').textContent = `${run.bells} 回`;
   document.getElementById('ar-bonus').textContent = `${run.bonuses} 回`;
+  document.getElementById('ar-total').textContent = `${cumulativeGames} G`;
+  const tr = run.trophy !== undefined ? run.trophy : pickTrophy(cumulativeGames);
+  const trEl = document.getElementById('ar-trophy');
+  trEl.className = 'ar-trophy' + (tr ? ` show t${tr}` : '');
+  if (tr) {
+    const T = TROPHIES[tr - 1];
+    trEl.style.setProperty('--tc', T.c);
+    trEl.innerHTML = `${trophySVG(T.c, tr === 6)}<span>ペカり君トロフィー</span><b>${T.name}</b>`;
+  } else trEl.innerHTML = '';
   arHintBar.dataset.lv = hint;
   [...arHintBar.children].forEach((el, i) => el.classList.toggle('on', i <= hint));
   arHintText.textContent = HINT_LABELS[hint];
   arHintText.dataset.lv = hint;
-  atResultGain.className = 'at-result-gain ' + (gain >= 0 ? 'plus' : 'minus');
+  atResultGain.classList.toggle('lucky', isLuckyNum(gain));
+  atResultGain.className = 'at-result-gain ' + (gain >= 0 ? 'plus' : 'minus') + (isLuckyNum(gain) ? ' lucky' : '');
   atResultEl.classList.remove('show');
   void atResultEl.offsetWidth;
   atResultEl.classList.add('show');
@@ -1292,6 +1769,7 @@ document.getElementById('at-result-close').addEventListener('click', () => {
   isAtResult = false;
   atRun = null;
   atEnding = false;
+  sinceEnd = 0;          // ここからボーナス終了後のゲーム数を数える
   updateAT();
 });
 
@@ -1302,48 +1780,16 @@ function playReplayJingle() {
   [784, 988, 1175].forEach((f, i) => tone(f, t + i * 0.07, 0.18, 'triangle', 0.16));
 }
 
-/* ハズレ時: 9マスをランダムに埋めて表示 */
-function showLoseReels() {
-  bellBadge.classList.remove('show');
-  renderReels(loseGrid(), null, '');
-  alignDisplay.classList.remove('show-align');
-  alignDisplay.classList.add('show-lose');
-  gogoTextContainer.classList.add('opacity-0');
-}
 function hideLoseReels() {
   alignDisplay.classList.remove('show-lose');
   gogoTextContainer.classList.remove('opacity-0');
-}
-
-/* 1回目: 777 または BAR BAR BAR をリール風に大きく表示 */
-function showSymbols() {
-  alignStage = 1;
-  initAudio(); // 音の再生準備を先に済ませる
-
-  const tier = pendingBonusType === 'BIG' ? BIG_TIERS[pendingTierIndex] : null;
-
-  // グレード順: 赤(150〜200) < 青(250〜300) < 白(350〜400)
-  const winKey = pendingTierIndex <= 1 ? '7red' : pendingTierIndex <= 3 ? '7blue' : '7white';
-  const glow = tier.grand ? 'sym-glow-gold' : '';
-  renderReels(winGrid(winKey), [3, 4, 5], glow);
-  alignDisplay.classList.remove('show-lose');
-
-  alignDisplay.classList.add('show-align');
-  gogoTextContainer.classList.add('opacity-0');
-
-  // 揃った瞬間にファンファーレ
-  playAlignChime();
-  triggerFlash();
-
-  // ボタンを NEXT に切替 (もう一度押すと枚数表示)
-  alignBtn.textContent = 'NEXT';
 }
 
 /* 枚数の数字の大きさ: 枚数(レベル)が大きいほどデカく、桁数に合わせて画面幅いっぱいまで */
 const PAY_BASE_PX = { 1: 92, 2: 104, 3: 116, 4: 128, 5: 140, 6: 152, 7: 164 };
 function applyPayoutStyle(coins, level) {
   payoutNum.className = `payout-num pay-l${level}`;
-  const avail = Math.max(200, mainEl.clientWidth - 24);
+  const avail = Math.max(180, gogoBox.clientWidth - 16);
   const digits = String(coins).length;
   const fit = avail / (digits * 0.78 + 0.55);            // 桁数ぶんが横幅に収まる最大サイズ
   payoutNum.style.setProperty('--fs', Math.min(PAY_BASE_PX[level] || 100, fit) + 'px');
@@ -1368,6 +1814,7 @@ function countUp(from, to, ms, onDone) {
     const p = Math.min(1, (now - t0) / ms);
     const eased = 1 - Math.pow(1 - p, 3);
     payoutValue.textContent = Math.round(from + (to - from) * eased);
+    setLedWin(Math.round(from + (to - from) * eased));
     if (now - lastTick > 45 && p < 1 && soundEnabled && audioCtx) {
       lastTick = now;
       tone(900 + 900 * p, audioCtx.currentTime, 0.04, 'square', 0.05);
@@ -1376,6 +1823,7 @@ function countUp(from, to, ms, onDone) {
       countRAF = requestAnimationFrame(frame);
     } else {
       payoutValue.textContent = to;
+      setLedWin(to);
       isCounting = false;
       countRAF = null;
       if (onDone) onDone();
@@ -1437,6 +1885,7 @@ function showPayout() {
 
 /* 心音 (ドクン…ドクン): フリーズ中に鳴らす。だんだん速く・大きくなる */
 let heartbeatTimer = null;
+let heartbeatOn = false;
 
 function thump(t, vol) {
   // 低音の本体 + スマホスピーカーでも聞こえる少し高い成分
@@ -1457,9 +1906,10 @@ function thump(t, vol) {
 
 function startHeartbeat(totalMs, delay = 350) {
   stopHeartbeat();
+  heartbeatOn = true;
   const startedAt = performance.now();
   const beat = () => {
-    if (!isSuspense) return;
+    if (!heartbeatOn) return;
     const p = Math.min(1, (performance.now() - startedAt) / totalMs); // 0→1 (エンド間際ほど1)
     if (soundEnabled) {
       initAudio();
@@ -1474,6 +1924,7 @@ function startHeartbeat(totalMs, delay = 350) {
 }
 
 function stopHeartbeat() {
+  heartbeatOn = false;
   clearTimeout(heartbeatTimer);
   heartbeatTimer = null;
 }
@@ -1486,6 +1937,10 @@ function resetPekaState() {
   pendingTierIndex = -1;
   pendingDisplayIndex = -1;
   pendingPlan = null;
+  cancelReels();
+  clearPekaTimers();
+  sideLampOff();
+  stopTension();
   clearTimeout(suspenseTimer);
   isSuspense = false;
   stopHeartbeat();
@@ -1521,7 +1976,59 @@ function resetPekaState() {
 }
 
 /* UIデータ更新 */
+/* ---------- 電光掲示 (7セグ風) ---------- */
+function setLed(el, n, digits) {
+  if (!el) return;
+  const s = String(Math.max(0, Math.min(Math.pow(10, digits) - 1, Math.round(n))));
+  const key = digits + ':' + s;
+  if (el.dataset.v === key) return;
+  el.dataset.v = key;
+  let html = '';
+  for (let i = 0; i < digits; i++) {
+    const k = i - (digits - s.length);
+    html += k < 0 ? '<span class="dg off"><b>0</b></span>' : `<span class="dg"><b>${s[k]}</b></span>`;
+  }
+  el.innerHTML = html;
+}
+const ledWinEl = document.getElementById('led-win');
+const ledCreditEl = document.getElementById('led-credit');
+const ledTotalEl = document.getElementById('led-total');
+let ledWin = 0;
+function setLedWin(n) { ledWin = n; setLed(ledWinEl, n, 3); }
+/* メダル枚数: 50枚から。足りなくなったら50枚ずつ補充した扱い */
+function creditNow() {
+  let v = 50 + diffCoins;
+  if (v < 0) v += 50 * Math.ceil(-v / 50);
+  return v;
+}
+/* 獲得枚数: ボーナス開始からの合計 */
+function totalGetNow() {
+  if (atRun) return Math.max(0, diffCoins - atRun.startDiff);
+  if (bonusRun) return bonusRun.paid;
+  return 0;
+}
+const plIds = ['insert', 'bet', 'replay', 'start', 'wait'].reduce((o, k) => (o[k] = document.getElementById('pl-' + k), o), {});
+function syncPanel() {
+  setLed(ledCreditEl, creditNow(), 4);
+  setLed(ledTotalEl, totalGetNow(), 4);
+  const idle = !isReelSpinning && !spinBtn.disabled && !reelLocked;
+  const betting = isReelSpinning || (replayPending ? false : false);
+  plIds.insert.classList.toggle('on', idle && !replayPending && !bonusRun);
+  plIds.bet.classList.toggle('on', isReelSpinning && !bonusRun && !isDebugRun);
+  plIds.replay.classList.toggle('on', replayPending);
+  plIds.start.classList.toggle('on', idle);
+  plIds.wait.classList.toggle('on', reelLocked || isCounting || isSuspense || isRushing || isPushing);
+}
+setInterval(syncPanel, 120);
+document.querySelectorAll('.stop-btn').forEach(b => {
+  b.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    if (isReelSpinning) stopCol(+b.dataset.stop, false);
+  });
+});
+
 function updateUI() {
+  syncPanel();
   displayGames.textContent = totalGames;
   displayBig.textContent = bigCount;
   displayReg.textContent = atCount;
@@ -1547,11 +2054,16 @@ function resetData() {
     cherryGames = 0;
     updateCherry();
     atRun = null;
+    sinceEnd = null;
+    pekaSpecial = null;
+    setLedWin(0);
     atEnding = false;
     isAtResult = false;
     atResultEl.classList.remove('show');
     bonusRun = null;
     setAura(null);
+    cancelReels();
+    stopTension();
     isPushing = false;
     pushOverlay.className = 'push-overlay';
     updateAT();
@@ -1565,7 +2077,11 @@ function resetData() {
 // イベントリスナー
 spinBtn.addEventListener('click', handleSpin);
 // リール表示エリアをタップ = レバーON (ボタンが無効のときは何もしない)
-gogoBox.addEventListener('click', () => { if (!spinBtn.disabled) handleSpin(); });
+// (タップの遅れをなくすため pointerdown で受ける。回転中はタップした位置のリールが止まる)
+gogoBox.addEventListener('pointerdown', e => {
+  if (isReelSpinning) { stopByPointer(e); return; }
+  if (!spinBtn.disabled) handleSpin();
+});
 // 操作ガイド: 状態管理用ボタンの文言を、リール下の表示に反映
 const tapHint = document.getElementById('tap-hint');
 function syncTapHint() {
@@ -1574,7 +2090,6 @@ function syncTapHint() {
 }
 new MutationObserver(syncTapHint).observe(spinBtn, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['disabled'] });
 syncTapHint();
-alignBtn.addEventListener('click', handleAlignBonus);
 document.getElementById('reset-btn').addEventListener('click', resetData);
 
 // 音声ON/OFF (アイコン表示)
@@ -1626,6 +2141,9 @@ const SETTING_ROWS = [
   { key: 'cherryW25', label: 'チェリー上乗せ比率: +25G', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'cherryW30', label: 'チェリー上乗せ比率: +30G', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'cherryCoins', label: 'チェリーの払い出し (枚)', min: 0, max: 1000, step: 1, suffix: '' },
+  { key: 'melon', label: 'スイカ 通常時 (ハズレのうち)', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'melonAt', label: 'スイカ AT中 (ハズレのうち)', min: 0, max: 100, step: 0.1, suffix: '%' },
+  { key: 'melonCoins', label: 'スイカの払い出し (枚)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'modeW0', label: 'AT後の次回モード比率: 通常', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'modeW1', label: '次回モード比率: 好調 (30G / 2倍)', min: 0, max: 1000, step: 1, suffix: '' },
   { key: 'modeW2', label: '次回モード比率: 絶好調 (40G / 4倍)', min: 0, max: 1000, step: 1, suffix: '' },
@@ -1652,6 +2170,7 @@ function buildSettingsForm(level = formLevel, src = SETTINGS.profiles[level]) {
     `<button type="button" data-level="${l}" class="${l === SETTINGS.level ? 'on' : ''}">設定${l}</button>`).join('');
   settingsBody.innerHTML = `
     <div class="set-levels">${levels}</div>
+    <label class="set-row set-opt"><span class="set-label">リール停止を自動にする (目押しなし)</span><span class="set-field"><input type="checkbox" id="opt-auto"></span></label>
     <div class="set-group">
       ${rows}
     </div>
@@ -1661,6 +2180,9 @@ function buildSettingsForm(level = formLevel, src = SETTINGS.profiles[level]) {
       <div class="set-row set-total"><span class="set-label">合計</span><span class="set-field" id="set-total"></span></div>
     </div>`;
   settingsBody.querySelectorAll('input[data-w]').forEach(el => el.addEventListener('input', refreshWeightPct));
+  const optAuto = document.getElementById('opt-auto');
+  optAuto.checked = AUTO_STOP;
+  optAuto.addEventListener('change', () => { AUTO_STOP = optAuto.checked; saveOpt(); });
   settingsBody.querySelectorAll('button[data-level]').forEach(el =>
     el.addEventListener('click', () => pressLevelButton(+el.dataset.level)));
   refreshWeightPct();
@@ -1865,3 +2387,26 @@ refreshRateLabel();
 
 const versionEl = document.getElementById('app-version');
 if (versionEl) versionEl.textContent = `v${APP_VERSION}`;
+
+// ==========================================
+// リール配列の表示
+// ==========================================
+const reelModal = document.getElementById('reel-modal');
+const reelView = document.getElementById('reel-view');
+function miniSym(k) {
+  if (isSeven(k)) return `<img class="rv-img" src="${k}.png" alt="7" onerror="this.outerHTML='<span class=&quot;rv-txt rv-${k}&quot;>7</span>'">`;
+  if (k === 'bar') return '<span class="rv-txt rv-bar">BAR</span>';
+  if (k === 'replay') return '<span class="rv-txt rv-replay">RE</span>';
+  return `<span class="rv-emoji">${EMOJI[k]}</span>`;
+}
+function buildReelView() {
+  const names = ['左', '中', '右'];
+  reelView.innerHTML = STRIPS.map((strip, c) => {
+    const cells = [];
+    for (let i = STRIP_LEN - 1; i >= 0; i--) {       // 上が先に流れ落ちてくる側。回転は下向き
+      cells.push(`<div class="rv-cell"><i>${i + 1}</i>${miniSym(strip[i])}</div>`);
+    }
+    return `<div class="rv-col"><div class="rv-head">${names[c]}</div>${cells.join('')}</div>`;
+  }).join('');
+}
+document.getElementById('reel-btn').addEventListener('click', () => { buildReelView(); openModal(reelModal); });
