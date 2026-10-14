@@ -59,7 +59,7 @@ const DEFAULT_SETTINGS = {
   modeW3: 3,           // 天国 (50G / 8倍)
   hintTrue: 70         // リザルト示唆が実際のモードと一致する割合
 };
-const APP_VERSION = '1.9.0';
+const APP_VERSION = '1.10.0';
 const SETTINGS_KEY = 'pekari-settings-v4';   // v4: 機械割の調整 (95〜115%) に合わせて保存データを作り直し
 
 // ==========================================
@@ -2417,6 +2417,65 @@ function syncTapHint() {
 new MutationObserver(syncTapHint).observe(spinBtn, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['disabled'] });
 syncTapHint();
 document.getElementById('reset-btn').addEventListener('click', resetData);
+
+/* ---------- オートプレイ ----------
+   レバー・停止・NEXT・PUSH・結果画面の閉じる、までを自動で行う。
+   演出(フラグ/アニメーション/オーバーレイ)が終わって少し経ってから次の操作をする。
+   停止は自動停止と同じ (目押しなし。押し順ナビがあればその順)。 */
+const autoBtn = document.getElementById('auto-btn');
+let AUTOPLAY = false;
+let autoIdle = 0;          // 演出が何もない状態が続いたティック数
+let autoResultWait = 0;
+let autoPushWait = 0;
+const AUTO_TICK = 200;
+const AUTO_IDLE_TICKS = 4; // 0.8秒 演出なしが続いたら次の操作
+function setAutoPlay(on) {
+  AUTOPLAY = !!on;
+  autoIdle = autoResultWait = autoPushWait = 0;
+  if (autoBtn) autoBtn.setAttribute('aria-pressed', AUTOPLAY ? 'true' : 'false');
+}
+function fxRunning() {
+  // 有限回のCSSアニメーションが動いている間は演出中とみなす
+  return document.getAnimations().some(a => a.constructor.name === 'CSSAnimation' && a.playState === 'running' &&
+    a.effect && a.effect.getComputedTiming().iterations !== Infinity);
+}
+function autoModalOpen() { return !!document.querySelector('.modal.open'); }
+function autoTick() {
+  if (!AUTOPLAY || isDebugRun || autoModalOpen()) { autoIdle = 0; return; }
+  // リザルト画面: 少し眺めてから閉じる
+  if (isAtResult) {
+    autoIdle = 0;
+    if (++autoResultWait >= 12) { autoResultWait = 0; document.getElementById('at-result-close').click(); }
+    return;
+  }
+  autoResultWait = 0;
+  // PUSH待ち: 少し間をおいて押す
+  if (isPushing) {
+    autoIdle = 0;
+    if (pushOverlay.classList.contains('waiting')) { if (++autoPushWait >= 4) { autoPushWait = 0; pushBtn.click(); } }
+    return;
+  }
+  autoPushWait = 0;
+  // リール回転中: 自動停止を仕込む (演出待ちではない)
+  if (isReelSpinning) {
+    autoIdle = 0;
+    if (reelSpin && !reelSpin.autoArmed) {
+      reelSpin.autoArmed = true;
+      const order = naviOrder ? naviOrder.slice() : [0, 1, 2];
+      order.forEach((c, i) => reelSpin.timers.push(setTimeout(() => stopCol(c, true), 350 + i * 260)));
+    }
+    return;
+  }
+  const busy = reelLocked || isCooldown || isCounting || isSuspense || isRushing ||
+    spinBtn.disabled || overBusy || overQueue.length > 0 || fxRunning();
+  if (busy) { autoIdle = 0; return; }
+  if (++autoIdle < AUTO_IDLE_TICKS) return;
+  autoIdle = 0;
+  handleSpin();
+}
+setInterval(autoTick, AUTO_TICK);
+if (autoBtn) autoBtn.addEventListener('click', () => setAutoPlay(!AUTOPLAY));
+
 
 // 音声ON/OFF (アイコン表示)
 const ICON_SOUND_ON = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>`;
