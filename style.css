@@ -1355,3 +1355,34 @@ button, .gogo-lamp, .stop-btn { touch-action: manipulation; }
 .navi b.done { opacity: 0.25; box-shadow: none; }
 @keyframes navi-next { from { transform: scale(1); } to { transform: scale(1.25); box-shadow: 0 0 18px #ffe27a; } }
 .at-toast.advice { font-size: 0.95rem; letter-spacing: 0; color: #fde68a; }
+
+.set-levels button.set-random { grid-column: 1 / -1; }
+
+/* 獲得枚数OVER表示 (250 OVER! など) */
+.over-pop {
+  position: absolute;
+  left: 0; right: 0;
+  top: 42%;
+  z-index: 38;
+  display: none;
+  text-align: center;
+  pointer-events: none;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-style: italic;
+  font-size: 3.2rem;
+  line-height: 1;
+  color: #fff3a0;
+  -webkit-text-stroke: 2px #b45309;
+  text-shadow: 0 0 14px #ffb300, 0 4px 6px rgba(0, 0, 0, 0.9);
+}
+.over-pop.big { font-size: 3.8rem; }
+.over-pop span { display: block; font-size: 0.55em; letter-spacing: 4px; color: #fff; -webkit-text-stroke: 1.5px #dc2626; }
+.over-pop.show { display: block; animation: over-in 1.5s cubic-bezier(0.2, 1, 0.4, 1) both; }
+@keyframes over-in {
+  0%   { opacity: 0; transform: scale(0.3) rotate(-6deg); }
+  15%  { opacity: 1; transform: scale(1.25) rotate(-4deg); }
+  25%  { transform: scale(1) rotate(-4deg); }
+  80%  { opacity: 1; transform: scale(1) rotate(-4deg); }
+  100% { opacity: 0; transform: scale(1.1) rotate(-4deg); }
+}

@@ -59,7 +59,7 @@ const DEFAULT_SETTINGS = {
   modeW3: 3,           // 天国 (50G / 8倍)
   hintTrue: 70         // リザルト示唆が実際のモードと一致する割合
 };
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.3';
 const SETTINGS_KEY = 'pekari-settings-v3';
 
 // ==========================================
@@ -110,13 +110,14 @@ function mergeProfile(st, raw) {
   });
 }
 function loadSettings() {
-  const out = { level: DEFAULT_LEVEL, prev: DEFAULT_LEVEL, profiles: {} };
+  const out = { level: DEFAULT_LEVEL, prev: DEFAULT_LEVEL, random: false, profiles: {} };
   for (let l = 1; l <= 7; l++) out.profiles[l] = JSON.parse(JSON.stringify(DEFAULT_PROFILES[l]));
   try {
     const raw = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
     if (raw && typeof raw === 'object' && raw.profiles) {
       for (let l = 1; l <= 7; l++) if (raw.profiles[l]) mergeProfile(out.profiles[l], raw.profiles[l]);
       if (raw.level >= 1 && raw.level <= 6) out.level = out.prev = raw.level | 0;
+      if (raw.random === true) { out.random = true; out.level = out.prev = 1 + Math.floor(Math.random() * 6); }   // ランダム: 起動のたびに引き直す
     }
   } catch (e) { /* 保存データが無い/読めない場合は初期値 */ }
   return out;
@@ -125,7 +126,7 @@ function saveSettings() {
   try {
     // 設定7は保存しない (次に開いたときは直前の設定1〜6に戻る)
     const level = SETTINGS.level === 7 ? SETTINGS.prev : SETTINGS.level;
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ level, profiles: SETTINGS.profiles }));
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ level, random: !!SETTINGS.random, profiles: SETTINGS.profiles }));
   } catch (e) { /* 保存できなくても動作は続ける */ }
 }
 function activeProfile() { return SETTINGS.profiles[SETTINGS.level]; }
@@ -1270,6 +1271,11 @@ function stopCol(c, auto) {
 /* レバー/タップで、止まっていないリールを左から順に止める */
 function stopNextReel() {
   if (!reelSpin) return;
+  // 押し順ナビ中は、タップでもナビ通りの順に止まる
+  if (naviOrder) {
+    const nc = naviOrder.find(x => reelSpin.cols[x].state === 'spin');
+    if (nc !== undefined) { stopCol(nc, false); return; }
+  }
   const col = reelSpin.cols.find(x => x.state === 'spin');
   if (col) stopCol(col.c, false);
 }
@@ -1865,29 +1871,51 @@ function trophySVG(c, rainbow) {
   return `<svg viewBox="0 0 24 24"><defs><linearGradient id="trg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a5a"/><stop offset=".25" stop-color="#ffd800"/><stop offset=".5" stop-color="#3be07a"/><stop offset=".75" stop-color="#38a8ff"/><stop offset="1" stop-color="#d946ef"/></linearGradient></defs><path fill="${fill}" d="M7 3h10v2h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 14.9V17h3v2h1v2H7v-2h1v-2h3v-2.1A5 5 0 0 1 7.3 11H7a4 4 0 0 1-4-4V6a1 1 0 0 1 1-1h3V3zm-2 4a2 2 0 0 0 2 2V7H5zm14 0h-2v2a2 2 0 0 0 2-2z"/></svg>`;
 }
 
-/* 獲得枚数のゾロ目で設定示唆: 222(設定2以上) / 444(設定4以上) / 456(設定5以上) / 666(設定6のみ) */
-const LUCKY_NUMS = [{ n: 222, min: 2 }, { n: 444, min: 4 }, { n: 456, min: 5 }, { n: 666, min: 6 }];
-function luckyAdjust(gain) {
-  const lv = SETTINGS.level;
-  let out = gain;
-  const hit = LUCKY_NUMS.find(x => x.n === gain);
-  if (hit && lv < hit.min) out = gain + 1;                       // 低い設定では偶然出ない
-  else if (!hit) {
-    const near = LUCKY_NUMS.filter(x => lv >= x.min && Math.abs(x.n - gain) <= 40)
-      .sort((a, b) => Math.abs(a.n - gain) - Math.abs(b.n - gain))[0];
-    if (near && Math.random() < 0.35 + 0.05 * lv) out = near.n;
-  }
-  if (out !== gain) { diffCoins += out - gain; recordPoint(); updateUI(); }
-  return out;
+/* 獲得枚数の「OVER」表示: ボーナス開始からリザルトまでの合計が、この枚数に達した瞬間に出る。
+   250/500/750/1000/1500/2000/3000 は通常。222/444/456/666 は設定示唆で、その設定以上のときだけ出る
+   (222=設定2以上 / 444=設定4以上 / 456=設定5以上 / 666=設定6のみ) */
+const OVER_NUMS = [
+  { n: 222, min: 2 }, { n: 250, min: 0 }, { n: 444, min: 4 }, { n: 456, min: 5 }, { n: 500, min: 0 },
+  { n: 666, min: 6 }, { n: 750, min: 0 }, { n: 1000, min: 0 }, { n: 1500, min: 0 }, { n: 2000, min: 0 }, { n: 3000, min: 0 }
+];
+const HINT_OVER_RATE = 0.18;   // 設定示唆のOVERが出る確率 (条件を満たしたとき)
+const overPop = document.getElementById('over-pop');
+let overQueue = [];
+let overBusy = false;
+function showOver(n) {
+  overQueue.push(n);
+  drainOver();
 }
-const isLuckyNum = g => LUCKY_NUMS.some(x => x.n === g);
+function drainOver() {
+  if (overBusy || !overQueue.length || !overPop) return;
+  overBusy = true;
+  const n = overQueue.shift();
+  overPop.innerHTML = `${n}<span>OVER!</span>`;
+  overPop.className = 'over-pop';
+  void overPop.offsetWidth;
+  overPop.classList.add('show');
+  if (n >= 1000) overPop.classList.add('big');
+  rainCoins(n >= 1000 ? 60 : 30);
+  if (soundEnabled) { initAudio(); const t0 = audioCtx.currentTime; [784, 988, 1175, 1568].forEach((f, i) => tone(f, t0 + i * 0.07, 0.25, 'triangle', 0.12)); }
+  setTimeout(() => { overPop.className = 'over-pop'; overBusy = false; drainOver(); }, 1500);
+}
+function checkOver() {
+  if (!atRun) return;
+  const total = diffCoins - atRun.startDiff;
+  const prev = atRun.maxTotal || 0;
+  if (total <= prev) return;
+  atRun.maxTotal = total;
+  // 設定示唆(min>0)は条件を満たしても稀にしか出ない。通常の枚数は必ず出る
+  OVER_NUMS.filter(x => SETTINGS.level >= x.min && prev < x.n && x.n <= total)
+    .filter(x => x.min === 0 || Math.random() < HINT_OVER_RATE)
+    .forEach(x => showOver(x.n));
+}
 
 /* PEKA RUSH 開始から終了までの獲得枚数と、次回の当たりやすさ(示唆)を表示 */
 function showAtResult(run) {
   isAtResult = true;
   const only = !!run.bonusOnly;
   let gain = run.gain !== undefined ? run.gain : diffCoins - run.startDiff;
-  if (run.gain === undefined) gain = luckyAdjust(gain);
   const hint = only ? 0 : (run.hint !== undefined ? run.hint : decideNextMode());
   document.getElementById('at-result-title').textContent = only ? 'BONUS RESULT' : 'AT RESULT';
   document.getElementById('ar-row-games').style.display = only ? 'none' : '';
@@ -1909,8 +1937,7 @@ function showAtResult(run) {
   [...arHintBar.children].forEach((el, i) => el.classList.toggle('on', i <= hint));
   arHintText.textContent = HINT_LABELS[hint];
   arHintText.dataset.lv = hint;
-  atResultGain.classList.toggle('lucky', isLuckyNum(gain));
-  atResultGain.className = 'at-result-gain ' + (gain >= 0 ? 'plus' : 'minus') + (isLuckyNum(gain) ? ' lucky' : '');
+  atResultGain.className = 'at-result-gain ' + (gain >= 0 ? 'plus' : 'minus');
   atResultEl.classList.remove('show');
   void atResultEl.offsetWidth;
   atResultEl.classList.add('show');
@@ -2232,6 +2259,7 @@ document.querySelectorAll('.stop-btn').forEach(b => {
 });
 
 function updateUI() {
+  checkOver();
   syncPanel();
   displayGames.textContent = totalGames;
   displayBig.textContent = bigCount;
@@ -2256,6 +2284,7 @@ function resetData() {
     cherryGames = 0;
     updateCherry();
     atRun = null;
+    overQueue = [];
     sinceEnd = null;
     pekaSpecial = null;
     setLedWin(0);
@@ -2368,32 +2397,40 @@ function buildSettingsForm(level = formLevel, src = SETTINGS.profiles[level]) {
       <span class="set-label">${l}枚</span>
       <span class="set-field"><input type="number" data-w="${i}" min="0" step="0.1" value="${src.weights[i]}"><span class="set-pct" data-pct="${i}"></span></span>
     </label>`).join('');
+  const isSeven = SETTINGS.level === 7;
   const levels = [1, 2, 3, 4, 5, 6].map(l =>
-    `<button type="button" data-level="${l}" class="${l === SETTINGS.level ? 'on' : ''}">設定${l}</button>`).join('');
+    `<button type="button" data-level="${l}" class="${!SETTINGS.random && l === SETTINGS.level ? 'on' : ''}">設定${l}</button>`).join('')
+    + `<button type="button" data-random="1" class="set-random ${SETTINGS.random ? 'on' : ''}">ランダム</button>`;
   settingsBody.innerHTML = `
     <div class="set-levels">${levels}</div>
     <label class="set-row set-opt"><span class="set-label">リール停止を自動にする (目押しなし)</span><span class="set-field"><input type="checkbox" id="opt-auto"></span></label>
-    <div class="set-group">
+    ${isSeven ? `<div class="set-group">
       ${rows}
     </div>
     <div class="set-title">当選内訳 (比率。合計が100でなくても自動で換算)</div>
     <div class="set-group">
       ${weights}
       <div class="set-row set-total"><span class="set-label">合計</span><span class="set-field" id="set-total"></span></div>
-    </div>`;
+    </div>` : ''}`;
+  // 数値入力 (と適用ボタン) は設定7のときだけ
+  const foot = document.querySelector('#settings-modal .modal-foot');
+  if (foot) foot.style.display = isSeven ? '' : 'none';
   settingsBody.querySelectorAll('input[data-w]').forEach(el => el.addEventListener('input', refreshWeightPct));
   const optAuto = document.getElementById('opt-auto');
   optAuto.checked = AUTO_STOP;
   optAuto.addEventListener('change', () => { AUTO_STOP = optAuto.checked; saveOpt(); });
   settingsBody.querySelectorAll('button[data-level]').forEach(el =>
     el.addEventListener('click', () => pressLevelButton(+el.dataset.level)));
-  refreshWeightPct();
+  const rb = settingsBody.querySelector('button[data-random]');
+  if (rb) rb.addEventListener('click', () => { secretBuf = []; setLevel(1 + Math.floor(Math.random() * 6), true); });
+  if (isSeven) refreshWeightPct();
 }
 
 /* 設定を切り替える (1〜7)。7は裏コマンドからのみ */
-function setLevel(l) {
+function setLevel(l, random = false) {
   if (SETTINGS.level !== 7) SETTINGS.prev = SETTINGS.level;
   SETTINGS.level = l;
+  SETTINGS.random = random && l !== 7;
   if (l !== 7) SETTINGS.prev = l;
   saveSettings();
   applySettings();
@@ -2441,7 +2478,7 @@ function applySettingsForm() {
 }
 
 function refreshRateLabel() {
-  if (displayRate) displayRate.textContent = `1/${activeProfile().hitDenom}`;
+  if (displayRate) displayRate.textContent = SETTINGS.random ? '---' : `1/${activeProfile().hitDenom}`;
 }
 
 // ==========================================

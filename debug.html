@@ -58,6 +58,7 @@
             <div id="at-toast" class="at-toast"></div>
             <div id="get-pop" class="get-pop"></div>
             <div id="navi" class="navi"><b>1</b><b>2</b><b>3</b></div>
+            <div id="over-pop" class="over-pop"></div>
             <div id="chance-logo" class="chance-logo"><span class="cl-peka">PEKA</span><span class="cl-chance">CHANCE!</span></div>
 
             <!-- 揃い図柄表示レイヤー -->
@@ -266,7 +267,7 @@
       addFn('左右ペカ(32G内)', () => sideLampShow('early'));
       addFn('左右ペカ(天国)', () => sideLampShow('heaven'));
       addFn('左右ペカ消灯', () => sideLampOff());
-      [222, 444, 456, 666].forEach(n => addFn(`リザルト ${n}枚`, () => { if (!isAtResult) showAtResult({ gain: n, games: 50, bells: 21, bonuses: 1, hint: 1 }); }));
+      [222, 250, 444, 456, 666, 1000].forEach(n => addFn(`${n} OVER`, () => showOver(n)));
       TROPHIES.forEach((tr, i) => addFn(`トロフィー${tr.name}`, () => { if (!isAtResult) showAtResult({ gain: 800, games: 50, bells: 21, bonuses: 1, hint: 1, trophy: i + 1 }); }));
       addFn('ボーナス終了リザルト', () => { if (!isAtResult) showAtResult({ gain: 300, games: 0, bells: 0, bonuses: 0, bonusOnly: true }); });
       addFn('ベル 直線6枚', () => hitBell(0, true));
