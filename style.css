@@ -1263,3 +1263,31 @@ main { overflow: visible !important; }
 /* 連打でのダブルタップズーム・拡大縮小を無効化 (iOS対応) */
 html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 button, .gogo-lamp, .stop-btn { touch-action: manipulation; }
+
+/* チェリー/スイカ予告: 筐体まわりのランプ演出 */
+.cabinet.omen-cherry { animation: rim-red 0.3s steps(1) infinite; }
+.cabinet.omen-melon { animation: rim-rainbow 0.6s linear infinite; }
+@keyframes rim-red {
+  0%   { border-color: #ff4d4d; box-shadow: 0 0 0 2px #0a0618, 0 0 28px #ff2b2b, inset 0 0 18px rgba(255, 60, 60, 0.35); }
+  50%  { border-color: #7c5cd6; box-shadow: 0 0 0 2px #0a0618, 0 0 24px rgba(124, 92, 214, 0.35), inset 0 0 18px rgba(0, 0, 0, 0.6); }
+}
+@keyframes rim-rainbow {
+  0%   { border-color: #ff3b30; box-shadow: 0 0 0 2px #0a0618, 0 0 32px #ff3b30; }
+  20%  { border-color: #ffd800; box-shadow: 0 0 0 2px #0a0618, 0 0 32px #ffd800; }
+  40%  { border-color: #1fe05a; box-shadow: 0 0 0 2px #0a0618, 0 0 32px #1fe05a; }
+  60%  { border-color: #2f8dff; box-shadow: 0 0 0 2px #0a0618, 0 0 32px #2f8dff; }
+  80%  { border-color: #d946ef; box-shadow: 0 0 0 2px #0a0618, 0 0 32px #d946ef; }
+  100% { border-color: #ff3b30; box-shadow: 0 0 0 2px #0a0618, 0 0 32px #ff3b30; }
+}
+.omen .mq-dot { animation: mq-fast 0.14s steps(1) infinite; }
+.omen .mq-dot:nth-of-type(odd) { animation-delay: 0.07s; }
+@keyframes mq-fast { 0% { opacity: 1; background: #fff3a0; } 50% { opacity: 0.2; } }
+.omen-cherry .pl { animation: pl-chase 0.5s steps(1) infinite; }
+.omen-melon .pl { animation: pl-chase 0.3s steps(1) infinite; }
+.omen .pl:nth-child(2) { animation-delay: 0.06s; }
+.omen .pl:nth-child(3) { animation-delay: 0.12s; }
+.omen .pl:nth-child(4) { animation-delay: 0.18s; }
+.omen .pl:nth-child(5) { animation-delay: 0.24s; }
+@keyframes pl-chase { 0% { color: #fff; background: #ff9d00; border-color: #ffd36a; box-shadow: 0 0 8px #ffb300; } 50% { color: #4a3d78; background: #1b1238; border-color: #33265f; box-shadow: none; } }
+.omen .led { animation: led-flash 0.25s steps(1) infinite; }
+@keyframes led-flash { 0% { filter: brightness(1.8); } 50% { filter: brightness(0.6); } }

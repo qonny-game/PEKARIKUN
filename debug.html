@@ -260,6 +260,8 @@
       [50, 100, 200, 300].forEach(g => addFn(`AT突入 +${g}G`, () => { if (!isRushing && !isPushing) startAT(g); }));
       [['normal','通常ペカ'],['late','後ペカ'],['gakkun','ガックン'],['hanabi','花火ペカ'],['double','Wペカ'],['rainbow','虹ペカ'],['freeze','フリーズ風']].forEach(([id, l]) =>
         addFn(l, () => debugStart({ display: 2, actual: 2, fx: id })));
+      addFn('スイカ予告', () => { if (!isReelSpinning) omenThen('melon', () => {}); });
+      addFn('チェリー予告', () => { if (!isReelSpinning) omenThen('cherry', () => {}); });
       addFn('左右ペカ(32G内)', () => sideLampShow('early'));
       addFn('左右ペカ(天国)', () => sideLampShow('heaven'));
       addFn('左右ペカ消灯', () => sideLampOff());

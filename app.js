@@ -59,7 +59,7 @@ const DEFAULT_SETTINGS = {
   modeW3: 3,           // 天国 (50G / 8倍)
   hintTrue: 70         // リザルト示唆が実際のモードと一致する割合
 };
-const APP_VERSION = '1.2.4';
+const APP_VERSION = '1.2.6';
 const SETTINGS_KEY = 'pekari-settings-v3';
 
 // ==========================================
@@ -1276,12 +1276,39 @@ function cancelReels() {
   reelLocked = false;
 }
 
+/* チェリー/スイカ成立時: リール回転の前に、筐体まわりのランプが光って予告する */
+const cabinetEl = document.querySelector('.cabinet');
+function omenOff() {
+  if (cabinetEl) cabinetEl.classList.remove('omen', 'omen-melon', 'omen-cherry');
+  sideLampOff();
+}
+const FAKE_OMEN_RATE = 0.07;   // ハズレ時のフェイク予告 (外れても予告だけ出ることがある)
+function omenThen(kind, go) {
+  let shown = kind;
+  if (kind === 'lose' && Math.random() < FAKE_OMEN_RATE) shown = Math.random() < 0.7 ? 'cherry' : 'melon';
+  if (shown !== 'melon' && shown !== 'cherry') { go(); return; }
+  const melon = shown === 'melon';
+  reelLocked = true;                       // 予告の間はレバー/タップを受けない
+  cabinetEl.classList.remove('omen', 'omen-melon', 'omen-cherry');
+  void cabinetEl.offsetWidth;
+  cabinetEl.classList.add('omen', melon ? 'omen-melon' : 'omen-cherry');
+  sideLampShow(melon ? 'heaven' : 'early');
+  if (soundEnabled) {
+    initAudio();
+    const t = audioCtx.currentTime;
+    const notes = melon ? [392, 494, 587, 784, 988, 1175, 1568] : [880, 1109, 1319];
+    notes.forEach((f, i) => tone(f, t + 0.08 + i * (melon ? 0.16 : 0.2), 0.2, 'triangle', 0.1));
+    if (melon) tone(98, t, 1.2, 'sine', 0.18);
+  }
+  pekaLater(() => { omenOff(); reelLocked = false; go(); }, melon ? 1500 : 1000);
+}
+
 /* 役の抽選結果を持って回転開始。止まったら done(結果) */
 function runRole(kind, done) {
-  startReels(planFor(kind), res => {
+  omenThen(kind, () => startReels(planFor(kind), res => {
     markWin(winIdxOf(kind, res.grid), '');
     done(res);
-  });
+  }));
 }
 
 /* 揃ったマスを光らせる / ほかを暗くする */
@@ -1981,7 +2008,7 @@ function resetPekaState() {
   cancelReels();
   hideChance();
   clearPekaTimers();
-  sideLampOff();
+  omenOff();
   stopTension();
   clearTimeout(suspenseTimer);
   isSuspense = false;
