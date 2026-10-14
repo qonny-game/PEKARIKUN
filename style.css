@@ -1259,3 +1259,7 @@ main { overflow: visible !important; }
 .payline { position: absolute; left: 0; top: 0; width: 198px; height: 174px; z-index: 4; pointer-events: none; overflow: visible; }
 .payline line { stroke: #fff3a0; stroke-width: 4; stroke-linecap: round; filter: drop-shadow(0 0 5px #ffb300) drop-shadow(0 0 10px #ff8a00); animation: payline-blink 0.42s steps(1) infinite; }
 @keyframes payline-blink { 0% { opacity: 1; } 50% { opacity: 0.15; } }
+
+/* 連打でのダブルタップズーム・拡大縮小を無効化 (iOS対応) */
+html, body { touch-action: manipulation; -webkit-text-size-adjust: 100%; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+button, .gogo-lamp, .stop-btn { touch-action: manipulation; }

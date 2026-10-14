@@ -59,7 +59,7 @@ const DEFAULT_SETTINGS = {
   modeW3: 3,           // 天国 (50G / 8倍)
   hintTrue: 70         // リザルト示唆が実際のモードと一致する割合
 };
-const APP_VERSION = '1.2.3';
+const APP_VERSION = '1.2.4';
 const SETTINGS_KEY = 'pekari-settings-v3';
 
 // ==========================================
@@ -2452,3 +2452,14 @@ function buildReelView() {
   }).join('');
 }
 document.getElementById('reel-btn').addEventListener('click', () => { buildReelView(); openModal(reelModal); });
+
+
+/* iOS: ピンチ拡大と、連打によるダブルタップズームを禁止 */
+['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));
+let lastTouchEnd = 0;
+document.addEventListener('touchend', e => {
+  const now = Date.now();
+  if (now - lastTouchEnd < 350 && !(e.target.closest && e.target.closest('button, input, textarea, select, label'))) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
+document.addEventListener('touchmove', e => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
