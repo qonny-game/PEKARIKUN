@@ -1867,3 +1867,18 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 .led-row { flex: 1; min-width: 0; display: grid; grid-template-columns: .9fr 1.1fr 1.1fr; gap: 2px; }
 .led-label { font-size: 7px; letter-spacing: .06em; white-space: nowrap; }
 .dg { font-size: 17px; line-height: 1.1; }
+
+/* ===== 1.19.26 音・グラフ・歯車のアイコンは、データカウンタの合算の右へ / 電光掲示の数字を大きく ===== */
+.data-counter { display: flex; align-items: center; gap: 4px; z-index: 500; }
+.data-counter .dc-grid { flex: 1; min-width: 0; }
+.dc-icons { position: relative; display: flex; align-items: center; gap: 0; flex: none; }
+.dc-icons .bb-ico { width: 32px; height: 30px; border-radius: 8px; }
+.dc-icons .bb-ico svg { width: 18px; height: 18px; }
+.dc-icons .more-menu { right: 0; top: calc(100% + 8px); bottom: auto; }
+.bottom-bar { padding: 4px 0 0; }
+.cab-panel { gap: 4px; }
+.panel-lamps { gap: 2px 2px; }
+.pl { font-size: 7px; padding: 1px 3px; }
+.led-row { grid-template-columns: .85fr 1.1fr 1.1fr; gap: 0; }
+.led-label { font-size: 8px; }
+.dg { font-size: 27px; line-height: 1.05; }
