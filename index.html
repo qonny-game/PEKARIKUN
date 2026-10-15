@@ -7,6 +7,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="fx.css">
+  <link rel="stylesheet" href="lcd.css">
+  <link rel="stylesheet" href="trophy.css">
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-5 select-none">
 
@@ -41,7 +44,7 @@
         <div id="side-l" class="side-lamp"><i style="--i:0">P</i><i style="--i:1">E</i><i style="--i:2">K</i><i style="--i:3">A</i><i style="--i:4">!</i></div>
 
         <div class="cab-lcd">
-          <div id="at-status" class="at-status"><span id="at-label" class="at-label">AT</span><span>残り <span id="at-remain" class="digital-font">0</span> G</span></div>
+          <div id="at-status" class="at-status"><span id="at-label" class="at-label">AT</span><span>残り <span id="at-remain" class="digital-font">0</span> G</span><span class="at-gain">獲得 <span id="at-gain" class="digital-font">0</span></span></div>
           <div id="cherry-status" class="cherry-status">CHERRY&nbsp;&nbsp;当選率UP 残り <span id="cherry-remain" class="digital-font">0</span> G</div>
 
           <!-- GOGO! ランプ表示ボックス (液晶) -->
@@ -55,6 +58,7 @@
               </div>
             </div>
 
+            <div id="sub-lcd" class="sub-lcd"></div>
             <div id="at-toast" class="at-toast"></div>
             <div id="get-pop" class="get-pop"></div>
             <div id="navi" class="navi"><b>1</b><b>2</b><b>3</b></div>
@@ -218,5 +222,8 @@
   </div>
 
   <script src="app.js"></script>
+  <script src="fx.js"></script>
+  <script src="lcd.js"></script>
+  <script src="trophy.js"></script>
 </body>
 </html>

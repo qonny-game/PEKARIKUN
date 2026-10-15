@@ -18,6 +18,7 @@ const BIG_TIERS = [
 //   その他  : 単位は %
 // ==========================================
 const TIER_LABELS = BIG_TIERS.map(t => String(t.coins));
+const BASE_COINS = BIG_TIERS.map(t => t.coins);   // 遊モードでは BIG_TIERS[i].coins を倍率で書き換える
 const DEFAULT_SETTINGS = {
   hitDenom: 100,                                       // 通常時のボーナス当選確率 1/N (基本はチェリー→高確率で当てる)
   weights: [30, 25, 20, 13, 8, 4],                    // 当選枚数の比率
@@ -44,7 +45,7 @@ const DEFAULT_SETTINGS = {
   cherryMult: 2,       // チェリー後 (内部高確率) のボーナス当選確率の倍率
   cherryG: 15,         // チェリー後の内部高確率の期間 (G)
   cherryAt: 3.5,       // AT中: ハズレのうちチェリーが揃う割合
-  cherryAtSuccess: 70, // AT中のチェリーでG数が上乗せされる割合 (外れもある)
+  cherryAtSuccess: 80, // AT中の弱チェリーでG数が上乗せされる割合 (外れもある)
   cherryW10: 50,       // 上乗せ量の比率: +10G
   cherryW20: 30,       // +20G
   cherryW25: 15,       // +25G
@@ -57,10 +58,15 @@ const DEFAULT_SETTINGS = {
   modeW1: 28,          // 好調 (30G / 当選率2倍)
   modeW2: 14,          // 絶好調 (40G / 4倍)
   modeW3: 3,           // 天国 (50G / 8倍)
-  hintTrue: 70         // リザルト示唆が実際のモードと一致する割合
+  hintTrue: 70,        // リザルト示唆が実際のモードと一致する割合
+  coinScale: 1,        // ボーナス枚数の倍率 (遊モードは0.5)
+  gScale: 1,           // ATの獲得G数の倍率 (遊モードは0.5)
+  typeW0: 84,          // ATタイプの比率: RUSH
+  typeW1: 12,          // HEAVEN
+  typeW2: 4            // DEATH
 };
-const APP_VERSION = '1.12.0';
-const SETTINGS_KEY = 'pekari-settings-v4';   // v4: 機械割の調整 (95〜115%) に合わせて保存データを作り直し
+const APP_VERSION = '1.16.0';
+const SETTINGS_KEY = 'pekari-settings-v5';   // v5: モード (本気/極楽/遊) を追加。機械割は100〜130%
 
 // ==========================================
 // 設定 1〜6 (高設定ほど出玉が良い) と 設定7 (デバッグ用: すぐ当たる)
@@ -80,7 +86,7 @@ const LEVEL_VALUES = {
   atW100:          [15,   15,   15,   15,   15,   15,    25],
   atW200:          [7,    7,    7,    7,    7,    7,     25],
   atW300:          [2,    2,    2,    2,    2,    2,     25],
-  cherryAtSuccess: [65,   65,   65,   65,   65,   65,   100],   // AT中のチェリーで上乗せが成立する割合
+  cherryAtSuccess: [80,   80,   80,   80,   80,   80,   100],   // AT中のチェリーで上乗せが成立する割合
   modeW0:          [56,   55,   54,   52,   50,   48,     0],
   modeW1:          [29,   29,   29,   30,   30,   30,     0],
   modeW2:          [11,   12,   12,   13,   14,   15,     0],
@@ -92,12 +98,42 @@ const LEVEL_TIER_WEIGHTS = [
 ];
 const DEFAULT_LEVEL = 4;
 const SECRET_SEQ = [6, 5, 6, 6, 4, 5, 6];
-const DEFAULT_PROFILES = {};
+
+/* ---------- 遊び方モード (本気 / 極楽 / 遊本気 / 遊極楽) × 設定1〜6 ----------
+   本気: 機械割 100〜120% / 極楽: 機械割 110〜130% (AT突入しやすく、HEAVEN/DEATHも多め)
+   遊: 当たりやすさ2倍・ボーナス枚数とATのG数は半分 (演出をたくさん見たい人向け。機械割は本気/極楽と同じ)
+   hitDenom はシミュレーションで機械割に合わせて調整した値 (tools/tune_modes.js) */
+const PLAY_MODES = [
+  { name: '本気',   entryAdd: 0, coinScale: 1,   gScale: 1,   typeW: [[84, 12, 4], [83, 13, 4], [81, 14, 5], [79, 15, 6], [76, 17, 7], [72, 20, 8]] },
+  { name: '極楽',   entryAdd: 8, coinScale: 1,   gScale: 1,   typeW: [[66, 24, 10], [63, 26, 11], [60, 28, 12], [56, 30, 14], [52, 32, 16], [48, 34, 18]] },
+  { name: '遊本気', entryAdd: 0, coinScale: 0.5, gScale: 0.5, typeW: [[84, 12, 4], [83, 13, 4], [81, 14, 5], [79, 15, 6], [76, 17, 7], [72, 20, 8]] },
+  { name: '遊極楽', entryAdd: 8, coinScale: 0.5, gScale: 0.5, typeW: [[66, 24, 10], [63, 26, 11], [60, 28, 12], [56, 30, 14], [52, 32, 16], [48, 34, 18]] }
+];
+// ボーナス当選確率 1/N (基本。チェリー・チャンス目などで当たりやすくなる前の値)
+const MODE_HITDENOM = [[772, 745, 724, 673, 639, 623], [742, 709, 676, 655, 631, 599], [220, 216, 213, 206, 198, 194], [210, 205, 199, 191, 185, 182]];
+// 画面に出す機械割の目安 (%)
+const MODE_RATES = [[100, 103, 106, 110, 115, 120], [110, 114, 118, 122, 126, 130], [100, 103, 106, 110, 115, 120], [110, 114, 118, 122, 126, 130]];
+const DEFAULT_PROFILES = {};          // 本気モード (従来の形)
+const PROFILES_BY_MODE = [{}, {}, {}, {}];
 for (let l = 1; l <= 7; l++) {
   const p = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
   Object.keys(LEVEL_VALUES).forEach(k => { p[k] = LEVEL_VALUES[k][l - 1]; });
   p.weights = LEVEL_TIER_WEIGHTS[l - 1].slice();
-  DEFAULT_PROFILES[l] = p;
+  PLAY_MODES.forEach((m, mi) => {
+    const q = JSON.parse(JSON.stringify(p));
+    if (l <= 6) {
+      q.hitDenom = MODE_HITDENOM[mi][l - 1];
+      q.atEntryMin = Math.min(95, q.atEntryMin + m.entryAdd);
+      q.atEntryMax = Math.min(98, q.atEntryMax + m.entryAdd);
+      q.coinScale = m.coinScale;
+      q.gScale = m.gScale;
+      [q.typeW0, q.typeW1, q.typeW2] = m.typeW[l - 1];
+    } else {
+      [q.typeW0, q.typeW1, q.typeW2] = [34, 33, 33];
+    }
+    PROFILES_BY_MODE[mi][l] = q;
+  });
+  DEFAULT_PROFILES[l] = PROFILES_BY_MODE[0][l];
 }
 
 function mergeProfile(st, raw) {
@@ -111,12 +147,16 @@ function mergeProfile(st, raw) {
   });
 }
 function loadSettings() {
-  const out = { level: DEFAULT_LEVEL, prev: DEFAULT_LEVEL, random: false, profiles: {} };
-  for (let l = 1; l <= 7; l++) out.profiles[l] = JSON.parse(JSON.stringify(DEFAULT_PROFILES[l]));
+  const out = { level: DEFAULT_LEVEL, prev: DEFAULT_LEVEL, random: false, mode: 0, profiles: {} };
+  for (let l = 1; l <= 7; l++) out.profiles[l] = JSON.parse(JSON.stringify(PROFILES_BY_MODE[0][l]));
   try {
     const raw = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
     if (raw && typeof raw === 'object' && raw.profiles) {
-      for (let l = 1; l <= 7; l++) if (raw.profiles[l]) mergeProfile(out.profiles[l], raw.profiles[l]);
+      if (raw.mode >= 0 && raw.mode <= 3) {
+        out.mode = raw.mode | 0;
+        for (let l = 1; l <= 7; l++) out.profiles[l] = JSON.parse(JSON.stringify(PROFILES_BY_MODE[out.mode][l]));
+      }
+      if (raw.profiles[7]) mergeProfile(out.profiles[7], raw.profiles[7]);   // 数値を編集できるのは設定7だけ
       if (raw.level >= 1 && raw.level <= 6) out.level = out.prev = raw.level | 0;
       if (raw.random === true) { out.random = true; out.level = out.prev = 1 + Math.floor(Math.random() * 6); }   // ランダム: 起動のたびに引き直す
     }
@@ -127,7 +167,7 @@ function saveSettings() {
   try {
     // 設定7は保存しない (次に開いたときは直前の設定1〜6に戻る)
     const level = SETTINGS.level === 7 ? SETTINGS.prev : SETTINGS.level;
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ level, random: !!SETTINGS.random, profiles: SETTINGS.profiles }));
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({ level, mode: SETTINGS.mode, random: !!SETTINGS.random, profiles: SETTINGS.profiles }));
   } catch (e) { /* 保存できなくても動作は続ける */ }
 }
 function activeProfile() { return SETTINGS.profiles[SETTINGS.level]; }
@@ -140,6 +180,9 @@ let BELL_NORMAL_RATE, BELL_AT_RATE, AT_HIT_MULT, AT_WEIGHTS = [80, 14, 5, 1];
 let BELL_WEIGHTS = [60, 25, 15], AT_BELL_WEIGHTS = [30, 10, 60];
 let MODE_WEIGHTS = [55, 28, 14, 3], HINT_TRUE;
 let REPLAY_AT_RATE, REPLAY_RATE, MELON_RATE, MELON_AT_RATE, MELON_COINS;
+let AT_G_SCALE = 1, AT_TYPE_W = [84, 12, 4];
+/* ATのG数を倍率で調整 (遊モード: 半分。最低5G) */
+const scaleG = g => (AT_G_SCALE === 1 ? g : Math.max(5, Math.round(g * AT_G_SCALE / 5) * 5));
 
 function applySettings() {
   const st = activeProfile();
@@ -171,6 +214,10 @@ function applySettings() {
   AT_BELL_WEIGHTS = [st.atBellStraight, st.atBellDiagTL, st.atBellDiagBL].map(nz);
   MODE_WEIGHTS = [st.modeW0, st.modeW1, st.modeW2, st.modeW3].map(nz);
   HINT_TRUE = clampP(st.hintTrue);
+  AT_G_SCALE = Math.max(0.1, +st.gScale || 1);
+  AT_TYPE_W = [st.typeW0, st.typeW1, st.typeW2].map(nz);
+  const cs = Math.max(0.1, +st.coinScale || 1);
+  BIG_TIERS.forEach((t, i) => { t.coins = Math.max(1, Math.round(BASE_COINS[i] * cs)); });
 }
 applySettings();
 
@@ -217,6 +264,8 @@ let countRAF = null;
 let sinceEnd = null;               // ボーナス/AT終了からのゲーム数 (32G以内の当選で左右ペカ)
 let pekaSpecial = null;            // 'early' | 'heaven': 左右ペカ演出
 let pekaTimers = [];
+let zenchoLeft = 0;               // 当選確定後、ランプが光るまでの残りG数 (3〜5G遅らせる。ハズレ矛盾が出たら確定)
+const ZENCHO_P = 0.45;
 let modeGames = 0;                 // AT終了後の「次回モード」の残りG数 (当選率アップ・画面には出さない)
 let modeMult = 1;                  // 次回モードの当選確率の倍率
 let atRun = null;                  // いまのAT中の集計 {startDiff, games, bells, bonuses}
@@ -776,13 +825,14 @@ const AT_TYPES = [
   { id: 'death',  name: 'DEATH',  line1: 'PEKA RUSH!', line2: 'DEATH!',   hit: 1.2, up: 1,   zg: 1.2, minG: 250, zlv: [5, 20, 35, 40] }
 ];
 // ATタイプの出現比率 [RUSH, HEAVEN, DEATH] (設定1〜6 / 設定7)
-const AT_TYPE_WEIGHTS = [[84, 12, 4], [83, 13, 4], [81, 14, 5], [79, 15, 6], [76, 17, 7], [72, 20, 8], [34, 33, 33]];
 let atType = 0;   // いまのATのタイプ (0:RUSH 1:HEAVEN 2:DEATH)
-function pickAtType() { return weightedPick(AT_TYPE_WEIGHTS[Math.min(7, Math.max(1, SETTINGS.level)) - 1]); }
+function pickAtType() { return weightedPick(AT_TYPE_W); }
 
 /* ---------- フリーズ → PEKA! PEKA! MOUNTAIN! 直撃 ---------- */
 const FREEZE_RATE = 1 / 1500;   // 通常時1ゲームあたりのフリーズ確率
 function freezeToZone(debug) {
+  zenchoLeft = 0;
+  if (window.TRO && !debug) TRO.seen('freeze');
   isSuspense = true;                       // フリーズ中はレバーが効かない
   startTension('FREEZE');
   suspenseTimer = setTimeout(() => {
@@ -942,7 +992,15 @@ function handleSpin() {
   if (inCherry) { cherryGames--; updateCherry(); }
   // AT中は当選しにくい / 次回モード中は当選しやすい / チェリー後は当選しやすい
   const hitMult = (inAT ? AT_HIT_MULT * AT_TYPES[atType].hit : inMode ? modeMult : 1) * (inCherry ? cherryM : 1);
-  const isHit = Math.random() < Math.min(1, HIT_RATE * hitMult);
+  let isHit = false;
+  if (zenchoLeft > 0) {
+    zenchoLeft--;
+    isHit = zenchoLeft === 0;
+  } else {
+    isHit = Math.random() < Math.min(1, HIT_RATE * hitMult);
+    // 当選が決まっても、すぐには光らせず3〜5G遅らせることがある (その間のハズレ矛盾は確定のサイン)
+    if (isHit && !inAT && Math.random() < ZENCHO_P) { zenchoLeft = 3 + Math.floor(Math.random() * 3); isHit = false; }
+  }
 
   if (isHit) {
     // 天国中の当選 / ボーナス終了後32G以内の当選: 左右のPEKAランプ
@@ -1164,9 +1222,9 @@ let AUTO_STOP = false;   // 自動停止 (目押しなし。7もスイカも必�
 try { AUTO_STOP = !!JSON.parse(localStorage.getItem(OPT_KEY) || '{}').autoStop; } catch (e) { /* 初期値 */ }
 function saveOpt() { try { localStorage.setItem(OPT_KEY, JSON.stringify({ autoStop: AUTO_STOP })); } catch (e) { /* 無視 */ } }
 
-const SPIN_SPEED = 18;    // 1秒に流れる図柄の数
+const SPIN_SPEED = 28;    // 1秒に流れる図柄の数 (日本機と同じ: 80回転/分 = 1周0.75秒 = 21コマ/0.75秒)
 const SLIP_MAX = 4;       // 目押し: 狙った図柄が中段の4コマ手前までなら引き込める
-const CELL_H = 58;
+const CELL_H = 50;
 let reelSpin = null;
 let isReelSpinning = false;
 let reelLocked = false;   // 停止直後の誤タップ防止
@@ -1210,7 +1268,7 @@ function drawOverlay(col) {
       col.cells[j].innerHTML = symbolHTML(colSym(col, idx), '');
       col.shown[j] = idx;
     }
-    col.cells[j].style.transform = `translateY(${(1 - k + f) * CELL_H}px)`;
+    col.cells[j].style.transform = `translate3d(0,${(1 - k + f) * CELL_H}px,0)`;
   }
 }
 
@@ -1440,14 +1498,14 @@ function drawPayline(winIdx) {
   const old = reelsEl.querySelector(':scope > .payline');
   if (old) old.remove();
   if (!winIdx || winIdx.length < 3) return;
-  const c = i => [(i % 3) * 66 + 33, Math.floor(i / 3) * 58 + 29];
+  const c = i => [(i % 3) * 66 + 33, Math.floor(i / 3) * 50 + 25];
   const [x1, y1] = c(winIdx[0]);
   const [x2, y2] = c(winIdx[winIdx.length - 1]);
   const dx = (x2 - x1) * 0.28, dy = (y2 - y1) * 0.28;   // 両端を少し延ばす
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
   svg.setAttribute('class', 'payline');
-  svg.setAttribute('viewBox', '0 0 198 174');
+  svg.setAttribute('viewBox', '0 0 198 150');
   const ln = document.createElementNS(ns, 'line');
   ln.setAttribute('x1', x1 - dx); ln.setAttribute('y1', y1 - dy);
   ln.setAttribute('x2', x2 + dx); ln.setAttribute('y2', y2 + dy);
@@ -1583,7 +1641,7 @@ function cherryEffects(inAT, strong, coins) {
   recordPoint();
   if (inAT) {
     if (strong || Math.random() < CHERRY_AT_SUCCESS) {
-      const addG = Math.round(pickCherryAtG() * AT_TYPES[atType].up);
+      const addG = scaleG(Math.round(pickCherryAtG() * AT_TYPES[atType].up));
       atEnding = false;     // 最終ゲームなら終了を取り消して延長
       pushReveal(`+${addG}G`, false, () => { atGames += addG; updateAT(); });
       return addG;
@@ -1596,12 +1654,12 @@ function cherryEffects(inAT, strong, coins) {
 }
 /* 弱/強の役: 払い出し・通常時の当選しやすさ(倍率/G数)・AT中の上乗せ成立率 */
 const ROLE_INFO = {
-  cherryW: { label: '弱チェリー',   coins: () => CHERRY_COINS, m: () => CHERRY_MULT, g: 15, atP: () => CHERRY_AT_SUCCESS, notes: [1319, 1760, 2349] },
-  cherryS: { label: '強チェリー',   coins: () => CHERRY_COINS * 2, m: () => CHERRY_MULT * 2.5, g: 15, atP: () => 1, notes: [1319, 1760, 2349, 2637] },
-  melonW:  { label: '弱スイカ',     coins: () => Math.max(1, MELON_COINS - 2), m: () => 2, g: 15, atP: () => 0.6, notes: [1047, 1319, 1568] },
-  melon:   { label: '強スイカ',     coins: () => MELON_COINS, m: () => 4, g: 15, atP: () => 1, notes: [1047, 1319, 1568, 2093] },
-  chanceW: { label: '弱チャンス目', coins: () => 0, m: () => 3, g: 8, atP: () => 0, notes: [523, 659, 784] },
-  chanceS: { label: '強チャンス目', coins: () => 0, m: () => 8, g: 8, atP: () => 0, notes: [523, 659, 784, 1047, 1319] }
+  cherryW: { label: '弱チェリー',   coins: () => CHERRY_COINS, m: () => CHERRY_MULT, g: 15, upM: 1, atP: () => CHERRY_AT_SUCCESS, notes: [1319, 1760, 2349] },
+  cherryS: { label: '強チェリー',   coins: () => CHERRY_COINS * 2, m: () => CHERRY_MULT * 2.5, g: 15, upM: 2, atP: () => 1, notes: [1319, 1760, 2349, 2637] },
+  melonW:  { label: '弱スイカ',     coins: () => Math.max(1, MELON_COINS - 2), m: () => 2, g: 15, upM: 1.2, atP: () => 0.8, notes: [1047, 1319, 1568] },
+  melon:   { label: '強スイカ',     coins: () => MELON_COINS, m: () => 4, g: 15, upM: 2.5, atP: () => 1, notes: [1047, 1319, 1568, 2093] },
+  chanceW: { label: '弱チャンス目', coins: () => 0, m: () => 3, g: 8, upM: 1, atP: () => 0, notes: [523, 659, 784] },
+  chanceS: { label: '強チャンス目', coins: () => 0, m: () => 8, g: 8, upM: 1, atP: () => 0, notes: [523, 659, 784, 1047, 1319] }
 };
 const CHERRY_STRONG_P = 0.12;   // チェリーのうち強の割合
 const MELON_STRONG_P = 0.35;    // スイカのうち強の割合
@@ -1614,7 +1672,7 @@ function roleEffects(role, inAT) {
   recordPoint();
   if (inAT) {
     if (R.atP() > 0 && Math.random() < R.atP()) {
-      const addG = Math.round(pickCherryAtG() * AT_TYPES[atType].up);
+      const addG = scaleG(Math.round(pickCherryAtG() * AT_TYPES[atType].up * R.upM));   // レア役ほど上乗せが多い
       atEnding = false;
       pushReveal(`+${addG}G`, false, () => { atGames += addG; updateAT(); });
     }
@@ -1683,6 +1741,15 @@ function updateAT() {
   atStatus.classList.toggle('heaven', atType === 1);
   atStatus.classList.toggle('death', atType === 2);
   atRemain.textContent = atGames;
+  updateAtGain();
+}
+/* ペカラッシュ中の合計獲得枚数 */
+function updateAtGain() {
+  const el = document.getElementById('at-gain');
+  if (!el) return;
+  const on = !!atRun && !bonusRun && atGames > 0 && !atRun.bonusOnly;
+  el.parentNode.classList.toggle('has-gain', on);
+  if (on) el.textContent = (diffCoins - atRun.startDiff >= 0 ? '+' : '') + (diffCoins - atRun.startDiff);
 }
 function showAtToast(text) {
   if (!atToast) return;
@@ -1731,8 +1798,10 @@ const rushLines = rushOverlay.querySelectorAll('.rush-line');
 /* AT突入 (PEKA RUSH!!!): 演出のあとPUSHボタン → 獲得G数をでかでかと表示 */
 function startAT(games, typeId) {
   atType = typeId !== undefined ? typeId : pickAtType();
+  if (window.TRO && atType > 0) TRO.seen(atType === 1 ? 'heaven' : 'death');
   const T = AT_TYPES[atType];
-  const n = Math.max(games || pickAtGames(), T.minG);
+  const base = Math.max(games || pickAtGames(), T.minG);
+  const n = games ? base : scaleG(base);
   const premium = n >= 100 || atType > 0;   // +100G以上・HEAVEN/DEATH はプレミア演出
   atEnding = false;
   sinceEnd = null;
@@ -1835,7 +1904,7 @@ function setZoneLogoLevel(lv) {
 }
 function showChance(zone, zlv) {
   if (!chanceLogo) return;
-  chanceLogo.querySelector('.cl-peka').textContent = zone ? 'PEKA! PEKA!' : 'PEKA';
+  chanceLogo.querySelector('.cl-peka').innerHTML = zone ? 'PEKA<br>PEKA' : 'PEKA';
   chanceLogo.querySelector('.cl-chance').textContent = zone ? 'MOUNTAIN!' : 'CHANCE!';
   chanceLogo.classList.toggle('zone', !!zone);
   if (zone) setZoneLogoLevel(zlv || 0);
@@ -1849,13 +1918,59 @@ function showChance(zone, zlv) {
     tone(130, t, 0.4, 'sine', 0.2);
   }
   triggerFlash();
+  if (!zone) showChanceIntro();
 }
-function hideChance() { if (chanceLogo) chanceLogo.classList.remove('on', 'judge'); }
+/* PEKA! CHANCE! の初回表示: 画面いっぱいにどでかく */
+function showChanceIntro() {
+  if (window.TRO) TRO.seen('chance_intro');
+  let el = document.getElementById('chance-intro');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'chance-intro';
+    el.className = 'chance-intro';
+    el.innerHTML = '<span class="ci-1">PEKA!</span><span class="ci-2">CHANCE!</span>';
+    document.body.appendChild(el);
+  }
+  el.classList.remove('on');
+  void el.offsetWidth;
+  el.classList.add('on');
+}
+/* ラスト3G: どでかいカウントダウン (3 → 2 → 1) */
+function showLastCount(n) {
+  if (window.TRO && n === 3) TRO.seen('last_count');
+  let el = document.getElementById('chance-count');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'chance-count';
+    el.className = 'chance-count';
+    el.innerHTML = '<span class="cc-n"></span><span class="cc-s">LAST</span>';
+    document.body.appendChild(el);
+  }
+  el.querySelector('.cc-n').textContent = n;
+  el.dataset.n = n;
+  el.classList.remove('on');
+  void el.offsetWidth;
+  el.classList.add('on');
+  if (chanceLogo) chanceLogo.classList.add('counting');
+  if (soundEnabled) {
+    initAudio();
+    const t = audioCtx.currentTime;
+    tone(220 / n, t, 0.35, 'sine', 0.3);
+    tone(660 + (4 - n) * 220, t, 0.12, 'square', 0.1);
+  }
+}
+function hideLastCount() {
+  const el = document.getElementById('chance-count');
+  if (el) el.classList.remove('on');
+  if (chanceLogo) chanceLogo.classList.remove('counting');
+}
+function hideChance() { if (chanceLogo) chanceLogo.classList.remove('on', 'judge', 'counting'); hideLastCount(); }
 
 function beginBonus(plan) {
   bonusRun = plan;
   pendingZone = false;
   showChance(plan.zone, plan.zlv);
+  if (plan.zone && window.TRO) TRO.seen('zone');
   sinceEnd = null;
   // ボーナス開始からリザルトまでの獲得枚数を数える
   if (!atRun && !plan.debug) atRun = { startDiff: diffCoins, games: 0, bells: 0, bonuses: 0 };
@@ -1866,37 +1981,86 @@ function beginBonus(plan) {
 /* ---------- 押し順ナビ (ボーナス中: 1→2→3 の順に押すとベルが揃う) ---------- */
 const naviEl = document.getElementById('navi');
 let naviOrder = null;   // 例: [1, 2, 0] = 中→右→左の順に止める
-function showNavi(order, style = '') {
+let naviPartial = false;   // 1だけナビ: 最初に押すリールだけ表示 (残りは自由)
+function showNavi(order, style = '', partial = false) {
   naviOrder = order;
-  naviEl.className = 'navi on ' + style;     // red: チェリー / purple: スイカ (上乗せ確定)
-  [...naviEl.children].forEach((el, c) => { el.textContent = (order.indexOf(c) + 1) + (style === 'purple' ? '!' : ''); el.className = ''; });
+  naviPartial = !!partial;
+  naviEl.className = 'navi on ' + style + (partial ? ' partial' : '');     // red: チェリー / purple: スイカ (上乗せ確定)
+  [...naviEl.children].forEach((el, c) => {
+    el.textContent = partial ? (c === order[0] ? '1' : '') : (order.indexOf(c) + 1) + (style === 'purple' ? '!' : '');
+    el.className = '';
+  });
   refreshNavi();
-  spinBtn.dataset.navi = order.map(c => ['左', '中', '右'][c]).join('→');
+  spinBtn.dataset.navi = (partial ? [order[0]] : order).map(c => ['左', '中', '右'][c]).join('→');
 }
 function refreshNavi() {
   if (!naviOrder || !naviEl) return;
   const done = reelSpin ? reelSpin.order : [];
   [...naviEl.children].forEach((el, c) => {
     el.classList.toggle('done', done.includes(c));
-    el.classList.toggle('next', !done.includes(c) && naviOrder[done.length] === c);
+    el.classList.toggle('next', !done.includes(c) && naviOrder[done.length] === c && (!naviPartial || done.length === 0));
   });
 }
-function hideNavi() { naviOrder = null; if (naviEl) naviEl.className = 'navi'; }
+function hideNavi() { naviOrder = null; naviPartial = false; if (naviEl) naviEl.className = 'navi'; }
 function sameOrder(a, b) { return !!a && a.length === b.length && a.every((v, i) => v === b[i]); }
 
+/* ドンドンドン!: 画面が揺れた回数で期待度を示す。3回揺れたら発展 (ボーナス中は次のオーラ昇格のサイン) */
+function donShake(n, done) {
+  if (window.TRO) TRO.seen('don' + Math.min(3, n));
+  let i = 0;
+  const gap = 520;
+  if (window.FX) FX.hold(n * gap + 700);
+  const step = () => {
+    if (i >= n) {
+      if (n >= 3) {
+        showAtToast('発展');
+        triggerFlash();
+        if (soundEnabled) { initAudio(); [523, 659, 784, 1047].forEach((f, k) => tone(f, audioCtx.currentTime + k * 0.06, 0.25, 'square', 0.1)); }
+      }
+      setTimeout(done, n >= 3 ? 700 : 250);
+      return;
+    }
+    i++;
+    const d = document.createElement('div');
+    d.className = 'don-pop';
+    d.textContent = 'DON'.repeat(1);
+    d.style.setProperty('--i', i);
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 600);
+    shakeMain(300);
+    if (soundEnabled) { initAudio(); thump(audioCtx.currentTime, 0.55 + i * 0.1); }
+    setTimeout(step, gap);
+  };
+  step();
+}
 function bonusGame() {
+  const b = bonusRun;
+  // ドンドンドン!: 昇格するゲームほど多く揺れる (ガセもある)
+  const promo = !b.zone && b.promo.includes(b.played + 1);
+  const don = weightedPick(promo ? [0, 15, 30, 55] : [90, 6, 3, 1]);
+  if (don > 0 && !b.debug) {
+    spinBtn.disabled = true;
+    donShake(don, () => { spinBtn.disabled = false; bonusGameMain(); });
+    return;
+  }
+  bonusGameMain();
+}
+function bonusGameMain() {
   const b = bonusRun;
   playClickSound();
   setLedWin(0);
   const isFinal = !b.zone && b.played + 1 >= b.games;   // 最終ゲームはジャッジメント (ここでATの当否が決まる)
   const navi = [0, 1, 2].sort(() => Math.random() - 0.5);   // 押し順ナビ
-  showNavi(navi);
+  const partial = Math.random() < 0.3;                       // 1だけナビ (最初の1つだけ表示)
+  showNavi(navi, '', partial);
+  if (partial && window.TRO) TRO.seen('navi_partial');
+  if (!b.zone && b.games - b.played <= 3) showLastCount(b.games - b.played); else hideLastCount();
   if (isFinal) { startTension('JUDGEMENT'); if (chanceLogo) chanceLogo.classList.add('judge'); }
   updateAT();
   runRole('bell2', res => {
     hideNavi();
     // 押し順を間違えた: ベルこぼし (1枚だけ。ゲーム数は消化されない)
-    if (!AUTO_STOP && !sameOrder(res.order, navi)) {
+    if (!AUTO_STOP && !(partial ? res.order[0] === navi[0] : sameOrder(res.order, navi))) {
       const pay1 = Math.max(0, Math.min(1, b.total - b.paid - 1));
       b.paid += pay1;
       if (!b.debug && pay1) { diffCoins += pay1; recordPoint(); }
@@ -1918,7 +2082,7 @@ function bonusGame() {
       recordPoint();
     }
     setLedWin(pay);
-    showBellResult(pay, true);
+    if (pay > 0 || !b.zone) showBellResult(pay, true);
     if (b.promo.includes(b.played)) {
       b.aura++;
       setAura(b.aura, true);
@@ -1935,7 +2099,7 @@ function bonusGame() {
         playAuraUp(b.zlv + 2);
         triggerFlash();
       }
-      const g = Math.round(ZONE_G_CHOICES[weightedPick(ZONE_G_WEIGHTS[b.zlv])] * AT_TYPES[atType].zg);
+      const g = scaleG(Math.round(ZONE_G_CHOICES[weightedPick(ZONE_G_WEIGHTS[b.zlv])] * AT_TYPES[atType].zg));
       b.zoneG += g;
       const last = b.played >= b.games;
       pushReveal(`+${g}G`, g >= 50, () => {
@@ -1965,7 +2129,38 @@ function finishZone(b) {
   bonusRun = null;
   hideChance();
   updateAT();
-  showAtToast(`ZONE END +${b.zoneG}G`);
+  showZoneEnd(b.zoneG);
+}
+/* ZONE END: ゾーンで上乗せした合計ゲーム数を、でかでかとカウントアップ表示 */
+function showZoneEnd(total) {
+  let el = document.getElementById('zone-end');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'zone-end';
+    el.className = 'zone-end';
+    el.innerHTML = '<span class="ze-t">ZONE END</span><span class="ze-n"><i>+</i><b>0</b><em>G</em></span><span class="ze-s"></span>';
+    document.body.appendChild(el);
+  }
+  const num = el.querySelector('.ze-n b');
+  el.dataset.rank = total >= 100 ? 3 : total >= 50 ? 2 : total >= 20 ? 1 : 0;
+  el.querySelector('.ze-s').textContent = `AT 残り ${atGames} G`;
+  num.textContent = '0';
+  el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  if (window.FX) FX.hold(3600);
+  const t0 = performance.now(), dur = 1100;
+  const frame = now => {
+    const p = Math.min(1, (now - t0) / dur);
+    num.textContent = Math.round(total * (1 - Math.pow(1 - p, 3)));
+    if (soundEnabled && audioCtx && p < 1 && Math.floor(p * 24) !== Math.floor(((now - 16 - t0) / dur) * 24)) tone(700 + 900 * p, audioCtx.currentTime, 0.04, 'square', 0.05);
+    if (p < 1) requestAnimationFrame(frame);
+    else {
+      triggerFlash();
+      if (total >= 50) burstParticles('gold', 70);
+      if (soundEnabled) { initAudio(); [523, 659, 784, 1047].forEach((f, k) => tone(f, audioCtx.currentTime + k * 0.07, 0.3, 'triangle', 0.14)); }
+    }
+  };
+  requestAnimationFrame(frame);
+  setTimeout(() => el.classList.remove('on'), 3400);
 }
 
 function finishBonus() {
@@ -2214,12 +2409,12 @@ function showPayout() {
   const coins = tier.coins;
   if (!isDebugRun) {
     bigCount++;
-    pendingPlan = makeBonusPlan(coins, pendingZone ? { zone: true, atWin: false, level: 0 } : {});
-    bonusLog.push({ g: cumulativeGames, type: 'BIG', coins });
+    pendingPlan = makeBonusPlan(pendingZone ? 0 : coins, pendingZone ? { zone: true, atWin: false, level: 0 } : {});   // ラッシュ中の7揃いはG数上乗せのみ (枚数なし)
+    bonusLog.push({ g: cumulativeGames, type: 'BIG', coins: pendingZone ? 0 : coins });
     recordPoint();
   }
 
-  currentShownCoins = coins;
+  currentShownCoins = pendingZone ? 0 : coins;
   fxOverlay.className = `fx-t${pendingTierIndex + 1}`;   // 枚数表示で背景が豪華に
   const level = payLevel(coins);
   payoutLabel.textContent = pendingZone ? 'PEKA! PEKA! MOUNTAIN!' : 'BIG BONUS';
@@ -2232,7 +2427,7 @@ function showPayout() {
   const rank = pendingTierIndex + 1;
   if (coins >= VVV_MIN_COINS) playGakoSound('vvv'); // 大きい枚数のときだけ枚数表示で vvv.mp3
   // 0 から高速カウントアップ → 数字が決まった瞬間にドドーン+ファンファーレ
-  countUp(0, coins, 1100, () => {
+  const onCounted = () => {
     playPayoutSound(level);
     playPayoutFanfare(rank);
     if (tier.grand) {
@@ -2243,7 +2438,16 @@ function showPayout() {
       triggerFlash();
       shakeMain(350);
     }
-  });
+  };
+  if (pendingZone) {
+    // ラッシュ中: 枚数は出ない。G数の上乗せチャンスのみ
+    payoutNum.style.setProperty('--fs', Math.min(PAY_BASE_PX[level] || 100, Math.max(180, gogoBox.clientWidth - 16) / 3.4) + 'px');
+    payoutValue.textContent = 'G UP!';
+    setLedWin(0);
+    setTimeout(onCounted, 700);
+  } else {
+    countUp(0, coins, 1100, onCounted);
+  }
 
   // NEXTボタンを無効化し、レバーを「ボーナス開始」に
   alignBtn.disabled = true;
@@ -2433,6 +2637,7 @@ document.querySelectorAll('.stop-btn').forEach(b => {
 
 function updateUI() {
   checkOver();
+  if (typeof updateAtGain === 'function') updateAtGain();
   syncPanel();
   displayGames.textContent = totalGames;
   displayBig.textContent = bigCount;
@@ -2451,6 +2656,7 @@ function resetData() {
     atCount = 0;
     diffCoins = 0;
     replayPending = false;
+    zenchoLeft = 0;
     atGames = 0;
     modeGames = 0;
     modeMult = 1;
@@ -2727,8 +2933,12 @@ function buildSettingsForm(level = formLevel, src = SETTINGS.profiles[level]) {
   const levels = [1, 2, 3, 4, 5, 6].map(l =>
     `<button type="button" data-level="${l}" class="${!SETTINGS.random && l === SETTINGS.level ? 'on' : ''}">設定${l}</button>`).join('')
     + `<button type="button" data-random="1" class="set-random ${SETTINGS.random ? 'on' : ''}">ランダム</button>`;
+  const modes = PLAY_MODES.map((m, i) => `<button type="button" data-mode="${i}" class="${i === SETTINGS.mode ? 'on' : ''}">${m.name}</button>`).join('');
+  const rateLine = SETTINGS.random ? '機械割 ---' : SETTINGS.level === 7 ? '' : `機械割 約${MODE_RATES[SETTINGS.mode][SETTINGS.level - 1]}%`;
   settingsBody.innerHTML = `
+    <div class="set-modes">${modes}</div>
     <div class="set-levels">${levels}</div>
+    <div class="set-note" style="margin:2px 0 8px">${rateLine}${SETTINGS.mode >= 2 ? ' / 当たりやすさ約2.5倍・出玉は半分' : ''}</div>
     <label class="set-row set-opt"><span class="set-label">リール停止を自動にする (目押しなし)</span><span class="set-field"><input type="checkbox" id="opt-auto"></span></label>
     ${isSeven ? `<div class="set-group">
       ${rows}
@@ -2745,6 +2955,7 @@ function buildSettingsForm(level = formLevel, src = SETTINGS.profiles[level]) {
   const optAuto = document.getElementById('opt-auto');
   optAuto.checked = AUTO_STOP;
   optAuto.addEventListener('change', () => { AUTO_STOP = optAuto.checked; saveOpt(); });
+  settingsBody.querySelectorAll('button[data-mode]').forEach(el => el.addEventListener('click', () => setMode(+el.dataset.mode)));
   settingsBody.querySelectorAll('button[data-level]').forEach(el =>
     el.addEventListener('click', () => pressLevelButton(+el.dataset.level)));
   const rb = settingsBody.querySelector('button[data-random]');
@@ -2752,6 +2963,15 @@ function buildSettingsForm(level = formLevel, src = SETTINGS.profiles[level]) {
   if (isSeven) refreshWeightPct();
 }
 
+/* モードを切り替える (本気/極楽/遊本気/遊極楽)。設定1〜6の中身をそのモードの値に作り直す */
+function setMode(m) {
+  SETTINGS.mode = m;
+  for (let l = 1; l <= 6; l++) SETTINGS.profiles[l] = JSON.parse(JSON.stringify(PROFILES_BY_MODE[m][l]));
+  saveSettings();
+  applySettings();
+  refreshRateLabel();
+  buildSettingsForm(SETTINGS.level);
+}
 /* 設定を切り替える (1〜7)。7は裏コマンドからのみ */
 function setLevel(l, random = false) {
   if (SETTINGS.level !== 7) SETTINGS.prev = SETTINGS.level;
@@ -2940,7 +3160,7 @@ function closeModal(m) { m.classList.remove('open'); }
 document.getElementById('settings-btn').addEventListener('click', () => { secretBuf = []; buildSettingsForm(SETTINGS.level); openModal(settingsModal); });
 document.getElementById('settings-apply').addEventListener('click', applySettingsForm);
 document.getElementById('settings-default').addEventListener('click', () => {
-  buildSettingsForm(formLevel, DEFAULT_PROFILES[formLevel]);   // 入力欄だけ、この設定の初期値に戻す (適用を押すまで反映されない)
+  buildSettingsForm(formLevel, PROFILES_BY_MODE[SETTINGS.mode][formLevel]);   // 入力欄だけ、この設定の初期値に戻す (適用を押すまで反映されない)
 });
 document.getElementById('graph-btn').addEventListener('click', () => { openModal(graphModal); drawGraphs(); });
 document.querySelectorAll('[data-close-modal]').forEach(el =>
@@ -2986,3 +3206,19 @@ document.addEventListener('touchend', e => {
   lastTouchEnd = now;
 }, { passive: false });
 document.addEventListener('touchmove', e => { if (e.touches && e.touches.length > 1) e.preventDefault(); }, { passive: false });
+
+
+/* ---------- 画面スリープ防止 (Wake Lock) ---------- */
+(() => {
+  let lock = null;
+  async function acquire() {
+    try {
+      if (!('wakeLock' in navigator) || document.visibilityState !== 'visible' || lock) return;
+      lock = await navigator.wakeLock.request('screen');
+      lock.addEventListener('release', () => { lock = null; });
+    } catch (e) { lock = null; /* 非対応・拒否は無視 */ }
+  }
+  acquire();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') acquire(); });
+  ['pointerdown', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, acquire, { passive: true }));
+})();

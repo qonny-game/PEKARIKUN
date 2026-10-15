@@ -290,12 +290,12 @@ body {
 .reels {
   position: relative;
   width: 198px;
-  height: 174px;
-  transform: scale(1.5);
-  margin: 44px auto 46px;
+  height: 150px;
+  transform: scale(1.4);
+  margin: 30px auto 28px;
   display: grid;
   grid-template-columns: repeat(3, 66px);
-  grid-template-rows: repeat(3, 58px);
+  grid-template-rows: repeat(3, 50px);
   justify-content: center;
 }
 /* 枠なし。図柄は枠より大きく描いて、隣と少し重ねる */
@@ -321,14 +321,14 @@ body {
 /* 7図柄の画像 (7red.png / 7blue.png / 7white.png) */
 .sym-img {
   flex: none;
-  width: 84px;
-  height: 84px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
 }
-.reel.win .sym-img { width: 96px; height: 96px; }
+.reel.win .sym-img { width: 50px; height: 50px; }
 .sym-emoji { font-size: 44px; line-height: 1; flex: none; }
-.reels .sym-bar { width: 72px; padding: 6px 0; font-size: 1.05rem; flex: none; }
-.reels .sym-seven { font-size: 4.2rem; flex: none; }
+.reels .sym-bar { width: 62px; padding: 5px 0; font-size: 1rem; border-width: 2px; flex: none; }
+.reels .sym-seven { font-size: 2.9rem; flex: none; }
 .sym-glow-gold { filter: drop-shadow(0 0 10px #ffd700) drop-shadow(0 0 18px #ffb300); }
 .sym-glow-mega { animation: sym-mega-glow 0.6s linear infinite; }
 @keyframes sym-mega-glow {
@@ -968,8 +968,8 @@ main { overflow: visible !important; }
 .set-levels button.on { background: #2563eb; border-color: #60a5fa; }
 
 /* 回転中のリール (1列ぶん。上下は枠で隠す) */
-.reel-ov { position: absolute; top: 0; width: 66px; height: 174px; overflow: hidden; }
-.reel-ov .reel { position: absolute; left: 0; top: 0; width: 66px; height: 58px; animation: none !important; will-change: transform; }
+.reel-ov { position: absolute; top: 0; width: 66px; height: 150px; overflow: hidden; }
+.reel-ov .reel { position: absolute; left: 0; top: 0; width: 66px; height: 50px; animation: none !important; will-change: transform; }
 .reel-ov .sym-img, .reel-ov .sym-emoji, .reel-ov .sym-bar, .reel-ov .sym-replay { filter: blur(0.6px); }
 
 /* 緊張演出: 画面の縁が赤くなり、脈打つ (ボーナス最終ゲーム / AT最終ゲーム) */
@@ -1256,7 +1256,7 @@ main { overflow: visible !important; }
   0%   { filter: brightness(1.9) drop-shadow(0 0 8px #fff3a0) drop-shadow(0 0 16px #ffd23f); }
   50%  { filter: brightness(0.95) drop-shadow(0 0 0 transparent); }
 }
-.payline { position: absolute; left: 0; top: 0; width: 198px; height: 174px; z-index: 4; pointer-events: none; overflow: visible; }
+.payline { position: absolute; left: 0; top: 0; width: 198px; height: 150px; z-index: 4; pointer-events: none; overflow: visible; }
 .payline line { stroke: #fff3a0; stroke-width: 4; stroke-linecap: round; filter: drop-shadow(0 0 5px #ffb300) drop-shadow(0 0 10px #ff8a00); animation: payline-blink 0.42s steps(1) infinite; }
 @keyframes payline-blink { 0% { opacity: 1; } 50% { opacity: 0.15; } }
 
@@ -1295,8 +1295,8 @@ button, .gogo-lamp, .stop-btn { touch-action: manipulation; }
 /* 図柄サイズ: 7とBARは大きく列幅いっぱい、リプレイ(楕円)・ベル・スイカ・チェリーは小さく。
    リールの左右の端に届くのは7とBARだけにして、目押ししやすくする */
 .reels .sym-replay {
-  width: 46px;
-  height: 28px;
+  width: 40px;
+  height: 22px;
   padding: 0;
   display: flex;
   align-items: center;
@@ -1305,9 +1305,9 @@ button, .gogo-lamp, .stop-btn { touch-action: manipulation; }
   font-size: 0.55rem;
   letter-spacing: 0;
 }
-.reels .sym-emoji { font-size: 32px; }
-.reel.win .sym-emoji { font-size: 36px; }
-.reels .sym-bar { width: 74px; }
+.reels .sym-emoji { font-size: 27px; }
+.reel.win .sym-emoji { font-size: 29px; }
+.reels .sym-bar { width: 62px; }
 .rv-replay { border: 1px solid #7dd3fc; border-radius: 50%; padding: 0 7px; font-size: 11px; }
 .rv-emoji { font-size: 18px; }
 
@@ -1441,3 +1441,89 @@ button, .gogo-lamp, .stop-btn { touch-action: manipulation; }
 .at-status.death { border-color: #ff2d55; color: #ffd9e0; box-shadow: 0 0 10px rgba(255, 45, 85, .7); }
 .at-result.t-heaven .at-result-card, .at-result.t-heaven > div { box-shadow: 0 0 30px rgba(125, 211, 252, .6); }
 .at-result.t-death .at-result-card, .at-result.t-death > div { box-shadow: 0 0 30px rgba(255, 45, 85, .6); }
+
+/* モード選択 (本気 / 極楽 / 遊本気 / 遊極楽) */
+.set-modes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
+.set-modes button { padding: 8px 0; border-radius: 8px; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.08); color: #e2e8f0; font-weight: 800; font-size: 12px; }
+.set-modes button.on { background: #f59e0b; border-color: #fcd34d; color: #1b1300; }
+
+
+/* ラッシュ中の合計獲得枚数 */
+.at-gain { display: none; color: #fef08a; }
+.at-status.has-gain .at-gain { display: inline; }
+.at-gain .digital-font { color: #fde047; text-shadow: 0 0 6px #f59e0b; }
+
+/* PEKA! MOUNTAIN! ロゴ: PEKA / PEKA / MOUNTAIN! の3行 */
+.chance-logo.zone { flex-direction: column; align-items: center; gap: 0; top: 2px; line-height: 0.95; }
+.chance-logo.zone span { display: block; text-align: center; }
+.chance-logo.zone .cl-peka { font-size: 22px; line-height: 0.95; }
+.chance-logo.zone .cl-chance { font-size: 25px; line-height: 1; }
+.gogo-lamp:has(.chance-logo.zone.on) .at-toast { top: 82px; }
+
+/* PEKA! CHANCE! 初回のどでかい表示 */
+.chance-intro {
+  position: fixed; inset: 0; z-index: 9000; display: none; flex-direction: column;
+  align-items: center; justify-content: center; pointer-events: none;
+  font-family: 'Orbitron', sans-serif; font-weight: 900; font-style: italic; line-height: 0.95;
+  text-align: center; white-space: nowrap;
+}
+.chance-intro.on { display: flex; animation: ci-all 1.9s ease-out both; }
+.chance-intro span {
+  display: block;
+  background: linear-gradient(100deg, #22d3ee 0%, #a78bfa 30%, #f472b6 55%, #fde047 80%, #22d3ee 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  -webkit-text-stroke: 3px #fff;
+  filter: drop-shadow(0 0 14px #22d3ee) drop-shadow(0 5px 6px rgba(0,0,0,.9));
+  animation: chance-shine 0.8s linear infinite;
+}
+.chance-intro .ci-1 { font-size: min(34vw, 190px); transform-origin: 50% 100%; animation: chance-shine 0.8s linear infinite, ci-slam 0.5s cubic-bezier(.2,1.6,.4,1) both; }
+.chance-intro .ci-2 { font-size: min(26vw, 150px); animation: chance-shine 0.8s linear infinite, ci-slam 0.5s 0.18s cubic-bezier(.2,1.6,.4,1) both; }
+@keyframes ci-slam { from { transform: scale(3.2); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes ci-all { 0% { background: rgba(0,0,0,0); } 15% { background: rgba(10,0,40,.55); } 80% { opacity: 1; background: rgba(10,0,40,.45); } 100% { opacity: 0; background: rgba(0,0,0,0); } }
+
+/* ラスト3G: どでかいカウントダウン */
+.chance-logo.counting { opacity: 0; }
+.chance-count {
+  position: fixed; left: 0; right: 0; top: 22%; z-index: 8500; display: none; flex-direction: column;
+  align-items: center; pointer-events: none; font-family: 'Orbitron', sans-serif; font-weight: 900; font-style: italic;
+}
+.chance-count.on { display: flex; animation: cc-in 0.55s cubic-bezier(.2,1.5,.4,1) both; }
+.chance-count .cc-n {
+  font-size: min(62vw, 330px); line-height: 0.9; color: #fde047; -webkit-text-stroke: 4px #7f1d1d;
+  text-shadow: 0 0 30px #f59e0b, 0 0 60px #ef4444; animation: cc-pulse 0.5s ease-in-out infinite alternate;
+}
+.chance-count[data-n="2"] .cc-n { color: #fb923c; }
+.chance-count[data-n="1"] .cc-n { color: #ef4444; -webkit-text-stroke-color: #fff; text-shadow: 0 0 36px #ef4444, 0 0 80px #dc2626; }
+.chance-count .cc-s { font-size: 22px; letter-spacing: 8px; color: #fff; text-shadow: 0 0 10px #ef4444; margin-top: -4px; }
+@keyframes cc-in { from { transform: scale(3); opacity: 0; } to { transform: scale(1); opacity: .93; } }
+@keyframes cc-pulse { from { transform: scale(1); } to { transform: scale(1.07); } }
+
+.gogo-lamp .align-display { justify-content: flex-start; }
+.gogo-lamp .align-display .reels { margin: 106px auto 0; }
+.gogo-lamp .align-display .next-hint { position: absolute; left: 0; right: 0; bottom: 4px; margin: 0; }
+
+/* ナビ: 1だけナビ / ドンドンドン */
+.navi.partial b:empty { visibility: hidden; }
+.don-pop { position: fixed; left: 50%; top: 40%; z-index: 9100; pointer-events: none; transform: translate(-50%, -50%);
+  font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: calc(70px + var(--i, 1) * 26px); font-style: italic; color: #fde047;
+  -webkit-text-stroke: 3px #7f1d1d; text-shadow: 0 0 24px #ef4444; animation: don-hit .55s ease-out both; }
+@keyframes don-hit { 0% { transform: translate(-50%, -50%) scale(2.4); opacity: 0; } 25% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(.9); opacity: 0; } }
+
+/* ZONE END: 上乗せ合計ゲーム数 */
+.zone-end { position: fixed; inset: 0; z-index: 9200; display: none; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;
+  font-family: 'Orbitron', sans-serif; font-weight: 900; font-style: italic; text-align: center; }
+.zone-end.on { display: flex; animation: ze-all 3.4s ease-out both; }
+.zone-end .ze-t { font-size: 30px; letter-spacing: .14em; color: #fff; text-shadow: 0 0 14px #22c55e; animation: ze-in .5s cubic-bezier(.2, 1.5, .4, 1) both; }
+.zone-end .ze-n { display: flex; align-items: baseline; justify-content: center; line-height: 1; color: #fde047; -webkit-text-stroke: 4px #7c2d12;
+  text-shadow: 0 0 28px #f59e0b, 0 0 60px #ef4444; animation: ze-in .6s .1s cubic-bezier(.2, 1.5, .4, 1) both; }
+.zone-end .ze-n b { font-size: min(36vw, 190px); font-weight: 900; }
+.zone-end .ze-n i, .zone-end .ze-n em { font-size: min(14vw, 70px); font-style: italic; }
+.zone-end .ze-s { margin-top: 8px; font-size: 20px; color: #bae6fd; text-shadow: 0 0 10px #0ea5e9; letter-spacing: .08em; animation: ze-in .5s .5s both; }
+.zone-end[data-rank="2"] .ze-n { color: #ffffff; text-shadow: 0 0 30px #fde047, 0 0 70px #f59e0b; }
+.zone-end[data-rank="3"] .ze-n b { background: linear-gradient(90deg, #ff4d4d, #ffee4d, #4dff7a, #4dc3ff, #b04dff, #ff4d4d); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-stroke: 3px #fff; animation: rainbow-slide .8s linear infinite; }
+@keyframes ze-in { from { transform: scale(2.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes ze-all { 0% { background: rgba(0,0,0,0); } 10%, 85% { background: rgba(6, 20, 12, .62); } 100% { background: rgba(0,0,0,0); opacity: 0; } }
+
+/* 縁取りは外側だけ (文字が痩せないように) */
+.zone-end .ze-n, .chance-count .cc-n, .don-pop, .chance-intro span { paint-order: stroke fill; }
