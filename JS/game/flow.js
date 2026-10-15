@@ -225,6 +225,7 @@ function attemptBonus() {
 
 /* レバーON 処理 */
 function handleSpin() {
+  hideLastCount();   // レバーを押したら LAST カウントダウンは消す
   // PUSHボタン待ちのときは、レバーでもPUSHできる
   if (isPushing) {
     if (pushOverlay.classList.contains('waiting')) pushBtn.click();

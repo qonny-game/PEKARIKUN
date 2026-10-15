@@ -190,3 +190,8 @@
 .fx-banner.rainbow { background: linear-gradient(90deg, #ff5e5e, #ffd23f, #5eff8a, #38bdf8, #c084fc, #ff5e5e); }
 .fx-banner.redbow { background: linear-gradient(90deg, #ff0033, #ff7a00, #ffe600, #ff0055, #ff2a2a, #ff0033); }
 .fx-banner.rainbow small, .fx-banner.redbow small { -webkit-text-fill-color: #fde68a; background: none; }
+
+/* ---- 1.17.3: 色の予告 黄=ベル / 緑=スイカ / 白=約束なし ---- */
+.fx-cutin.c-yellow { background: linear-gradient(90deg, #b45309, #fde047 50%, #b45309); box-shadow: 0 0 26px #facc15; color: #3b2a00; }
+.fx-cutin.c-green { background: linear-gradient(90deg, #14532d, #4ade80 50%, #14532d); box-shadow: 0 0 26px #22c55e; }
+.fx-cutin.c-white { background: linear-gradient(90deg, #334155, #e2e8f0 50%, #334155); box-shadow: 0 0 18px #cbd5e1; color: #0f172a; }

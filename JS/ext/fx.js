@@ -135,13 +135,13 @@
   const PV_SUCCESS = { hit: 0.72, rare: 0.5, mid: 0.3, none: 0.1 };
 
   /* ---------- 予告: カットイン ---------- */
-  function cutinColor(cls, success) {
+  function cutinColor(cls, success, allowBlue = true) {
     const w = success ? { hit: [10, 40, 50], rare: [25, 45, 30], mid: [45, 40, 15], none: [60, 32, 8] }[cls]
       : { hit: [70, 25, 5], rare: [70, 25, 5], mid: [75, 22, 3], none: [80, 18, 2] }[cls];
-    return ['blue', 'red', 'gold'][weightedPick(w)];
+    return ['blue', 'red', 'gold'][weightedPick(allowBlue ? w : [0, w[1], w[2]])];
   }
   function showCutin(color, success, done) {
-    const TEXT = { blue: 'CHANCE', red: 'PEKA CHANCE', gold: 'PEKA!!', rainbow: 'GOGO!!' };
+    const TEXT = { blue: 'CHANCE', red: 'PEKA CHANCE', gold: 'PEKA!!', rainbow: 'GOGO!!', yellow: 'BELL', green: 'MELON', white: '??' };
     const el = put(`fx-cutin c-${color}`, `${mascot(success ? 'happy' : 'shock')}<b>${TEXT[color]}</b>`, 1550);
     if (color === 'gold' || color === 'rainbow') { unlock('cutin_gold'); triggerFlash(); sndUp(6); }
     else if (color === 'red') sndUp(4); else sndUp(3);
@@ -204,7 +204,8 @@
   function showContradict(hit, done) {
     unlock('mujun');
     if (hit && rnd() < 0.6) st.rev = 'rev';
-    const end = () => { showBanner('矛盾', 'どっち?', 'red', false, 1300); sndDown(); FX.hold(1400); wait(1250, done); };
+    // 矛盾は文字を出さず、不可解な音だけで感じさせる
+    const end = () => { snd([466, 392, 466, 311, 277], 0.11, 0.32, 'sawtooth', 0.08); FX.hold(1400); wait(1250, done); };
     const sadTalk = msg => { put('fx-talk sad', `${mascot('sad')}<span class="tk">${msg}</span>`, 1900); FX.hold(1900); wait(1800, end); };
     const v = Math.floor(rnd() * 4);
     if (v === 0) {            // 金カットイン → 直後に暗転・静寂
@@ -292,12 +293,25 @@
   const PV_KEYS = Object.keys(PV); FX.PV = PV;
 
   /* ---------- 予告を決めて実行 ---------- */
-  function playPreview(cls, hit, done) {
+  /* 色の予告: 色が出たら結果はそれで確定 (青=リプレイ / 黄=ベル / 緑=スイカ / 赤=チェリー / 金=当たり / 虹=大きな当たり)。白は何も約束しない */
+  function cutinColorFor(kind) {
+    if (kind === 'replay') return 'blue';
+    if (String(kind).startsWith('bell')) return 'yellow';
+    if (kind === 'melon' || kind === 'melonW') return 'green';
+    if (kind === 'cherryS' || kind === 'cherryW') return 'red';
+    if (kind === 'lose' && pendingBonusType === 'BIG' && !isPekared) return pendingTierIndex >= 4 ? 'rainbow' : 'gold';
+    return 'white';
+  }
+  function playPreview(cls, hit, done, kind) {
     const success = hit ? rnd() < PV_SUCCESS.hit : rnd() < PV_SUCCESS[cls];
     const type = pick(['cutin', 'cutin', 'step', 'talk', 'dark', ...PV_KEYS, ...PV_KEYS]);
     // 当選なのに失敗の見せ方 → ガッカリのあとに逆転
     if (hit && !success) st.rev = 'rev';
-    if (type === 'cutin') showCutin(cutinColor(cls, success), success, done);
+    // 青（CHANCEカットイン）は必ずリプレイ。通常時は結果がリプレイのときだけ青を出す（AT中など kind 未指定は従来どおり）
+    if (type === 'cutin') {
+      if (kind === undefined) showCutin(cutinColor(cls, success), success, done);   // AT中など（従来どおり）
+      else { const c = cutinColorFor(kind); showCutin(c, c === 'white' ? success : true, done); }
+    }
     else if (type === 'step') showStep(success, hit, done);
     else if (PV[type]) PV[type](success, done);
     else if (type === 'talk') showTalk(success, done);
@@ -360,7 +374,7 @@
     if (!inBonus && !inAT && kind === 'lose' && (zenchoLeft > 0 || hit) && rnd() < (zenchoLeft > 0 ? 0.5 : 0.2) * Math.max(0.5, freqMul())) { showContradict(hit, go); return; }
     // 予告
     if (!inBonus && !inAT && !isDebugRun) {
-      if (rnd() < PV_RATE[cls] * freqMul()) { playPreview(cls, hit, go); return; }
+      if (rnd() < PV_RATE[cls] * freqMul()) { playPreview(cls, hit, go, kind); return; }
     } else if (!inBonus && inAT && hit) {
       if (rnd() < 0.5 * freqMul()) { playPreview('hit', true, go); return; }
     }

@@ -85,6 +85,7 @@ setInterval(syncPanel, 50);
 document.querySelectorAll('.stop-btn').forEach(b => {
   b.addEventListener('pointerdown', e => {
     e.preventDefault();
+    hideLastCount();   // STOP を押したら LAST カウントダウンは消す
     if (!isReelSpinning) return;
     const c = +b.dataset.stop;
     const rs = reelSpin;
