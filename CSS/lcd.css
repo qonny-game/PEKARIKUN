@@ -14,6 +14,7 @@
 .sub-lcd[data-scene="day"]   { --lc1: #2563eb; --lc2: #bae6fd; }
 .sub-lcd[data-scene="dusk"]  { --lc1: #6d28d9; --lc2: #fb923c; }
 .sub-lcd[data-scene="night"] { --lc1: #070b25; --lc2: #26307a; }
+.sub-lcd[data-scene="zencho"]{ --lc1: #3f0d0d; --lc2: #f97316; }
 .sub-lcd[data-scene="at"]    { --lc1: #3b0764; --lc2: #f472b6; }
 .sub-lcd[data-scene="heaven"]{ --lc1: #0369a1; --lc2: #fef9c3; }
 .sub-lcd[data-scene="death"] { --lc1: #1a0004; --lc2: #9f1239; }

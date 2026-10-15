@@ -279,6 +279,9 @@ function drawRole(inAT) {
   return 'lose';
 }
 
+let fakeZencho = 0;                 // ガセ前兆の残りG数（当選しない）
+const FAKE_ZENCHO_P = 1 / 160;      // 通常時1Gごとにガセ前兆へ入る確率
+
 function handleSpin() {
   hideLastCount();   // レバーを押したら LAST カウントダウンは消す
   // PUSHボタン待ちのときは、レバーでもPUSHできる
@@ -347,6 +350,10 @@ function handleSpin() {
   // AT中は当選しにくい / 次回モード中は当選しやすい / チェリー後は当選しやすい
   const hitMult = (inAT ? AT_HIT_MULT * AT_TYPES[atType].hit : inMode ? modeMult : 1) * (inCherry ? cherryM : 1);
   let isHit = false;
+  // ガセ前兆: 前兆ステージに入るが当選はしない（本前兆と同じ3〜5G。ハズレの期待感を作る）
+  if (inAT || bonusRun) fakeZencho = 0;
+  else if (fakeZencho > 0) fakeZencho--;
+  else if (zenchoLeft === 0 && Math.random() < FAKE_ZENCHO_P) fakeZencho = 3 + Math.floor(Math.random() * 3);
   if (zenchoLeft > 0) {
     zenchoLeft--;
     isHit = zenchoLeft === 0;

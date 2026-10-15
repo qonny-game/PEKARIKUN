@@ -117,6 +117,7 @@
   function scene() {
     if (bonusRun) return bonusRun.zone ? 'zone' : 'bonus';
     if (atGames > 0 || atEnding) return atType === 1 ? 'heaven' : atType === 2 ? 'death' : 'at';
+    if (zenchoLeft > 0 || fakeZencho > 0) return 'zencho';
     const g = totalGames % 300;
     return g < 100 ? 'day' : g < 200 ? 'dusk' : 'night';
   }
@@ -128,6 +129,7 @@
       if (sc === 'day') say('NEW DAY', '', 1500);
       if (sc === 'dusk') say('DUSK', '', 1200);
       if (sc === 'night') say('NIGHT', '', 1200);
+      if (sc === 'zencho') say('ZENCHO', '', 1500);
     }
     if (Date.now() < hold) return;
     if (bonusRun) {
@@ -138,7 +140,8 @@
       m1.textContent = ['RUSH', 'HEAVEN', 'DEATH'][atType] || 'RUSH';
       const gain = atRun ? diffCoins - atRun.startDiff : 0;
       m2.textContent = `残り ${atGames}G  ${gain >= 0 ? '+' : ''}${gain}`;
-    } else { m1.textContent = ''; m2.textContent = ''; }
+    } else if (zenchoLeft > 0 || fakeZencho > 0) { m1.textContent = 'ZENCHO'; m2.textContent = ''; }
+    else { m1.textContent = ''; m2.textContent = ''; }
   }, 300);
   /* 通常時のひとこと / 背景の動き */
   setInterval(() => {
