@@ -69,7 +69,7 @@ const DEFAULT_SETTINGS = {
   typeW1: 12,          // HEAVEN
   typeW2: 4            // DEATH
 };
-const APP_VERSION = '1.19.3';
+const APP_VERSION = '1.19.4';
 const SETTINGS_KEY = 'pekari-settings-v5';   // v5: モード (本気/極楽/遊) を追加。機械割は100〜130%
 
 // ==========================================
@@ -105,3 +105,11 @@ const SECRET_SEQ = [6, 5, 6, 6, 4, 5, 6];
 
 // アセットの場所（画像・音声をフォルダ移動するときはここだけ直す）
 const ASSET_DIR = { img: 'assets/img/', sound: 'assets/sound/' };
+
+/* サイドランプの色と対応役（ここだけ直せば全体が変わる）
+   color: 色名→色  /  omen: 予告の種類→色（リール回転前）  /  win: 揃った役→色（揃ったあと一瞬）  /  rainbow: 虹色にする場面は sideLampShow('heaven') */
+const LAMP_TABLE = {
+  color: { red: '#ff3b30', green: '#22c55e', blue: '#3b82f6', yellow: '#facc15', pink: '#d946ef', early: '#facc15' },
+  omen: { cherry: 'red', melon: 'green', chance: 'pink' },
+  win: { replay: 'blue', bell0: 'yellow', bell1: 'yellow', bell2: 'yellow', melon: 'green', melonW: 'green', cherryW: 'red', cherryS: 'red' }
+};

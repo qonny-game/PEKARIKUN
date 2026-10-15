@@ -21,7 +21,7 @@ function clearPekaTimers() { pekaTimers.forEach(clearTimeout); pekaTimers = []; 
 /* 左右のPEKAランプ (沖スロ風): ボーナス終了32G以内の当選 / 天国中の当選 */
 const sideL = document.getElementById('side-l');
 const sideR = document.getElementById('side-r');
-const SIDE_COLOR = { red: '#ff3b30', green: '#22c55e', blue: '#3b82f6', yellow: '#facc15', pink: '#d946ef', early: '#facc15' };
+const SIDE_COLOR = LAMP_TABLE.color;   // 色は JS/data/config.js の LAMP_TABLE
 let sideTok = 0;   // 点灯のたびに変わる。古い消灯予約を無効にする
 function sideLampShow(kind, quiet) {
   sideTok++;

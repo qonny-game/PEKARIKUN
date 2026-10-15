@@ -65,7 +65,7 @@
       if (rnd() < p) preview(cls);
     }
     return _rr(kind, res => {
-      const WIN_LAMP = { replay: 'blue', bell0: 'yellow', bell1: 'yellow', bell2: 'yellow', melon: 'green', melonW: 'green', cherryW: 'red', cherryS: 'red' };
+      const WIN_LAMP = LAMP_TABLE.win;
       const aimedRole = kind === 'cherryW' || kind === 'cherryS' || kind === 'melon';   // 狙う役だけ成否がある（ベル・リプレイ・弱スイカは success が付かない）
       if (WIN_LAMP[kind] && (!aimedRole || (res && res.success))) sideLampFlash(WIN_LAMP[kind], 1500);   // 当たった役の色
       if (!isDebugRun) {

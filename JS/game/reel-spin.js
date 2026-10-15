@@ -80,7 +80,7 @@ function landCol(col) {
   col.el.remove();
   const cells = reelsEl.querySelectorAll(':scope > .reel');
   col.final.forEach((k, r) => { cells[r * 3 + col.c].innerHTML = symbolHTML(k, ''); });
-  playStopSound();
+  playStopSound(col.c);
 }
 
 /* c番目のリールを止める。引き込める範囲(4コマ)で、役に合う位置を選ぶ */
@@ -238,7 +238,7 @@ const FAKE_OMEN_RATE = 0.07;   // ハズレ時のフェイク予告 (外れて�
 /* 役ごとの予告: 弱は軽い(チェリー予告) / 強は重い(スイカ予告) */
 /* 赤ランプ(チェリー予告)は、チェリー当選の確定か、ボーナス確定中のハズレ（矛盾）のときだけ */
 const OMEN_OF = { cherryW: 'cherry', cherryS: 'cherry', melonW: 'melon', chanceW: 'chance', chanceS: 'chance' };
-const OMEN_LAMP = { cherry: 'red', melon: 'green', chance: 'pink' };   // 予告の色（赤=チェリー / 緑=スイカ / 紫ピンク=チャンス目）
+const OMEN_LAMP = LAMP_TABLE.omen;   // 予告の色（赤=チェリー / 緑=スイカ / 紫ピンク=チャンス目）
 function omenThen(kind, go) {
   let shown = OMEN_OF[kind] === undefined ? kind : OMEN_OF[kind];
   if (kind === 'lose' && Math.random() < FAKE_OMEN_RATE) shown = pendingBonusType && Math.random() < 0.7 ? 'cherry' : 'melon';
@@ -329,11 +329,12 @@ function showStatic(g, winIdx, glow) {
   gogoTextContainer.classList.add('opacity-0');
 }
 
-function playStopSound() {
+function playStopSound(c = 0) {
   if (!soundEnabled) return;
   initAudio();
   const t = audioCtx.currentTime;
-  tone(180, t, 0.07, 'square', 0.16);
-  tone(90, t, 0.1, 'sine', 0.3);
+  const k = [1, 1.06, 0.94][c] || 1;   // 左・中・右で音程をわずかに変える
+  tone(180 * k, t, 0.07, 'square', 0.16);
+  tone(90 * k, t, 0.1 + (c === 2 ? 0.04 : 0), 'sine', c === 2 ? 0.36 : 0.3);
 }
 
