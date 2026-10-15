@@ -350,7 +350,7 @@ function handleSpin() {
     if (inAT && atRun) atRun.bells++;
     const type = pickBellType(inAT);
     // AT中のベル: 揃いやすいが、ナビが出ないことがあり、ナビなしのときはハズレ目になることもある
-    const atNavi = inAT && Math.random() < 0.6 ? naviFor('red') : null;
+    const atNavi = inAT && Math.random() < 0.6 ? naviFor('') : null;   // ベルのナビは黄
     const atBellMiss = inAT && !atNavi && Math.random() < 0.3;
     runRole(atBellMiss ? 'lose' : 'bell' + type, () => {
       if (atBellMiss) { stopTension(); updateUI(); maybeShowAtResult(); return; }

@@ -1624,7 +1624,13 @@ main > .op-area { display: contents; }
 /* 電光掲示の余白を詰める */
 .cab-panel { margin-top: 6px; padding: 6px 8px; }
 /* 押し順ナビは液晶の上に重ねる（専用の帯を撤去） */
-.navi { top: 8px; bottom: auto; }
+.navi { top: 50%; bottom: auto; transform: translate(-50%, -50%); }   /* 液晶の高さの中央 */
 /* 詰めた分を演出液晶へ回す（液晶 206px・リールは液晶の下） */
-.gogo-lamp { height: 23.25rem; }
-.gogo-lamp .align-display .reels { margin: 220px auto 0; }
+.gogo-lamp { height: 26.25rem; }
+.gogo-lamp .align-display .reels { margin: 216px auto 0; }
+/* PEKA CHANCE!: 液晶の中に縦に大きく */
+.chance-logo { flex-direction: column; align-items: center; gap: 0; top: 130px; }
+.chance-logo span, .chance-logo .cl-peka, .chance-logo .cl-chance { font-size: 60px; line-height: 1; }
+/* LAST カウントダウン: 液晶の中に */
+.chance-count { position: absolute; inset: 0; z-index: 36; justify-content: center; }
+.chance-count .cc-n { font-size: 190px; }

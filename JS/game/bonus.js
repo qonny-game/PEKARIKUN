@@ -102,7 +102,7 @@ function showLastCount(n) {
     el.id = 'chance-count';
     el.className = 'chance-count';
     el.innerHTML = '<span class="cc-n"></span><span class="cc-s">LAST</span>';
-    document.body.appendChild(el);
+    (document.getElementById('gogo-box') || document.body).appendChild(el);   // 液晶の中に出す
   }
   el.querySelector('.cc-n').textContent = n;
   el.dataset.n = n;
@@ -140,7 +140,15 @@ function beginBonus(plan) {
 const naviEl = document.getElementById('navi');
 let naviOrder = null;   // 例: [1, 2, 0] = 中→右→左の順に止める
 let naviPartial = false;   // 1だけナビ: 最初に押すリールだけ表示 (残りは自由)
+/* 赤・紫のナビ = レアが揃うサイン。警告音で知らせる */
+function rareWarn(style) {
+  if (!soundEnabled) return;
+  initAudio();
+  const t = audioCtx.currentTime, hi = style === 'purple' ? 1320 : 990;
+  for (let i = 0; i < 4; i++) tone(i % 2 ? hi * 0.66 : hi, t + i * 0.16, 0.14, 'sawtooth', 0.12);
+}
 function showNavi(order, style = '', partial = false) {
+  if (style === 'red' || style === 'purple') rareWarn(style);
   naviOrder = order;
   naviPartial = !!partial;
   naviEl.className = 'navi on ' + style + (partial ? ' partial' : '');     // red: チェリー / purple: スイカ (上乗せ確定)

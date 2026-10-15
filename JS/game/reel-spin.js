@@ -289,12 +289,11 @@ function markWin(winIdx, glow) {
 }
 /* チャンス目: 対象の絵柄だけ光らせ、ほかは暗くする (弱=スイカ / 強=7) */
 function markChance(kind, grid) {
-  const want = kind === 'chanceW' ? 'melon' : kind === 'chanceS' ? 'seven' : null;
+  const want = kind === 'chanceW' || kind === 'chanceS' ? 'melon' : null;   // チャンス目はスイカの絵柄だけ光らせる
   reelsEl.classList.toggle('has-chance', !!want);
   reelsEl.querySelectorAll(':scope > .reel').forEach((el, i) => {
     const sym = grid[i];
-    const hit = want === 'seven' ? isSeven(sym) : sym === want;
-    el.classList.toggle('chance-sym', !!want && hit);
+    el.classList.toggle('chance-sym', !!want && sym === want);
   });
 }
 function clearChance() {

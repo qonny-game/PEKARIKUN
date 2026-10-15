@@ -23,7 +23,7 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `at-gain` | `JS/game/at.js` |  |
 | `cherry-status` | `JS/game/cherry.js` |  |
 | `cherry-remain` | `JS/game/cherry.js` |  |
-| `gogo-box` | `JS/core/state.js` |  |
+| `gogo-box` | `JS/core/state.js`, `JS/game/bonus.js` |  |
 | `gogo-text-container` | `JS/core/state.js` |  |
 | `gogo-text` | （HTMLのみ） |  |
 | `gogo-subtext` | `JS/core/state.js` |  |
