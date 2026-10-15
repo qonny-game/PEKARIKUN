@@ -22,7 +22,7 @@ function clearPekaTimers() { pekaTimers.forEach(clearTimeout); pekaTimers = []; 
 const sideL = document.getElementById('side-l');
 const sideR = document.getElementById('side-r');
 function sideLampShow(kind) {
-  [sideL, sideR].forEach(el => { el.classList.remove('on', 'heaven'); void el.offsetWidth; el.classList.add('on'); if (kind === 'heaven') el.classList.add('heaven'); });
+  [sideL, sideR].forEach(el => { el.classList.remove('on', 'heaven', 'gold'); void el.offsetWidth; el.classList.add('on'); if (kind === 'heaven') el.classList.add('heaven'); if (kind === 'early') el.classList.add('gold'); });   // 赤(red)はチェリー予告と矛盾のみ。early は金
   if (soundEnabled) {
     initAudio();
     const t = audioCtx.currentTime;
@@ -30,7 +30,7 @@ function sideLampShow(kind) {
     notes.forEach((f, i) => tone(f, t + i * 0.07, 0.22, 'square', 0.08));
   }
 }
-function sideLampOff() { [sideL, sideR].forEach(el => el && el.classList.remove('on', 'heaven')); }
+function sideLampOff() { [sideL, sideR].forEach(el => el && el.classList.remove('on', 'heaven', 'gold')); }
 
 /* ランプ点灯そのもの */
 function lightLamp(extra) {

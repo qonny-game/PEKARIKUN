@@ -104,15 +104,12 @@ function stopCol(c, auto) {
     tele = true; t = p.ts[c];
   } else if (p.kind === 'melon') {
     if (c === 0) { tele = true; t = p.t0; }
-    else if (c === 2) { tele = true; t = p.t2; }
+    else if (c === 2) { tele = true; t = p.missed ? p.t2mid : p.t2; }
     else {
       const a = cands.find(x => stripSym(1, x + 1) === 'melon');   // 上段にスイカが来る位置
       if (a !== undefined) { T = a; t = mod(a); }
       else if (auto) { tele = true; t = mod(STRIPS[1].indexOf('melon') - 1); }
-      else {
-        const ok = cands.filter(x => alignedLines(gridOf([p.t0, mod(x), p.t2])).length === 0);
-        T = (ok.length ? ok : cands)[0]; t = mod(T);
-      }
+      else { p.missed = true; tele = true; t = p.t1miss; }   // 外し: 弱チャンス目の形で止まる（取りこぼし）
     }
   } else if (p.kind === 'sand') {   // サンド目: 第2リールを目押し (バー・チェリー・バー)。左右は自動
     if (auto || c !== 1) { tele = true; t = p.ts[c]; }
@@ -239,18 +236,18 @@ function omenOff() {
 }
 const FAKE_OMEN_RATE = 0.07;   // ハズレ時のフェイク予告 (外れても予告だけ出ることがある)
 /* 役ごとの予告: 弱は軽い(チェリー予告) / 強は重い(スイカ予告) */
-const OMEN_OF = { cherryW: 'cherry', cherryS: 'melon', melonW: 'cherry', chanceW: 'chance', chanceS: 'melon' };
+/* 赤ランプ(チェリー予告)は、チェリー当選の確定か、ボーナス確定中のハズレ（矛盾）のときだけ */
+const OMEN_OF = { cherryW: 'cherry', cherryS: 'melon', melonW: null, chanceW: null, chanceS: 'melon' };
 function omenThen(kind, go) {
   let shown = OMEN_OF[kind] === undefined ? kind : OMEN_OF[kind];
-  if (shown === 'chance') shown = Math.random() < 0.5 ? 'cherry' : null;
-  if (kind === 'lose' && Math.random() < FAKE_OMEN_RATE) shown = Math.random() < 0.7 ? 'cherry' : 'melon';
+  if (kind === 'lose' && Math.random() < FAKE_OMEN_RATE) shown = pendingBonusType && Math.random() < 0.7 ? 'cherry' : 'melon';
   if (shown !== 'melon' && shown !== 'cherry') { go(); return; }
   const melon = shown === 'melon';
   reelLocked = true;                       // 予告の間はレバー/タップを受けない
   cabinetEl.classList.remove('omen', 'omen-melon', 'omen-cherry');
   void cabinetEl.offsetWidth;
   cabinetEl.classList.add('omen', melon ? 'omen-melon' : 'omen-cherry');
-  sideLampShow(melon ? 'heaven' : 'early');
+  sideLampShow(melon ? 'heaven' : 'red');
   if (soundEnabled) {
     initAudio();
     const t = audioCtx.currentTime;

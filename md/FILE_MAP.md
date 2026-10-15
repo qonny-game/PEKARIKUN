@@ -10,8 +10,8 @@
 | 4 | `JS/core/audio.js` | 音声（効果音・ペカリ音・枚数表示のファンファーレ） | 269 | audioCtx, initAudio, SOUND_FILES, soundAudio, soundBuffers, VVV_MIN_COINS, SAMPLE_MAX_SEC, SAMPLE_FADE_SEC …他7 |
 | 5 | `JS/core/effects.js` | 画面演出（フラッシュ・パーティクル・シェイク） | 133 | flashTimer, triggerFlash, tripleFlash, shakeMain, particles, particleMode, particleRAF, resizeCanvas …他7 |
 | 6 | `JS/game/flow.js` | ゲーム進行の中心（レバーON・当選処理・ペカ演出・枚数表示） | 412 | PEKA_FX, pickPekaFx, pekaLater, clearPekaTimers, sideL, sideR, sideLampShow, sideLampOff …他19 |
-| 7 | `JS/game/reels.js` | リール表示・リール配列・役の組み合わせ | 121 | REEL_LINES, EMOJI, symbolHTML, lineOf, STRIP_LEN, STRIPS, SEVENS, isSeven …他13 |
-| 8 | `JS/game/reel-spin.js` | リール回転・目押し停止・予告・役の結果 | 342 | OPT_KEY, AUTO_STOP, saveOpt, SPIN_SPEED, SLIP_MAX, CELL_H, reelSpin, isReelSpinning …他26 |
+| 7 | `JS/game/reels.js` | リール表示・リール配列・役の組み合わせ | 130 | REEL_LINES, EMOJI, symbolHTML, lineOf, STRIP_LEN, STRIPS, SEVENS, isSeven …他13 |
+| 8 | `JS/game/reel-spin.js` | リール回転・目押し停止・予告・役の結果 | 339 | OPT_KEY, AUTO_STOP, saveOpt, SPIN_SPEED, SLIP_MAX, CELL_H, reelSpin, isReelSpinning …他26 |
 | 9 | `JS/game/bell.js` | ベル | 81 | BELL_TYPES, BELL_LINES, pickBellType, bellBadge, getPop, getRAF, rainCoins, showGet …他3 |
 | 10 | `JS/game/cherry.js` | チェリー | 139 | cherryStatus, cherryRemain, updateCherry, CHERRY_AT_CHOICES, pickCherryAtG, setBoost, cherryEffects, ROLE_INFO …他12 |
 | 11 | `JS/game/at.js` | AT（ペカラッシュ）・PUSH演出 | 129 | atStatus, atRemain, atLabel, atToast, updateAT, updateAtGain, showAtToast, AT_CHOICES …他9 |

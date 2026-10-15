@@ -409,9 +409,9 @@
     if (st.saki) {
       const real = st.saki === 'real';
       st.saki = null;
-      sideLampShow('early');
+      if (real) sideLampShow('early');
       showBanner(real ? 'PEKA?!' : 'PEKA...?', '', real ? 'red' : 'blue');
-      if (!real) wait(600, () => { sideLampOff(); sndDown(); });
+      if (!real) wait(600, () => sndDown());
       else sndUp(4);
     }
   };

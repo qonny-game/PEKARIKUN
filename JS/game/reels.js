@@ -85,6 +85,8 @@ const pickCombo = kind => { const l = ROLE_COMBOS[kind]; return l[Math.floor(Mat
    windowOf の上段 = strip[t+1] なので、上段にスイカが来る停止位置は t = 図柄の位置 - 1 */
 function pickMelonPlan() {
   const tops = c => STRIPS[c].map((k, i) => (k === 'melon' ? mod(i - 1) : -1)).filter(t => t >= 0);
+  // 外したときの形（弱チャンス目）: 第2リール中段スイカ・上段は非スイカ / 第3リール中段スイカ・下段は非スイカ
+  const midMelonNoTop = c => STRIPS[c].map((k, i) => (k === 'melon' && STRIPS[c][mod(i + 1)] !== 'melon' && STRIPS[c][mod(i - 1)] !== 'melon' ? i : -1)).filter(i => i >= 0);
   const opts = [];
   tops(0).forEach(t0 => tops(2).forEach(t2 => {
     const ok = tops(1).every(t1 => {
@@ -94,8 +96,15 @@ function pickMelonPlan() {
     });
     if (ok) opts.push([t0, t2]);
   }));
-  const o = opts[Math.floor(Math.random() * opts.length)];
-  return { kind: 'melon', t0: o[0], t2: o[1] };
+  // 外しの形は、同じ第1リールの上段スイカのまま、揃いが無い組み合わせを選ぶ
+  const m1 = midMelonNoTop(1), m2 = midMelonNoTop(2);
+  const cand = opts.map(o => ({ o, pairs: m1.flatMap(t1 => m2.map(t2 => [t1, t2])).filter(([t1, t2]) => {
+    const g = gridOf([o[0], t1, t2]);
+    return alignedLines(g).length === 0 && leftCherries(g) === 0;
+  }) })).filter(x => x.pairs.length);
+  const pick = cand[Math.floor(Math.random() * cand.length)];
+  const [t1miss, t2mid] = pick.pairs[Math.floor(Math.random() * pick.pairs.length)];
+  return { kind: 'melon', t0: pick.o[0], t2: pick.o[1], t1miss, t2mid };
 }
 function planFor(kind) {
   if (kind === 'sand') return { kind: 'sand', ts: pickCombo('sand') };
