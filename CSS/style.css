@@ -1674,3 +1674,56 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 @keyframes demo-pulse { 0%, 100% { box-shadow: 0 0 6px 1px rgba(250, 204, 21, 0.3); } 50% { box-shadow: 0 0 18px 4px rgba(250, 204, 21, 0.8); } }
 
 .cabinet[data-scene="cz"] .reels { box-shadow: 0 0 16px 3px rgba(56, 189, 248, 0.85); }
+
+/* 1.19.14 サイドランプ: 枠と丸をなくし、PEKARIKUN の文字そのものを縦いっぱいに光らせる */
+.side-lamp {
+  width: 24px;
+  padding: 2px 0;
+  justify-content: space-between;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+.side-lamp i {
+  width: 24px;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 21px;
+  line-height: 1;
+  color: #3a2d70;
+  text-shadow: 0 0 0 transparent;
+  -webkit-text-stroke: 0.6px rgba(120, 100, 200, 0.45);
+  transition: color 0.2s, text-shadow 0.2s;
+}
+.side-lamp.on i { animation: sl-chase 0.6s steps(1) infinite; animation-delay: calc(var(--i) * 0.07s); }
+.side-lamp.on.heaven i { animation: sl-rainbow 0.6s linear infinite; animation-delay: calc(var(--i) * 0.07s); }
+.side-lamp.on.lit i { animation: sl-chase-c 0.6s steps(1) infinite; animation-delay: calc(var(--i) * 0.07s); }
+.side-lamp.on.lit.pat-sweep i { animation: sl-sweep 0.45s steps(1) infinite; animation-delay: calc((8 - var(--i)) * 0.045s); }
+.side-lamp.on.lit.pat-pulse i { animation: sl-pulse 0.9s ease-in-out infinite; animation-delay: 0s; }
+.side-lamp.on.lit.pat-solid i { animation: none; color: var(--sl); background: transparent; box-shadow: none; -webkit-text-stroke: 0; text-shadow: 0 0 6px var(--sl), 0 0 16px var(--sl), 0 0 28px var(--sl); }
+@keyframes sl-chase {
+  0%   { color: #ff5a4d; -webkit-text-stroke: 0; text-shadow: 0 0 6px #ff3b30, 0 0 16px #ff9d00; }
+  50%  { color: #3a2d70; -webkit-text-stroke: 0.6px rgba(120, 100, 200, 0.45); text-shadow: none; }
+}
+@keyframes sl-chase-c {
+  0%   { color: var(--sl); -webkit-text-stroke: 0; text-shadow: 0 0 6px var(--sl), 0 0 18px var(--sl); }
+  50%  { color: #3a2d70; -webkit-text-stroke: 0.6px rgba(120, 100, 200, 0.45); text-shadow: none; }
+}
+@keyframes sl-sweep {
+  0%   { color: var(--sl); -webkit-text-stroke: 0; text-shadow: 0 0 8px var(--sl), 0 0 20px var(--sl); }
+  35%  { color: #3a2d70; -webkit-text-stroke: 0.6px rgba(120, 100, 200, 0.45); text-shadow: none; }
+}
+@keyframes sl-pulse {
+  0%, 100% { color: #3a2d70; -webkit-text-stroke: 0.6px rgba(120, 100, 200, 0.45); text-shadow: none; }
+  50%      { color: var(--sl); -webkit-text-stroke: 0; text-shadow: 0 0 8px var(--sl), 0 0 22px var(--sl), 0 0 36px var(--sl); }
+}
+@keyframes sl-rainbow {
+  0%   { color: #ff5a4d; -webkit-text-stroke: 0; text-shadow: 0 0 10px #ff3b30, 0 0 22px #ff3b30; }
+  20%  { color: #ffd800; text-shadow: 0 0 10px #ffd800, 0 0 22px #ffd800; }
+  40%  { color: #1fe05a; text-shadow: 0 0 10px #1fe05a, 0 0 22px #1fe05a; }
+  60%  { color: #2f8dff; text-shadow: 0 0 10px #2f8dff, 0 0 22px #2f8dff; }
+  80%  { color: #d946ef; text-shadow: 0 0 10px #d946ef, 0 0 22px #d946ef; }
+  100% { color: #ff5a4d; text-shadow: 0 0 10px #ff3b30, 0 0 22px #ff3b30; }
+}

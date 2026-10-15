@@ -70,7 +70,7 @@ function buildSettingsForm(level = formLevel, src = SETTINGS.profiles[level]) {
     `<button type="button" data-level="${l}" class="${!SETTINGS.random && l === SETTINGS.level ? 'on' : ''}">設定${l}</button>`).join('')
     + `<button type="button" data-random="1" class="set-random ${SETTINGS.random ? 'on' : ''}">ランダム</button>`;
   const modes = PLAY_MODES.map((m, i) => `<button type="button" data-mode="${i}" class="${i === SETTINGS.mode ? 'on' : ''}">${m.name}</button>`).join('');
-  const rateLine = SETTINGS.random ? '機械割 ---' : SETTINGS.level === 7 ? '' : `機械割 約${MODE_RATES[SETTINGS.mode][SETTINGS.level - 1]}%`;
+  const rateLine = SETTINGS.random ? '機械割 ---' : SETTINGS.level === 7 ? '' : `機械割 約${MODE_RATES[SETTINGS.mode][SETTINGS.level - 1]}%以上`;
   settingsBody.innerHTML = `
     <div class="set-modes">${modes}</div>
     <div class="set-levels">${levels}</div>
