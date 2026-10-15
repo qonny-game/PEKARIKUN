@@ -239,6 +239,19 @@
     say(`STORY ${z.i}/${z.n}`, t, 2000, z.i >= 3 ? 'shock' : 'happy');
   };
   window.onCzEnd = function () { if (!isDebugRun) say('', 'ゾーン終了…', 2800, 'sad', 'sad'); };
+  /* ハマり中のひとこと: ペカり君が励ます。250G超えで救済(当選率UP)が始まる */
+  const HAMARI = [[150, 'ちょっとハマり気味…', 'sad'], [250, '救済スタート！', 'jump'], [400, 'がんばれ！', 'jump'], [600, '絶対くるよ！', 'cross'], [800, 'もう少し…！', 'jump']];
+  let hamariG = 0;
+  setInterval(() => {
+    if (isDebugRun) return;
+    if (totalGames < hamariG) hamariG = 0;
+    HAMARI.forEach(h => {
+      if (hamariG < h[0] && totalGames >= h[0] && !bonusRun && atGames === 0) {
+        hamariG = h[0];
+        say(`${h[0]}G`, h[1], 2800, h[2] === 'sad' ? 'sad' : 'happy', h[2]);
+      }
+    });
+  }, 500);
   let last = '';
   setInterval(() => {
     const sc = scene();

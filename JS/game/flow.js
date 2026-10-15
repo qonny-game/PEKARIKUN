@@ -308,6 +308,13 @@ let zenchoTotal = 0, fakeTotal = 0;   // 前兆の長さ（連続演出の何話
 let fakeZencho = 0;                 // ガセ前兆の残りG数（当選しない）
 const FAKE_ZENCHO_P = 1 / 160;      // 通常時1Gごとにガセ前兆へ入る確率
 
+/* ハマり救済: 通常時にボーナスが長く当たらないとき、当選確率を少しずつ上げる（楽しむための設計） */
+const DROUGHT_START = 250, DROUGHT_STEP = 150, DROUGHT_MAX = 4;
+function droughtMult(inAT) {
+  if (inAT || bonusRun || totalGames <= DROUGHT_START) return 1;
+  return Math.min(DROUGHT_MAX, 1 + (totalGames - DROUGHT_START) / DROUGHT_STEP);
+}
+
 function handleSpin() {
   hideLastCount();   // レバーを押したら LAST カウントダウンは消す
   // PUSHボタン待ちのときは、レバーでもPUSHできる
@@ -387,7 +394,7 @@ function handleSpin() {
     czLeft--;
     if (czNew) { czNew = false; if (window.FXBanner) window.FXBanner('CHANCE ZONE', `${CZ_G}G`, 'red', true, 1700); }
   } else czLeft = 0;
-  const hitMult = (inAT ? AT_HIT_MULT * AT_TYPES[atType].hit : inMode ? modeMult : 1) * (inCherry ? cherryM : 1) * (inCZ ? CZ_MULT : 1);
+  const hitMult = (inAT ? AT_HIT_MULT * AT_TYPES[atType].hit : inMode ? modeMult : 1) * (inCherry ? cherryM : 1) * (inCZ ? CZ_MULT : 1) * droughtMult(inAT);
   let isHit = false;
   // ガセ前兆: 前兆ステージに入るが当選はしない（本前兆と同じ3〜5G。ハズレの期待感を作る）
   let zStep = null;   // 前兆の連続演出（本物・ガセ共通の見た目。最後だけ結果が分かれる）
