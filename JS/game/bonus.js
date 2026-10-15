@@ -144,8 +144,16 @@ let naviPartial = false;   // 1だけナビ: 最初に押すリールだけ表�
 function rareWarn(style) {
   if (!soundEnabled) return;
   initAudio();
-  const t = audioCtx.currentTime, hi = style === 'purple' ? 1320 : 990;
-  for (let i = 0; i < 4; i++) tone(i % 2 ? hi * 0.66 : hi, t + i * 0.16, 0.14, 'sawtooth', 0.12);
+  const t = audioCtx.currentTime;
+  if (style === 'purple') {
+    // 紫(強レア): 低い和音がせり上がって重く鳴る
+    [220, 277, 330].forEach(f => tone(f, t, 0.9, 'sawtooth', 0.09));
+    [440, 554, 659].forEach(f => tone(f, t + 0.45, 0.7, 'sawtooth', 0.1));
+    tone(65, t, 1.2, 'sine', 0.3);
+  } else {
+    // 赤(弱レア): 高い単音を2回、短く鋭く
+    for (let i = 0; i < 2; i++) tone(1175, t + i * 0.2, 0.16, 'square', 0.1);
+  }
 }
 function showNavi(order, style = '', partial = false) {
   if (style === 'red' || style === 'purple') rareWarn(style);

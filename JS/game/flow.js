@@ -143,7 +143,25 @@ function freezeToZone(debug) {
   if (window.TRO && !debug) TRO.seen('freeze');
   isSuspense = true;                       // フリーズ中はレバーが効かない
   startTension('FREEZE');
+  // フリーズ: 暗転して静まる → ドン! ×3 (だんだん強く) → 弾ける
+  const mainEl = document.querySelector('.cabinet') || document.body;
+  mainEl.classList.add('freeze-dark');
+  sideLampOff();
+  const thud = (lv) => {
+    shakeMain(180 + lv * 120);
+    if (!soundEnabled) return;
+    initAudio();
+    const t = audioCtx.currentTime;
+    tone(70 - lv * 8, t, 0.5, 'sine', 0.3 + lv * 0.08);
+    tone(140 + lv * 30, t, 0.12, 'square', 0.1 + lv * 0.03);
+  };
+  const dons = [1100, 1900, 2700].map((ms, i) => setTimeout(() => {
+    thud(i);
+    if (i === 2) mainEl.classList.remove('freeze-dark');
+  }, ms));
   suspenseTimer = setTimeout(() => {
+    dons.forEach(clearTimeout);
+    mainEl.classList.remove('freeze-dark');
     stopTension();
     isSuspense = false;
     tripleFlash();
@@ -166,7 +184,7 @@ function freezeToZone(debug) {
       updateUI();
     }
     beginBonus(makeBonusPlan(coins, { zone: true, atWin: false, level: 0, debug: !!debug }));
-  }, 2600);
+  }, 3500);
 }
 
 /* ---------- 緊張演出 (ボーナス最終ゲームのジャッジメント / AT最終ゲーム) ---------- */
@@ -237,6 +255,30 @@ function attemptBonus() {
 }
 
 /* レバーON 処理 */
+/* 小役の抽選: 乱数1つを役テーブル(累積)に当てる。従来の「ベル→スイカ→チェリー→リプレイ→チャンス目」の順番抽選と同じ確率配分 */
+function roleTable(inAT) {
+  const pB = inAT ? BELL_AT_RATE : BELL_NORMAL_RATE;
+  const pM = inAT ? MELON_AT_RATE : MELON_RATE;
+  const pC = inAT ? CHERRY_AT_RATE : CHERRY_RATE;
+  const pR = inAT ? REPLAY_AT_RATE : REPLAY_RATE;
+  let left = 1;
+  const take = p => { const v = left * p; left -= v; return v; };
+  const bell = take(pB), melon = take(pM), cherry = take(pC), replay = take(pR);
+  const chS = inAT ? 0 : take(CHANCE_S_P);
+  const chW = inAT ? 0 : take(CHANCE_W_P / (1 - CHANCE_S_P));
+  return [
+    ['bell', bell], ['melonS', melon * MELON_STRONG_P], ['melonW', melon * (1 - MELON_STRONG_P)],
+    ['cherryS', cherry * CHERRY_STRONG_P], ['cherryW', cherry * (1 - CHERRY_STRONG_P)],
+    ['replay', replay], ['chanceS', chS], ['chanceW', chW], ['lose', left]
+  ];
+}
+function drawRole(inAT) {
+  const t = roleTable(inAT);
+  let r = Math.random();
+  for (let i = 0; i < t.length; i++) { if (r < t[i][1]) return t[i][0]; r -= t[i][1]; }
+  return 'lose';
+}
+
 function handleSpin() {
   hideLastCount();   // レバーを押したら LAST カウントダウンは消す
   // PUSHボタン待ちのときは、レバーでもPUSHできる
@@ -317,6 +359,8 @@ function handleSpin() {
   // 通常時のサンド目（リーチ目）: ボーナス確定。当選と同じ流れで、サンド目の形で止まる
   const reach = !inAT && !isHit && zenchoLeft === 0 && Math.random() < SAND_REACH_P;
   if (reach) isHit = true;
+  // 小役は1回の乱数で決める（実機と同じ。確率は従来の順番抽選と同じ配分）
+  const role = isHit ? 'hit' : drawRole(inAT);
 
   if (isHit) {
     // 天国中の当選 / ボーナス終了後32G以内の当選: 左右のPEKAランプ
@@ -345,7 +389,7 @@ function handleSpin() {
         triggerPekari();
       }, 600);
     });
-  } else if (Math.random() < (inAT ? BELL_AT_RATE : BELL_NORMAL_RATE)) {
+  } else if (role === 'bell') {
     // ベル揃い: 直線 / 斜め左上から1枚 / 斜め左下から15枚 (AT中は左下が出やすい)
     if (inAT && atRun) atRun.bells++;
     const type = pickBellType(inAT);
@@ -362,13 +406,13 @@ function handleSpin() {
       updateUI();
       maybeShowAtResult();
     }, atNavi);
-  } else if (Math.random() < (inAT ? MELON_AT_RATE : MELON_RATE)) {
+  } else if (role === 'melonS' || role === 'melonW') {
     // スイカ: 強=中段(中リールを狙う。取りこぼしあり) / 弱=斜め(自動で揃う)
-    playRole(Math.random() < MELON_STRONG_P ? 'melon' : 'melonW', inAT);
-  } else if (Math.random() < (inAT ? CHERRY_AT_RATE : CHERRY_RATE)) {
+    playRole(role === 'melonS' ? 'melon' : 'melonW', inAT);
+  } else if (role === 'cherryS' || role === 'cherryW') {
     // チェリー: 強=中段 / 弱=上下段 (左リールを狙う。取りこぼしあり)
-    playRole(Math.random() < CHERRY_STRONG_P ? 'cherryS' : 'cherryW', inAT);
-  } else if (Math.random() < (inAT ? REPLAY_AT_RATE : REPLAY_RATE)) {
+    playRole(role, inAT);
+  } else if (role === 'replay') {
     // リプレイ: 図柄が揃って、次のゲームは投入枚数なし
     replayPending = true;
     runRole('replay', () => {
@@ -378,9 +422,9 @@ function handleSpin() {
       updateUI();
       maybeShowAtResult();
     });
-  } else if (!inAT && Math.random() < CHANCE_S_P) {
+  } else if (role === 'chanceS') {
     playRole('chanceS', false);     // 強チャンス目
-  } else if (!inAT && Math.random() < CHANCE_W_P / (1 - CHANCE_S_P)) {
+  } else if (role === 'chanceW') {
     playRole('chanceW', false);     // 弱チャンス目
   } else {
     runRole('lose', () => {

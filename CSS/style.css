@@ -1641,3 +1641,7 @@ main > .op-area { display: contents; }
 .cab-lcd .at-status .as-left { display: flex; align-items: center; gap: 6px; }
 .at-gain { display: none; }
 .at-gain.has-gain { display: inline; }
+
+/* 1.19.2 フリーズ中の暗転 */
+.cabinet.freeze-dark { filter: brightness(0.25) saturate(0.6); transition: filter 0.6s ease; }
+.cabinet { transition: filter 0.25s ease; }
