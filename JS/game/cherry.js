@@ -59,6 +59,8 @@ const ROLE_INFO = {
 const CHERRY_STRONG_P = 0.12;   // チェリーのうち強の割合
 const MELON_STRONG_P = 0.35;    // スイカのうち強の割合
 const CHANCE_S_P = 0.008, CHANCE_W_P = 0.035;   // ハズレ目のうち強/弱チャンス目になる割合 (通常時のみ)
+const SAND_REACH_P = 0.006;   // 通常時にサンド目（リーチ目）が出る割合。出たらボーナス確定
+let sandReachNow = false;     // このゲームがリーチ目（通常時）か
 /* サンド目までの残りゲーム (AT中: スイカ・チェリー成立の次から3G以内) */
 let sandLeft = 0;
 const SAND_UP = [5, 10, 15, 20, 25, 30, 50];   // 揃えたときの上乗せG数 (どれか抽選)

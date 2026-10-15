@@ -231,23 +231,24 @@ function missEffect() {
 /* チェリー/スイカ成立時: リール回転の前に、筐体まわりのランプが光って予告する */
 const cabinetEl = document.querySelector('.cabinet');
 function omenOff() {
-  if (cabinetEl) cabinetEl.classList.remove('omen', 'omen-melon', 'omen-cherry', 'omen-miss');
+  if (cabinetEl) cabinetEl.classList.remove('omen', 'omen-melon', 'omen-cherry', 'omen-chance', 'omen-miss');
   sideLampOff();
 }
 const FAKE_OMEN_RATE = 0.07;   // ハズレ時のフェイク予告 (外れても予告だけ出ることがある)
 /* 役ごとの予告: 弱は軽い(チェリー予告) / 強は重い(スイカ予告) */
 /* 赤ランプ(チェリー予告)は、チェリー当選の確定か、ボーナス確定中のハズレ（矛盾）のときだけ */
-const OMEN_OF = { cherryW: 'cherry', cherryS: 'melon', melonW: null, chanceW: null, chanceS: 'melon' };
+const OMEN_OF = { cherryW: 'cherry', cherryS: 'cherry', melonW: 'melon', chanceW: 'chance', chanceS: 'chance' };
+const OMEN_LAMP = { cherry: 'red', melon: 'green', chance: 'pink' };   // 予告の色（赤=チェリー / 緑=スイカ / 紫ピンク=チャンス目）
 function omenThen(kind, go) {
   let shown = OMEN_OF[kind] === undefined ? kind : OMEN_OF[kind];
   if (kind === 'lose' && Math.random() < FAKE_OMEN_RATE) shown = pendingBonusType && Math.random() < 0.7 ? 'cherry' : 'melon';
-  if (shown !== 'melon' && shown !== 'cherry') { go(); return; }
-  const melon = shown === 'melon';
+  if (!OMEN_LAMP[shown]) { go(); return; }
+  const melon = shown === 'melon', chance = shown === 'chance';
   reelLocked = true;                       // 予告の間はレバー/タップを受けない
-  cabinetEl.classList.remove('omen', 'omen-melon', 'omen-cherry');
+  cabinetEl.classList.remove('omen', 'omen-melon', 'omen-cherry', 'omen-chance');
   void cabinetEl.offsetWidth;
-  cabinetEl.classList.add('omen', melon ? 'omen-melon' : 'omen-cherry');
-  sideLampShow(melon ? 'heaven' : 'red');
+  cabinetEl.classList.add('omen', melon ? 'omen-melon' : chance ? 'omen-chance' : 'omen-cherry');
+  sideLampShow(OMEN_LAMP[shown]);
   if (soundEnabled) {
     initAudio();
     const t = audioCtx.currentTime;

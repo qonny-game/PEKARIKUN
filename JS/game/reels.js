@@ -60,6 +60,7 @@ const colHas = (g, c, f) => [c, 3 + c, 6 + c].some(i => f(g[i]));
           if (g[4] === 'melon' && g[5] === 'melon' && g[8] !== 'melon') ROLE_COMBOS.chanceW.push(ts);   // 斜めテンパイ＋第3リール中段スイカ
         }
         else if ([0, 1, 2].every(k => colHas(g, k, isSeven))) ROLE_COMBOS.chanceS.push(ts);
+        else if (g[3] === 'bell' && g[4] === 'bell' && g[5] === 'melon') ROLE_COMBOS.chanceW.push(ts);   // 中段ベル・ベル・スイカ=弱チャンス目
         else if (g[1] === 'bar' && g[4] === 'cherry' && g[7] === 'bar') ROLE_COMBOS.sand.push(ts);   // サンド目 (第2リール: バー・チェリー・バー)
         else ROLE_COMBOS.lose.push(ts);
       } else if (lc === 1 && !topMelon) {
@@ -108,6 +109,7 @@ function pickMelonPlan() {
 }
 function planFor(kind) {
   if (kind === 'sand') return { kind: 'sand', ts: pickCombo('sand') };
+  if (kind === 'lose' && sandReachNow) return { kind: 'fixed', ts: pickCombo('sand') };   // 通常時のリーチ目（サンド目の形で止まる）
   if (kind === 'cherry' || kind === 'cherryW' || kind === 'cherryS') return { kind: 'cherry', ts: pickCombo(kind), strong: kind === 'cherryS' };
   return kind === 'melon' ? pickMelonPlan() : { kind: 'fixed', ts: pickCombo(kind) };
 }

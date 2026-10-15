@@ -21,16 +21,29 @@ function clearPekaTimers() { pekaTimers.forEach(clearTimeout); pekaTimers = []; 
 /* 左右のPEKAランプ (沖スロ風): ボーナス終了32G以内の当選 / 天国中の当選 */
 const sideL = document.getElementById('side-l');
 const sideR = document.getElementById('side-r');
-function sideLampShow(kind) {
-  [sideL, sideR].forEach(el => { el.classList.remove('on', 'heaven', 'gold'); void el.offsetWidth; el.classList.add('on'); if (kind === 'heaven') el.classList.add('heaven'); if (kind === 'early') el.classList.add('gold'); });   // 赤(red)はチェリー予告と矛盾のみ。early は金
-  if (soundEnabled) {
+const SIDE_COLOR = { red: '#ff3b30', green: '#22c55e', blue: '#3b82f6', yellow: '#facc15', pink: '#d946ef', early: '#facc15' };
+let sideTok = 0;   // 点灯のたびに変わる。古い消灯予約を無効にする
+function sideLampShow(kind, quiet) {
+  sideTok++;
+  [sideL, sideR].forEach(el => {
+    el.classList.remove('on', 'heaven', 'lit'); void el.offsetWidth; el.classList.add('on');
+    if (kind === 'heaven') el.classList.add('heaven');
+    else { el.classList.add('lit'); el.style.setProperty('--sl', SIDE_COLOR[kind] || SIDE_COLOR.red); }
+  });
+  if (soundEnabled && !quiet) {
     initAudio();
     const t = audioCtx.currentTime;
     const notes = kind === 'heaven' ? [523, 659, 784, 1047, 1319, 1568] : [784, 988, 1175, 1568];
     notes.forEach((f, i) => tone(f, t + i * 0.07, 0.22, 'square', 0.08));
   }
 }
-function sideLampOff() { [sideL, sideR].forEach(el => el && el.classList.remove('on', 'heaven', 'gold')); }
+/* 当たった役の色で一定時間だけ光らせる（ほかの点灯が来たら消さない） */
+function sideLampFlash(kind, ms) {
+  sideLampShow(kind, true);
+  const tok = sideTok;
+  setTimeout(() => { if (tok === sideTok) sideLampOff(); }, ms);
+}
+function sideLampOff() { sideTok++; [sideL, sideR].forEach(el => el && el.classList.remove('on', 'heaven', 'lit')); }
 
 /* ランプ点灯そのもの */
 function lightLamp(extra) {
@@ -301,6 +314,10 @@ function handleSpin() {
     if (isHit && !inAT && Math.random() < ZENCHO_P) { zenchoLeft = 3 + Math.floor(Math.random() * 3); isHit = false; }
   }
 
+  // 通常時のサンド目（リーチ目）: ボーナス確定。当選と同じ流れで、サンド目の形で止まる
+  const reach = !inAT && !isHit && zenchoLeft === 0 && Math.random() < SAND_REACH_P;
+  if (reach) isHit = true;
+
   if (isHit) {
     // 天国中の当選 / ボーナス終了後32G以内の当選: 左右のPEKAランプ
     pekaSpecial = (inMode && modeMult >= 8) ? 'heaven' : (sinceEnd !== null && sinceEnd <= 32) ? 'early' : null;
@@ -315,7 +332,9 @@ function handleSpin() {
     cherryGames = 0;
     updateCherry();
     // 今回はハズレ目で止まり、止まったあとにGOGO!ランプが光る
+    sandReachNow = reach;
     runRole('lose', () => {
+      sandReachNow = false;
       stopTension();
       totalGames = 0;
       updateUI();

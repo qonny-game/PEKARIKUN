@@ -1104,9 +1104,9 @@ main { overflow: visible !important; }
 }
 .side-lamp.on i { animation: side-chase 0.6s steps(1) infinite; animation-delay: calc(var(--i) * 0.12s); }
 .side-lamp.on.heaven i { animation: side-rainbow 0.5s linear infinite; animation-delay: calc(var(--i) * 0.1s); }
-.side-lamp.on.gold i { animation: side-chase-gold 0.6s steps(1) infinite; animation-delay: calc(var(--i) * 0.12s); }
-@keyframes side-chase-gold {
-  0%   { color: #1b1238; background: #facc15; box-shadow: 0 0 10px #facc15, 0 0 18px #fde047; }
+.side-lamp.on.lit i { animation: side-chase-c 0.6s steps(1) infinite; animation-delay: calc(var(--i) * 0.12s); }
+@keyframes side-chase-c {
+  0%   { color: #fff; background: var(--sl); box-shadow: 0 0 10px var(--sl), 0 0 18px var(--sl); }
   50%  { color: #4a3d78; background: #1b1238; box-shadow: none; }
 }
 @keyframes side-chase {
@@ -1273,6 +1273,11 @@ button, .gogo-lamp, .stop-btn { touch-action: manipulation; }
 /* チェリー/スイカ予告: 筐体まわりのランプ演出 */
 .cabinet.omen-cherry { animation: rim-red 0.3s steps(1) infinite; }
 .cabinet.omen-melon { animation: rim-rainbow 0.6s linear infinite; }
+.cabinet.omen-chance { animation: rim-chance 0.4s steps(1) infinite; }
+@keyframes rim-chance {
+  0%   { border-color: #e879f9; box-shadow: 0 0 0 2px #0a0618, 0 0 26px #d946ef; }
+  50%  { border-color: #7c5cd6; box-shadow: 0 0 0 2px #0a0618, 0 0 18px rgba(217, 70, 239, 0.4); }
+}
 @keyframes rim-red {
   0%   { border-color: #ff4d4d; box-shadow: 0 0 0 2px #0a0618, 0 0 28px #ff2b2b, inset 0 0 18px rgba(255, 60, 60, 0.35); }
   50%  { border-color: #7c5cd6; box-shadow: 0 0 0 2px #0a0618, 0 0 24px rgba(124, 92, 214, 0.35), inset 0 0 18px rgba(0, 0, 0, 0.6); }

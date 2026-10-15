@@ -65,6 +65,8 @@
       if (rnd() < p) preview(cls);
     }
     return _rr(kind, res => {
+      const WIN_LAMP = { replay: 'blue', bell0: 'yellow', bell1: 'yellow', bell2: 'yellow', melon: 'green', melonW: 'green', cherryW: 'red', cherryS: 'red' };
+      if (WIN_LAMP[kind] && !(res && res.success === false)) sideLampFlash(WIN_LAMP[kind], 1500);   // 当たった役の色
       if (!isDebugRun) {
         const r = ROLE_MSG[kind];
         if (r) { const strong = kind === 'cherryS' || kind === 'melon' || kind === 'chanceS'; say(r[1], r[0], 1700, strong ? 'shock' : 'happy', strong ? 'hop' : null); }
