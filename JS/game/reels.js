@@ -6,12 +6,12 @@
 const REEL_LINES = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
 const EMOJI = { bell: '🔔', cherry: '🍒', melon: '🍉' };
 
+const SYM_FALLBACK = { replay: '<div class="sym-replay">REPLAY</div>', bar: '<div class="sym-bar">BAR</div>', bell: '<div class="sym-emoji">🔔</div>', cherry: '<div class="sym-emoji">🍒</div>', melon: '<div class="sym-emoji">🍉</div>' };
+/* 図柄はすべて画像 (assets/img/<key>.png)。読み込めないときだけ文字・絵文字で代用する */
 function symbolHTML(key, glow) {
-  if (key === 'replay') return '<div class="sym-replay">REPLAY</div>';
-  if (key === 'bar') return '<div class="sym-bar">BAR</div>';
-  if (EMOJI[key]) return `<div class="sym-emoji">${EMOJI[key]}</div>`;
-  // 画像が無い場合は文字の7で代用
-  return `<img class="sym-img ${glow || ''}" src="${ASSET_DIR.img}${key}.png" alt="7" onerror="if(this.parentNode)this.outerHTML='<div class=&quot;sym-seven&quot;>7</div>'">`;
+  const fb = (SYM_FALLBACK[key] || '<div class="sym-seven">7</div>').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  const alt = key.startsWith('7') ? '7' : key;
+  return `<img class="sym-img ${glow || ''}" src="${ASSET_DIR.img}${key}.png" alt="${alt}" draggable="false" onerror="if(this.parentNode)this.outerHTML='${fb}'">`;
 }
 const lineOf = (g, l) => g[l[0]] === g[l[1]] && g[l[1]] === g[l[2]];
 

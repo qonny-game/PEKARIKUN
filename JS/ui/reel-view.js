@@ -8,10 +8,8 @@
 const reelModal = document.getElementById('reel-modal');
 const reelView = document.getElementById('reel-view');
 function miniSym(k) {
-  if (isSeven(k)) return `<img class="rv-img" src="${ASSET_DIR.img}${k}.png" alt="7" onerror="this.outerHTML='<span class=&quot;rv-txt rv-${k}&quot;>7</span>'">`;
-  if (k === 'bar') return '<span class="rv-txt rv-bar">BAR</span>';
-  if (k === 'replay') return '<span class="rv-txt rv-replay">RE</span>';
-  return `<span class="rv-emoji">${EMOJI[k]}</span>`;
+  const fb = k === 'bar' ? '<span class=&quot;rv-txt rv-bar&quot;>BAR</span>' : k === 'replay' ? '<span class=&quot;rv-txt rv-replay&quot;>RE</span>' : isSeven(k) ? `<span class=&quot;rv-txt rv-${k}&quot;>7</span>` : `<span class=&quot;rv-emoji&quot;>${EMOJI[k] || ''}</span>`;
+  return `<img class="rv-img" src="${ASSET_DIR.img}${k}.png" alt="${k}" draggable="false" onerror="this.outerHTML='${fb}'">`;
 }
 function buildReelView() {
   const names = ['左', '中', '右'];

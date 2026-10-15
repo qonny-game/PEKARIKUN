@@ -1882,3 +1882,10 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 .led-row { grid-template-columns: .85fr 1.1fr 1.1fr; gap: 0; }
 .led-label { font-size: 8px; }
 .dg { font-size: 27px; line-height: 1.05; }
+
+/* ===== 1.19.27 図柄を画像に差し替え (assets/img の 7red 7blue 7white bar bell cherry replay melon) ===== */
+.reels .sym-img, .reel.win .sym-img { height: 32px; width: auto; max-width: 64px; object-fit: contain; flex: none; }
+.reels .sym-img[alt="7"], .reels .sym-img[alt="bar"], .reel.win .sym-img[alt="7"], .reel.win .sym-img[alt="bar"] { width: 62px; height: 31px; max-width: none; }
+.reel.win .sym-img { transform: scale(1.06); }
+.rv-img { height: 26px; width: auto; max-width: 54px; object-fit: contain; }
+.rv-img[alt="7"], .rv-img[alt="bar"] { width: 52px; height: 26px; }
