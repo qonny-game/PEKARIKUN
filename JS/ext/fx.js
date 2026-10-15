@@ -900,8 +900,8 @@
   const autoOpt = document.getElementById('auto-opt-btn');
   if (autoOpt) {
     const b = document.createElement('button');
-    b.type = 'button'; b.id = 'ach-btn'; b.textContent = '称号';
-    b.className = 'px-4 py-2 bg-white/10 border border-white/20 text-slate-100 rounded-lg font-black tracking-wider hover:bg-white/20';
+    b.type = 'button'; b.id = 'ach-btn'; b.innerHTML = '<span class="mm-label">称号</span>';
+    b.className = 'mm-item';
     autoOpt.parentNode.appendChild(b);
     b.addEventListener('click', openAch);
   }

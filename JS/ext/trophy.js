@@ -203,12 +203,12 @@
     }
   }
   let btn = null;
-  function refreshBtn() { if (btn) btn.textContent = `記録 Lv.${lvOf(D.xp)}`; }
+  function refreshBtn() { if (btn) btn.innerHTML = `<span class="mm-label">記録 Lv.${lvOf(D.xp)}</span>`; }
   const anchor = document.getElementById('ach-btn') || document.getElementById('auto-opt-btn');
   if (anchor) {
     btn = document.createElement('button');
     btn.type = 'button'; btn.id = 'tro-btn';
-    btn.className = anchor.className;
+    btn.className = 'mm-item';
     anchor.parentNode.appendChild(btn);
     btn.addEventListener('click', () => { render(); modal.classList.add('open'); });
     refreshBtn();

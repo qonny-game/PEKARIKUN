@@ -1727,3 +1727,43 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
   80%  { color: #d946ef; text-shadow: 0 0 10px #d946ef, 0 0 22px #d946ef; }
   100% { color: #ff5a4d; text-shadow: 0 0 10px #ff3b30, 0 0 22px #ff3b30; }
 }
+
+/* 1.19.15 下部バーは1行 (AUTO / 音 / グラフ / 歯車)。ほかの操作は歯車のメニューへ */
+.bottom-bar { position: relative; display: flex; align-items: center; gap: 8px; padding: 4px 0; background: none; }
+.bottom-bar button { cursor: pointer; }
+.bb-auto {
+  flex: 1; padding: 9px 0; border-radius: 10px; border: none;
+  background: rgba(255, 255, 255, 0.1); color: #f1f5f9;
+  font-weight: 900; letter-spacing: 0.14em; font-size: 13px;
+}
+.bb-auto[aria-pressed="true"] { background: #16a34a; color: #fff; box-shadow: 0 0 12px rgba(34, 197, 94, 0.6); }
+.bb-ico {
+  display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 38px; border-radius: 10px; border: none;
+  background: transparent; color: #cbd5e1; flex: none;
+}
+.bb-ico:hover, .bb-auto:hover { background: rgba(255, 255, 255, 0.18); }
+.more-menu {
+  position: absolute; right: 0; bottom: calc(100% + 6px); z-index: 60; min-width: 190px;
+  display: flex; flex-direction: column; padding: 6px; gap: 2px;
+  background: #130c2c; border-radius: 12px; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+}
+.more-menu[hidden] { display: none; }
+.mm-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px;
+  border: none; border-radius: 8px; background: transparent; color: #e2e8f0;
+  font-size: 13px; font-weight: 700; text-align: left;
+}
+.mm-item:hover { background: rgba(255, 255, 255, 0.1); }
+.mm-item svg { flex: none; width: 18px; height: 18px; }
+
+/* 1.19.15 枠の入れ子を減らす: 内側の枠線・背景を外し、外枠だけ残す */
+.data-counter { border: none; background: rgba(0, 0, 0, 0.3); }
+.cabinet { border-width: 1px; box-shadow: 0 0 20px rgba(124, 92, 214, 0.3); }
+.cab-lcd { border: 2px solid rgba(201, 162, 74, 0.55); box-shadow: none; }
+.sub-lcd { border: none; box-shadow: none; }
+.cab-panel { border: none; background: transparent; padding: 4px 0 0; }
+.pl { border-color: transparent; background: transparent; }
+.pl.on { border-color: transparent; }
+.led { background: transparent; border: none; box-shadow: none; }
+.led.green, .led.amber { border: none; }
