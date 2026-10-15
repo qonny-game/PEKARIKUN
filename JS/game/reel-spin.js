@@ -10,7 +10,7 @@ function saveOpt() { try { localStorage.setItem(OPT_KEY, JSON.stringify({ autoSt
 
 const SPIN_SPEED = 28;    // 1秒に流れる図柄の数 (日本機と同じ: 80回転/分 = 1周0.75秒 = 21コマ/0.75秒)
 const SLIP_MAX = 4;       // 目押し: 狙った図柄が中段の4コマ手前までなら引き込める
-const CELL_H = 50;
+const CELL_H = 42;   // 絵柄1コマの高さ(px)。CSS の .reels / .reel-ov の高さと揃える
 let reelSpin = null;
 let isReelSpinning = false;
 let reelLocked = false;   // 停止直後の誤タップ防止
@@ -255,6 +255,7 @@ function omenThen(kind, go) {
 
 /* 役の抽選結果を持って回転開始。止まったら done(結果) */
 function runRole(kind, done, navi) {
+  clearChance();
   omenThen(kind, () => {
     const plan = planFor(kind);
     if (navi) { plan.navi = navi.order; showNavi(navi.order, navi.style); }
@@ -262,6 +263,7 @@ function runRole(kind, done, navi) {
       omenOff();
       if (navi) hideNavi();
       markWin(winIdxOf(kind, res.grid), '');
+      markChance(kind, res.grid);
       done(res);
     });
   });
@@ -279,19 +281,33 @@ function markWin(winIdx, glow) {
   });
   drawPayline(winIdx);
 }
+/* チャンス目: 対象の絵柄だけ光らせ、ほかは暗くする (弱=スイカ / 強=7) */
+function markChance(kind, grid) {
+  const want = kind === 'chanceW' ? 'melon' : kind === 'chanceS' ? 'seven' : null;
+  reelsEl.classList.toggle('has-chance', !!want);
+  reelsEl.querySelectorAll(':scope > .reel').forEach((el, i) => {
+    const sym = grid[i];
+    const hit = want === 'seven' ? isSeven(sym) : sym === want;
+    el.classList.toggle('chance-sym', !!want && hit);
+  });
+}
+function clearChance() {
+  reelsEl.classList.remove('has-chance');
+  reelsEl.querySelectorAll('.chance-sym').forEach(el => el.classList.remove('chance-sym'));
+}
 /* 揃ったラインを光る線で示す (チェリーは1コマなので線なし) */
 function drawPayline(winIdx) {
   const old = reelsEl.querySelector(':scope > .payline');
   if (old) old.remove();
   if (!winIdx || winIdx.length < 3) return;
-  const c = i => [(i % 3) * 66 + 33, Math.floor(i / 3) * 50 + 25];
+  const c = i => [(i % 3) * 66 + 33, Math.floor(i / 3) * CELL_H + CELL_H / 2];
   const [x1, y1] = c(winIdx[0]);
   const [x2, y2] = c(winIdx[winIdx.length - 1]);
   const dx = (x2 - x1) * 0.28, dy = (y2 - y1) * 0.28;   // 両端を少し延ばす
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
   svg.setAttribute('class', 'payline');
-  svg.setAttribute('viewBox', '0 0 198 150');
+  svg.setAttribute('viewBox', `0 0 198 ${CELL_H * 3}`);
   const ln = document.createElementNS(ns, 'line');
   ln.setAttribute('x1', x1 - dx); ln.setAttribute('y1', y1 - dy);
   ln.setAttribute('x2', x2 + dx); ln.setAttribute('y2', y2 + dy);

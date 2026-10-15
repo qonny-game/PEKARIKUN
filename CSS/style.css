@@ -290,12 +290,12 @@ body {
 .reels {
   position: relative;
   width: 198px;
-  height: 150px;
+  height: 126px;
   transform: scale(1.4);
   margin: 30px auto 28px;
   display: grid;
   grid-template-columns: repeat(3, 66px);
-  grid-template-rows: repeat(3, 50px);
+  grid-template-rows: repeat(3, 42px);
   justify-content: center;
 }
 /* 枠なし。図柄は枠より大きく描いて、隣と少し重ねる */
@@ -321,11 +321,11 @@ body {
 /* 7図柄の画像 (7red.png / 7blue.png / 7white.png) */
 .sym-img {
   flex: none;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
 }
-.reel.win .sym-img { width: 50px; height: 50px; }
+.reel.win .sym-img { width: 44px; height: 44px; }
 .sym-emoji { font-size: 44px; line-height: 1; flex: none; }
 .reels .sym-bar { width: 62px; padding: 5px 0; font-size: 1rem; border-width: 2px; flex: none; }
 .reels .sym-seven { font-size: 2.9rem; flex: none; }
@@ -968,8 +968,8 @@ main { overflow: visible !important; }
 .set-levels button.on { background: #2563eb; border-color: #60a5fa; }
 
 /* 回転中のリール (1列ぶん。上下は枠で隠す) */
-.reel-ov { position: absolute; top: 0; width: 66px; height: 150px; overflow: hidden; }
-.reel-ov .reel { position: absolute; left: 0; top: 0; width: 66px; height: 50px; animation: none !important; will-change: transform; }
+.reel-ov { position: absolute; top: 0; width: 66px; height: 126px; overflow: hidden; }
+.reel-ov .reel { position: absolute; left: 0; top: 0; width: 66px; height: 42px; animation: none !important; will-change: transform; }
 .reel-ov .sym-img, .reel-ov .sym-emoji, .reel-ov .sym-bar, .reel-ov .sym-replay { filter: blur(0.6px); }
 
 /* 緊張演出: 画面の縁が赤くなり、脈打つ (ボーナス最終ゲーム / AT最終ゲーム) */
@@ -1027,18 +1027,19 @@ main { overflow: visible !important; }
 .data-counter {
   position: relative;
   z-index: 1;
-  padding: 6px 8px 5px;
+  padding: 3px 8px 2px;
   border-radius: 0.6rem;
   background: linear-gradient(#0d1636, #070b1c);
   border: 1px solid rgba(255, 255, 255, 0.14);
 }
 .dc-grid { display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; gap: 4px; }
 .dc-lab { font-size: 10px; font-weight: 700; color: #94a3b8; }
-.dc-sub { display: flex; justify-content: space-between; margin-top: 4px; padding: 0 6px; font-size: 11px; font-weight: 700; color: #cbd5e1; }
+.dc-sub { display: flex; justify-content: space-between; margin-top: 1px; padding: 0 6px; font-size: 11px; font-weight: 700; color: #cbd5e1; }
 
 .cabinet {
   position: relative;
-  border-radius: 1.1rem;
+  margin: 0 -12px;
+  border-radius: 0.8rem;
   padding: 8px;
   background: linear-gradient(160deg, #3b1d70, #1a0f3a 45%, #0c0820);
   border: 2px solid #7c5cd6;
@@ -1527,3 +1528,56 @@ button, .gogo-lamp, .stop-btn { touch-action: manipulation; }
 
 /* 縁取りは外側だけ (文字が痩せないように) */
 .zone-end .ze-n, .chance-count .cc-n, .don-pop, .chance-intro span { paint-order: stroke fill; }
+
+/* ---- 1.17.0: STOPボタン（赤丸=待機 / 青丸=押せる） ---- */
+.stop-row { justify-items: center; }
+.stop-btn {
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 0;
+  letter-spacing: 0;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  background: radial-gradient(circle at 35% 30%, #ff9a9a, #d41f1f 60%, #7a0b0b);
+  box-shadow: 0 3px 0 #4a0505;
+}
+.stop-btn.ready {
+  border-color: #bfe6ff;
+  background: radial-gradient(circle at 35% 30%, #9fd8ff, #1d6fd8 60%, #0a2e6b);
+  box-shadow: 0 3px 0 #06244f, 0 0 10px rgba(56, 189, 248, 0.7);
+}
+
+/* ---- 1.17.0: 上部ペカり君文字の色変化（チャンス・激熱） ---- */
+.cab-marquee.chance { color: #7dd3fc; text-shadow: 0 0 10px #0ea5e9; }
+.cab-marquee.hot { color: #ff5a5a; text-shadow: 0 0 10px #ff0033, 0 0 18px #ff0033; }
+
+/* ---- 1.17.0: チャンス目（対象の絵柄だけ光らせ、ほかは暗く） ---- */
+.reels.has-chance .reel:not(.chance-sym) { opacity: 0.35; filter: saturate(0.5) brightness(0.55); }
+.reel.chance-sym { z-index: 2; }
+.reel.chance-sym .sym-img {
+  filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 12px #ffe600);
+  animation: chance-pulse 0.6s ease-in-out infinite;
+}
+@keyframes chance-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+
+/* ---- 1.17.0: AT中・BIG中の演出（data-mode は display.js の syncModeTheme が付ける） ---- */
+body { transition: background 0.8s ease; }
+body[data-mode="at"] { background: radial-gradient(ellipse at 50% 30%, #3b1600 0%, #140a04 70%); }
+body[data-mode="big"] { background: radial-gradient(ellipse at 50% 30%, #4a0010 0%, #14040a 70%); }
+body[data-mode="at"] .cabinet {
+  border-color: #ffb020;
+  box-shadow: 0 0 0 2px #2a1500, 0 0 26px rgba(255, 157, 0, 0.6), inset 0 0 18px rgba(0, 0, 0, 0.6);
+  animation: mode-at-pulse 1.4s ease-in-out infinite;
+}
+body[data-mode="big"] .cabinet {
+  border-color: #ff3b5c;
+  box-shadow: 0 0 0 2px #2a0008, 0 0 30px rgba(255, 40, 80, 0.7), inset 0 0 18px rgba(0, 0, 0, 0.6);
+  animation: mode-big-pulse 0.7s ease-in-out infinite;
+}
+body[data-mode="big"] .data-counter { border-color: #ff3b5c; }
+body[data-mode="at"] .data-counter { border-color: #ffb020; }
+@keyframes mode-at-pulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.2) saturate(1.2); } }
+@keyframes mode-big-pulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.35) saturate(1.4) hue-rotate(-12deg); } }
+body[data-mode="big"] .cab-marquee { color: #ffd0d8; text-shadow: 0 0 10px #ff0033; }
+body[data-mode="at"] .cab-marquee { color: #ffe6a6; text-shadow: 0 0 10px #ff9d00; }

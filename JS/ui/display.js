@@ -55,7 +55,20 @@ function tickDiff() {
   displayDiff.textContent = s >= 0 ? `+${s}` : `${s}`;
   displayDiff.className = `digital-font font-bold text-sm ${diffCoins >= 0 ? 'text-green-400' : 'text-red-400'}`;
 }
+/* STOPボタン: 押せる列は青丸、停止済み・待機中は赤丸 */
+function syncStopButtons() {
+  document.querySelectorAll('.stop-btn').forEach((b, i) => {
+    b.classList.toggle('ready', !!isReelSpinning && !!reelSpin && !reelSpin.order.includes(i));
+  });
+}
+/* 画面の空気感: BIG中=赤金 / AT中=橙 / 通常時。body の data-mode で CSS を切り替える */
+function syncModeTheme() {
+  const m = bonusRun ? 'big' : (atGames > 0 || atEnding) ? 'at' : 'normal';
+  if (document.body.dataset.mode !== m) document.body.dataset.mode = m;
+}
 function syncPanel() {
+  syncStopButtons();
+  syncModeTheme();
   tweenLed('credit', ledCreditEl, creditNow(), 4);
   tweenLed('total', ledTotalEl, totalGetNow(), 4);
   tweenLed('win', ledWinEl, ledWin, 3);

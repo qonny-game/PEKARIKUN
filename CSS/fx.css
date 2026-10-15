@@ -179,3 +179,14 @@
 .pv-lp { display: flex; gap: 12px; } .pv-lp i { width: 36px; height: 36px; border-radius: 50%; background: #1e293b; border: 3px solid #475569; transition: all .1s; }
 .pv-lp i.on { background: radial-gradient(circle at 35% 30%, #fff, #f59e0b); box-shadow: 0 0 18px #fbbf24; border-color: #fff; }
 .fx-pv-lamp.ok .pv-lp i.on { background: radial-gradient(circle at 35% 30%, #fff, #ef4444); box-shadow: 0 0 20px #f87171; }
+
+/* ---- 1.17.0: 虹文字・赤虹文字（最上位の演出色） ---- */
+.fx-banner.rainbow, .fx-banner.redbow {
+  text-shadow: none;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7)) drop-shadow(0 3px 0 rgba(0, 0, 0, 0.6));
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent; -webkit-text-fill-color: transparent;
+}
+.fx-banner.rainbow { background: linear-gradient(90deg, #ff5e5e, #ffd23f, #5eff8a, #38bdf8, #c084fc, #ff5e5e); }
+.fx-banner.redbow { background: linear-gradient(90deg, #ff0033, #ff7a00, #ffe600, #ff0055, #ff2a2a, #ff0033); }
+.fx-banner.rainbow small, .fx-banner.redbow small { -webkit-text-fill-color: #fde68a; background: none; }

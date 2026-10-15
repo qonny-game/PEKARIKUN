@@ -382,11 +382,23 @@
   };
 
   /* ---------- バナー ---------- */
+  /* 上部のペカり君文字の色変化（チャンス=青 / 激熱=赤。こっそり一瞬だけ） */
+  function flashMarquee(cls, ms) {
+    const m = document.querySelector('.cab-marquee');
+    if (!m) return;
+    m.classList.remove('chance', 'hot');
+    void m.offsetWidth;
+    m.classList.add(cls);
+    clearTimeout(m._fxT);
+    m._fxT = setTimeout(() => m.classList.remove(cls), ms);
+  }
   function showBanner(text, sub, color, big, ms) {
     if (window.TRO) {
       const k = text === '連続演出' ? 'pseudo' : /^PEKA(\.\.\.)?\?/.test(text) ? 'saki' : text === '矛盾' ? 'mujun' : text === 'W RARE!' ? 'wrare' : /^\+\d+$/.test(text) ? 'milestone' : null;
       if (k) TRO.seen(k);
     }
+    if (color === 'red' && big) flashMarquee('hot', 2200);
+    else if (color === 'blue' && big) flashMarquee('chance', 1800);
     return put(`fx-banner ${color || ''}${big ? ' big' : ''}`, `${text}${sub ? `<small>${sub}</small>` : ''}`, ms || 1750);
   }
 
@@ -704,7 +716,7 @@
   const _setZoneLogoLevel = setZoneLogoLevel;
   setZoneLogoLevel = function (lv) {
     _setZoneLogoLevel(lv);
-    if (lv >= 1 && bonusRun && bonusRun.zone && bonusRun.played > 0) showBanner('UP!', ['', 'GREEN', 'GOLD', 'RAINBOW'][lv] || '', lv >= 3 ? 'red' : 'blue', false, 1300);
+    if (lv >= 1 && bonusRun && bonusRun.zone && bonusRun.played > 0) showBanner('UP!', ['', 'GREEN', 'GOLD', 'RAINBOW'][lv] || '', lv >= 3 ? 'redbow' : 'blue', false, 1300);
   };
 
   /* ---------- ATの残りG数: 増えたときはカウントアップ ---------- */
