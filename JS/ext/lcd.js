@@ -104,6 +104,12 @@
   if (window.ResizeObserver && box) new ResizeObserver(fitReels).observe(box);
   window.fitReels = fitReels;
 
+  /* 起動直後は停止リールを表示する (リール欄が空白にならないように)。あいさつにペカり君がひょっこり出る */
+  try {
+    if (typeof showStatic === 'function' && !isReelSpinning && cumulativeGames === 0) showStatic(gridOf([0, 1, 2].map(() => Math.floor(rnd() * STRIP_LEN))), null);
+  } catch (e) { /* 表示だけなので無視 */ }
+  setTimeout(() => { if (!isDebugRun) { say('PEKARI-KUN', 'レバーをタップ', 2600, 'happy', 'peek'); } }, 700);
+
   /* ---------- 飛来物 ---------- */
   const SPRITES = { bird: 3000, bat: 2600, flock: 3400, coin: 1000, ripple: 1000, star: 900, ufo: 2000, rocket: 1400, balloon: 2600, rainbow: 2200, cloud: 3200, thunder: 3200, fire: 1100, chest: 1900, eye: 1800 };
   function spawn(type, lv) {
