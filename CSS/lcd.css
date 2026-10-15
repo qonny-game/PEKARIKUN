@@ -110,3 +110,18 @@
 /* フリーズ: 液晶だけ真っ暗。リールは見えたまま、図柄のバックランプだけ落とす */
 .sub-lcd.freeze-dark { filter: brightness(0) !important; transition: filter .5s ease; opacity: 1 !important; }
 .cabinet.freeze-dim .reels { filter: brightness(.35); transition: filter .5s ease; }
+
+/* 鳥 / 群れ / コウモリ (液晶を横切る) */
+.sp-bird { left: -50px; top: calc(14px + var(--dy)); width: 34px; height: 14px; animation: sp-bird 3s linear forwards; }
+.sp-bird::before, .sp-bird::after { content: ''; position: absolute; top: 0; width: 18px; height: 12px; border-top: 3px solid #1e293b; border-radius: 50% 50% 0 0; transform-origin: 50% 100%; animation: sp-flap .28s ease-in-out infinite alternate; }
+.sp-bird::before { left: 0; transform: rotate(-18deg); } .sp-bird::after { right: 0; transform: rotate(18deg); animation-direction: alternate-reverse; }
+@keyframes sp-flap { from { height: 12px; } to { height: 5px; } }
+@keyframes sp-bird { 0% { transform: translate(0, 0); } 50% { transform: translate(190px, -22px); } 100% { transform: translate(400px, 6px); } }
+.sp-flock { left: -140px; top: calc(10px + var(--dy)); width: 34px; height: 14px; animation: sp-bird 3.4s linear forwards; }
+.sp-flock::before, .sp-flock::after { content: ''; position: absolute; width: 34px; height: 14px; border-top: 3px solid #1e293b; border-radius: 50% 50% 0 0; }
+.sp-flock::before { left: 40px; top: 18px; } .sp-flock::after { left: 84px; top: -6px; }
+.sp-bat { left: -60px; top: calc(10px + var(--dy)); width: 40px; height: 16px; background: #0f0f1a; border-radius: 50% 50% 40% 40%; box-shadow: 0 0 10px var(--sc); animation: sp-bat 2.6s ease-in-out forwards; }
+.sp-bat::before, .sp-bat::after { content: ''; position: absolute; top: -6px; width: 26px; height: 20px; background: #0f0f1a; clip-path: polygon(0 100%, 20% 0, 50% 55%, 80% 0, 100% 100%); animation: sp-flap2 .2s linear infinite alternate; }
+.sp-bat::before { left: -22px; } .sp-bat::after { right: -22px; }
+@keyframes sp-flap2 { from { transform: scaleY(1); } to { transform: scaleY(.4); } }
+@keyframes sp-bat { 0% { transform: translate(0, 0); } 25% { transform: translate(100px, 40px); } 50% { transform: translate(210px, -10px); } 75% { transform: translate(310px, 50px); } 100% { transform: translate(430px, 0); } }

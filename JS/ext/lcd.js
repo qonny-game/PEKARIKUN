@@ -105,7 +105,7 @@
   window.fitReels = fitReels;
 
   /* ---------- 飛来物 ---------- */
-  const SPRITES = { coin: 1000, ripple: 1000, star: 900, ufo: 2000, rocket: 1400, balloon: 2600, rainbow: 2200, cloud: 3200, thunder: 3200, fire: 1100, chest: 1900, eye: 1800 };
+  const SPRITES = { bird: 3000, bat: 2600, flock: 3400, coin: 1000, ripple: 1000, star: 900, ufo: 2000, rocket: 1400, balloon: 2600, rainbow: 2200, cloud: 3200, thunder: 3200, fire: 1100, chest: 1900, eye: 1800 };
   function spawn(type, lv) {
     const d = document.createElement('div');
     const base = type === 'thunder' ? 'cloud' : type;
@@ -120,7 +120,7 @@
     if (window.TRO) TRO.seen('lcd:' + type);
     return d;
   }
-  const NAMES = { coin: 'コイン', ripple: '波紋', star: '流れ星', ufo: 'UFO', rocket: 'ロケット', balloon: '気球', rainbow: '虹', cloud: '雲', thunder: '雷雲', fire: '花火', chest: '宝箱', eye: '目' };
+  const NAMES = { bird: '鳥', bat: 'コウモリ', flock: '鳥の群れ', coin: 'コイン', ripple: '波紋', star: '流れ星', ufo: 'UFO', rocket: 'ロケット', balloon: '気球', rainbow: '虹', cloud: '雲', thunder: '雷雲', fire: '花火', chest: '宝箱', eye: '目' };
   const LVW = { hit: [18, 30, 32, 20], rare: [30, 36, 24, 10], mid: [50, 35, 12, 3], none: [72, 24, 4, 0] };
   const wpick = w => { let x = rnd() * w.reduce((a, b) => a + b, 0); for (let i = 0; i < w.length; i++) { x -= w[i]; if (x < 0) return i; } return 0; };
   function preview(cls) {
@@ -261,6 +261,19 @@
     else if (czLeft > 0) { m1.textContent = 'CHANCE ZONE'; m2.textContent = `残り ${czLeft}G`; }
     else { m1.textContent = ''; m2.textContent = ''; }
   }, 300);
+  /* AT / ボーナスの結果に合わせてペカり君が反応する */
+  const _sar = showAtResult;
+  showAtResult = function (run) {
+    if (!isDebugRun && run) {
+      const gain = run.gain !== undefined ? run.gain : diffCoins - run.startDiff;
+      if (gain >= 600) { say('GREAT!', `+${gain}`, 3000, 'happy', 'jump'); for (let i = 0; i < 8; i++) setTimeout(() => spawn('coin', 3), i * 110); spawn('fire', 3); }
+      else if (gain >= 0) say('NICE', `+${gain}`, 2600, 'happy', 'cross');
+      else say('', '次こそ…', 2800, 'sad', 'sad');
+    }
+    return _sar.apply(this, arguments);
+  };
+  const _sat = startAT;
+  startAT = function () { const r = _sat.apply(this, arguments); if (!isDebugRun) { say('AT START', '', 1800, 'shock', 'dash'); spawn('rocket', 2); spawn('fire', 2); } return r; };
   const _miss = missEffect;
   missEffect = function () { _miss(); if (!isDebugRun) say('', '残念…', 2200, 'sad', 'sad'); };
   /* ときどき画面を横切ったり、ひょっこり出てくる */
@@ -276,7 +289,8 @@
   setInterval(() => {
     if (isDebugRun || bonusRun || FX.busy) return;
     const sc = scene();
-    if (sc === 'day') spawn(rnd() < 0.6 ? 'cloud' : 'balloon', 0);
+    if (sc === 'day') spawn(pick(['cloud', 'cloud', 'balloon', 'bird', 'flock']), 0);
+    else if (sc === 'death') spawn(rnd() < 0.6 ? 'bat' : 'cloud', 2);
     else if (sc === 'night') spawn('star', 0);
     else if (sc === 'dusk') spawn('cloud', 0);
     else if (atGames > 0 && rnd() < 0.5) spawn(pick(['star', 'fire', 'rocket']), sc === 'death' ? 2 : 1);
