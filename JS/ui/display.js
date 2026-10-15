@@ -79,7 +79,7 @@ function syncPanel() {
   plIds.bet.classList.toggle('on', isReelSpinning && !bonusRun && !isDebugRun);
   plIds.replay.classList.toggle('on', replayPending);
   plIds.start.classList.toggle('on', idle);
-  plIds.wait.classList.toggle('on', reelLocked || isCounting || isSuspense || isRushing || isPushing);
+  plIds.wait.classList.toggle('on', reelLocked || isCounting || isSuspense || isRushing || isPushing || window.leverWaiting);
 }
 setInterval(syncPanel, 50);
 document.querySelectorAll('.stop-btn').forEach(b => {

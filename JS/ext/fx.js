@@ -11,7 +11,7 @@
 
   /* ---------- 設定 (演出の頻度 / BGM) ---------- */
   const FXO_KEY = 'pekari-fx-v1';
-  const FXO = { freq: 'normal', bgm: true };
+  const FXO = { freq: 'normal', bgm: true, wait: 'normal' };
   try { Object.assign(FXO, JSON.parse(localStorage.getItem(FXO_KEY) || '{}')); } catch (e) { /* 初期値 */ }
   const saveFxo = () => { try { localStorage.setItem(FXO_KEY, JSON.stringify(FXO)); } catch (e) { /* 無視 */ } };
   const freqMul = () => ({ off: 0, low: 0.5, normal: 1, high: 1.6 }[FXO.freq] ?? 1);
@@ -855,10 +855,12 @@
       <div class="set-title">演出</div>
       <div class="set-group">
         <label class="set-row set-opt"><span class="set-label">予告の出やすさ</span><span class="set-field"><select id="fx-freq">${opt('low', '少なめ')}${opt('normal', '標準')}${opt('high', '多め')}${opt('off', 'なし')}</select></span></label>
+        <label class="set-row set-opt"><span class="set-label">ウェイト (レバー間隔)</span><span class="set-field"><select id="fx-wait"><option value="normal"${FXO.wait === 'normal' ? ' selected' : ''}>標準 (4.1秒)</option><option value="short"${FXO.wait === 'short' ? ' selected' : ''}>短縮 (2秒)</option><option value="off"${FXO.wait === 'off' ? ' selected' : ''}>なし</option></select></span></label>
         <label class="set-row set-opt"><span class="set-label">BGM (ボーナス・AT中)</span><span class="set-field"><input type="checkbox" id="fx-bgm"${FXO.bgm ? ' checked' : ''}></span></label>
         <div class="set-note">今日のペカり君: ${COSTUME_NAME[costumeIdx()]}</div>
       </div>`);
     body.querySelector('#fx-freq').addEventListener('change', e => { FXO.freq = e.target.value; saveFxo(); });
+    body.querySelector('#fx-wait').addEventListener('change', e => { FXO.wait = e.target.value; saveFxo(); });
     body.querySelector('#fx-bgm').addEventListener('change', e => { FXO.bgm = e.target.checked; saveFxo(); });
   };
 
@@ -918,7 +920,25 @@
 
   /* ---------- レバー: 演出中は受け付けない ---------- */
   const _handleSpin = handleSpin;
-  handleSpin = function () { if (FX.busy > 0 && !isReelSpinning && !isPushing) return; _handleSpin(); };
+  /* ウェイト: 実機は1ゲーム約4.1秒。前のレバーから間隔が足りなければ残り時間だけ待ってから回す */
+  const WAIT_MS = { normal: 4100, short: 2000, off: 0 };
+  let lastLeverAt = 0, leverTimer = null;
+  window.leverWaiting = false;
+  handleSpin = function () {
+    if (FX.busy > 0 && !isReelSpinning && !isPushing) return;
+    if (isReelSpinning || isPushing || isAtResult) { _handleSpin(); return; }
+    const wait = WAIT_MS[FXO.wait] ?? 4100;
+    const rest = lastLeverAt + wait - Date.now();
+    if (rest > 0 && !reelLocked) {
+      if (leverTimer) return;              // 待機中の連打は無視
+      window.leverWaiting = true;
+      leverTimer = setTimeout(() => { leverTimer = null; window.leverWaiting = false; lastLeverAt = Date.now(); _handleSpin(); }, rest);
+      return;
+    }
+    if (reelLocked) { _handleSpin(); return; }
+    lastLeverAt = Date.now();
+    _handleSpin();
+  };
   spinBtn.removeEventListener('click', _handleSpin);
   spinBtn.addEventListener('click', handleSpin);
 
