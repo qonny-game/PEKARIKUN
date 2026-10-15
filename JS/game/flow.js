@@ -281,6 +281,7 @@ function drawRole(inAT) {
   return 'lose';
 }
 
+let zenchoTotal = 0, fakeTotal = 0;   // 前兆の長さ（連続演出の何話目かの表示用）
 let fakeZencho = 0;                 // ガセ前兆の残りG数（当選しない）
 const FAKE_ZENCHO_P = 1 / 160;      // 通常時1Gごとにガセ前兆へ入る確率
 
@@ -353,17 +354,21 @@ function handleSpin() {
   const hitMult = (inAT ? AT_HIT_MULT * AT_TYPES[atType].hit : inMode ? modeMult : 1) * (inCherry ? cherryM : 1);
   let isHit = false;
   // ガセ前兆: 前兆ステージに入るが当選はしない（本前兆と同じ3〜5G。ハズレの期待感を作る）
+  let zStep = null;   // 前兆の連続演出（本物・ガセ共通の見た目。最後だけ結果が分かれる）
   if (inAT || bonusRun) fakeZencho = 0;
-  else if (fakeZencho > 0) fakeZencho--;
-  else if (zenchoLeft === 0 && Math.random() < FAKE_ZENCHO_P) fakeZencho = 3 + Math.floor(Math.random() * 3);
+  else if (fakeZencho > 0) { fakeZencho--; zStep = { real: false, i: fakeTotal - fakeZencho + 1, n: fakeTotal, end: fakeTotal - fakeZencho + 1 >= fakeTotal }; if (fakeZencho === 0) zStep = null; }
+  else if (zenchoLeft === 0 && Math.random() < FAKE_ZENCHO_P) { fakeZencho = fakeTotal = 3 + Math.floor(Math.random() * 3); zStep = { real: false, i: 1, n: fakeTotal, end: false }; }
   if (zenchoLeft > 0) {
     zenchoLeft--;
     isHit = zenchoLeft === 0;
+    if (zenchoLeft > 0) zStep = { real: true, i: zenchoTotal - zenchoLeft + 1, n: zenchoTotal, end: false };
   } else {
     isHit = Math.random() < Math.min(1, HIT_RATE * hitMult);
     // 当選が決まっても、すぐには光らせず3〜5G遅らせることがある (その間のハズレ矛盾は確定のサイン)
-    if (isHit && !inAT && Math.random() < ZENCHO_P) { zenchoLeft = 3 + Math.floor(Math.random() * 3); isHit = false; }
+    if (isHit && !inAT && Math.random() < ZENCHO_P) { zenchoLeft = zenchoTotal = 3 + Math.floor(Math.random() * 3); isHit = false; fakeZencho = 0; zStep = { real: true, i: 1, n: zenchoTotal, end: false }; }
   }
+
+  if (zStep && typeof window.onZenchoStep === 'function') window.onZenchoStep(zStep);
 
   // 通常時のサンド目（リーチ目）: ボーナス確定。当選と同じ流れで、サンド目の形で止まる
   const reach = !inAT && !isHit && zenchoLeft === 0 && Math.random() < SAND_REACH_P;

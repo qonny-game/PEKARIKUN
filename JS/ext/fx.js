@@ -11,7 +11,9 @@
 
   /* ---------- 設定 (演出の頻度 / BGM) ---------- */
   const FXO_KEY = 'pekari-fx-v1';
-  const FXO = { freq: 'normal', bgm: true, wait: 'normal', vib: true };
+  const FXO = { freq: 'normal', bgm: true, wait: 'normal', vib: true, bgmN: false, lite: false };
+  const applyLite = () => document.body.classList.toggle('fx-lite', !!FXO.lite);
+  setTimeout(applyLite, 0);
   window.vibrate = pat => { try { if (FXO.vib && navigator.vibrate) navigator.vibrate(pat); } catch (e) { /* 非対応 */ } };
   try { Object.assign(FXO, JSON.parse(localStorage.getItem(FXO_KEY) || '{}')); } catch (e) { /* 初期値 */ }
   const saveFxo = () => { try { localStorage.setItem(FXO_KEY, JSON.stringify(FXO)); } catch (e) { /* 無視 */ } };
@@ -817,6 +819,16 @@
     if (!soundEnabled || !FXO.bgm || !BGM.mode) return;
     initAudio();
     const t = audioCtx.currentTime;
+    if (BGM.mode === 'normal' || BGM.mode === 'zencho') {
+      // 通常時: 静かなパッド風 / 前兆: 低音の脈動が速くなっていく
+      const j = BGM.step++ % 16, r0 = BGM.mode === 'zencho' ? 196 : 220, v0 = BGM.mode === 'zencho' ? 0.06 : 0.035;
+      if (j % 4 === 0) tone(note(r0, [0, 2, 3, 1][(j / 4) | 0] - 5), t, 0.9, 'sine', v0 * 2);
+      if (BGM.mode === 'zencho') {
+        if (j % 2 === 0) tone(note(r0, ARP[j], 0), t, 0.2, 'sawtooth', v0 * 0.8);
+        if (j % 4 === 0) kick(t, v0 * 3);
+      } else if (j % 8 === 4) tone(note(r0, ARP[j], 1), t, 0.5, 'triangle', v0);
+      return;
+    }
     const root = { bonus: 261.6, zone: 293.7, at: 329.6 }[BGM.mode] * (atType === 2 ? 0.84 : 1);
     const i = BGM.step++ % 16;
     const vol = 0.07 + BGM.lvl * 0.012;
@@ -841,7 +853,9 @@
     if (isAtResult) mode = null;
     else if (bonusRun) { mode = bonusRun.zone ? 'zone' : 'bonus'; lvl = bonusRun.zone ? bonusRun.zlv : Math.min(3, bonusRun.aura >> 1); }
     else if (atGames > 0) { mode = 'at'; lvl = Math.min(3, (st.combo >= 10 ? 1 : 0) + (st.combo >= 25 ? 1 : 0) + (atGames <= 5 ? 1 : 0) + (atType ? 1 : 0)); }
-    if (!soundEnabled || !FXO.bgm) mode = null;
+    else if (zenchoLeft > 0 || fakeZencho > 0) { mode = FXO.bgm ? 'zencho' : null; lvl = 1; }
+    else if (FXO.bgmN && !isDebugRun && !isAtResult) { mode = 'normal'; lvl = 0; }
+    if (!soundEnabled || !(FXO.bgm || (mode === 'normal' && FXO.bgmN))) mode = null;
     bgmSet(mode, lvl);
   }, 400);
 
@@ -858,11 +872,15 @@
         <label class="set-row set-opt"><span class="set-label">予告の出やすさ</span><span class="set-field"><select id="fx-freq">${opt('low', '少なめ')}${opt('normal', '標準')}${opt('high', '多め')}${opt('off', 'なし')}</select></span></label>
         <label class="set-row set-opt"><span class="set-label">ウェイト (レバー間隔)</span><span class="set-field"><select id="fx-wait"><option value="normal"${FXO.wait === 'normal' ? ' selected' : ''}>標準 (4.1秒)</option><option value="short"${FXO.wait === 'short' ? ' selected' : ''}>短縮 (2秒)</option><option value="off"${FXO.wait === 'off' ? ' selected' : ''}>なし</option></select></span></label>
         <label class="set-row set-opt"><span class="set-label">振動 (対応端末のみ)</span><span class="set-field"><input type="checkbox" id="fx-vib"${FXO.vib ? ' checked' : ''}></span></label>
+        <label class="set-row set-opt"><span class="set-label">通常時のBGM</span><span class="set-field"><input type="checkbox" id="fx-bgmn"${FXO.bgmN ? ' checked' : ''}></span></label>
+        <label class="set-row set-opt"><span class="set-label">軽量モード (演出を減らす)</span><span class="set-field"><input type="checkbox" id="fx-lite"${FXO.lite ? ' checked' : ''}></span></label>
         <label class="set-row set-opt"><span class="set-label">BGM (ボーナス・AT中)</span><span class="set-field"><input type="checkbox" id="fx-bgm"${FXO.bgm ? ' checked' : ''}></span></label>
         <div class="set-note">今日のペカり君: ${COSTUME_NAME[costumeIdx()]}</div>
       </div>`);
     body.querySelector('#fx-freq').addEventListener('change', e => { FXO.freq = e.target.value; saveFxo(); });
     body.querySelector('#fx-wait').addEventListener('change', e => { FXO.wait = e.target.value; saveFxo(); });
+    body.querySelector('#fx-bgmn').addEventListener('change', e => { FXO.bgmN = e.target.checked; saveFxo(); });
+    body.querySelector('#fx-lite').addEventListener('change', e => { FXO.lite = e.target.checked; saveFxo(); applyLite(); });
     body.querySelector('#fx-vib').addEventListener('change', e => { FXO.vib = e.target.checked; saveFxo(); });
     body.querySelector('#fx-bgm').addEventListener('change', e => { FXO.bgm = e.target.checked; saveFxo(); });
   };

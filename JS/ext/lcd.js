@@ -146,11 +146,20 @@
     if (zenchoLeft > 0 || fakeZencho > 0) return 'zencho';
     return stageNow();
   }
+  /* 前兆の連続演出: 毎ゲーム一言ずつ進む。本物もガセも同じ流れで、最後のゲームだけ結果が分かれる */
+  const ZSTEPS = ['ようすが…', 'ざわざわ…', '何かが近づいてる', 'チャンス！', '来るか…！'];
+  window.onZenchoStep = function (z) {
+    if (isDebugRun) return;
+    if (z.end && !z.real) { say('', 'あれ…？', 2200, 'sad'); return; }
+    const t = ZSTEPS[z.i >= z.n ? 4 : Math.min(3, z.i - 1)];
+    say(`STORY ${z.i}/${z.n}`, t, 2000, z.i >= 3 ? 'shock' : 'happy');
+  };
   let last = '';
   setInterval(() => {
     const sc = scene();
     if (sc !== last) {
       last = sc; el.dataset.scene = sc;
+      const cab = document.querySelector('.cabinet'); if (cab) cab.dataset.scene = sc;
       if (sc === 'day') say('NEW DAY', '', 1500);
       if (sc === 'dusk') say('DUSK', '', 1200);
       if (sc === 'night') say('NIGHT', '', 1200);
@@ -181,4 +190,23 @@
     else if (sc === 'dusk') spawn('cloud', 0);
     else if (atGames > 0 && rnd() < 0.5) spawn(pick(['star', 'fire', 'rocket']), sc === 'death' ? 2 : 1);
   }, 6500);
+  /* ---------- デモ画面: 45秒操作がないと、ランプと液晶が客寄せ表示になる。触れたら戻る ---------- */
+  let lastInput = Date.now(), demoOn = false, demoStep = 0;
+  ['pointerdown', 'keydown', 'touchstart'].forEach(ev => window.addEventListener(ev, () => {
+    lastInput = Date.now();
+    if (demoOn) { demoOn = false; sideLampOff(); cabinetOnly(false); }
+  }, { passive: true }));
+  const cabinetOnly = on => { const c = document.querySelector('.cabinet'); if (c) c.classList.toggle('demo', on); };
+  setInterval(() => {
+    const busy = isDebugRun || bonusRun || atGames > 0 || isReelSpinning || isPekared || isBonusAligned || isAtResult || isPushing || FX.busy > 0 || zenchoLeft > 0 || fakeZencho > 0 || (typeof AUTOPLAY !== 'undefined' && AUTOPLAY);
+    if (busy) { lastInput = Date.now(); return; }
+    if (!demoOn && Date.now() - lastInput > 45000) { demoOn = true; demoStep = 0; cabinetOnly(true); }
+    if (!demoOn) return;
+    const seq = ['red', 'green', 'blue', 'yellow', 'pink'];
+    sideLampShow(seq[demoStep % seq.length], true);
+    const texts = [['PEKARI-KUN', 'LEVER ON'], ['PEKA!', 'GOGO LAMP'], ['TAP TO PLAY', '']];
+    const t = texts[demoStep % texts.length];
+    say(t[0], t[1], 2600);
+    demoStep++;
+  }, 3000);
 })();

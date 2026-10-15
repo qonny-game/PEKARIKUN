@@ -157,6 +157,7 @@ function rareWarn(style) {
 }
 function showNavi(order, style = '', partial = false) {
   if (style === 'red' || style === 'purple') rareWarn(style);
+  document.body.dataset.navi = style || 'y';
   naviOrder = order;
   naviPartial = !!partial;
   naviEl.className = 'navi on ' + style + (partial ? ' partial' : '');     // red: チェリー / purple: スイカ (上乗せ確定)
@@ -175,7 +176,7 @@ function refreshNavi() {
     el.classList.toggle('next', !done.includes(c) && naviOrder[done.length] === c && (!naviPartial || done.length === 0));
   });
 }
-function hideNavi() { naviOrder = null; naviPartial = false; if (naviEl) naviEl.className = 'navi'; }
+function hideNavi() { delete document.body.dataset.navi; naviOrder = null; naviPartial = false; if (naviEl) naviEl.className = 'navi'; }
 function sameOrder(a, b) { return !!a && a.length === b.length && a.every((v, i) => v === b[i]); }
 
 /* ドンドンドン!: 画面が揺れた回数で期待度を示す。3回揺れたら発展 (ボーナス中は次のオーラ昇格のサイン) */

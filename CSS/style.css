@@ -1658,3 +1658,17 @@ main > .op-area { display: contents; }
   0%, 100% { color: #4a3d78; background: #1b1238; box-shadow: none; }
   50%      { color: #fff; background: var(--sl); box-shadow: 0 0 12px var(--sl), 0 0 22px var(--sl); }
 }
+
+/* 1.19.10 状態でリール枠の発光を変える / ナビ色でSTOPボタンを光らせる / 軽量モード */
+.cabinet[data-scene="zencho"] .reels { box-shadow: 0 0 14px 2px rgba(249, 115, 22, 0.75); }
+.cabinet[data-scene="bonus"] .reels, .cabinet[data-scene="zone"] .reels { box-shadow: 0 0 14px 2px rgba(250, 204, 21, 0.8); }
+.cabinet[data-scene="at"] .reels, .cabinet[data-scene="heaven"] .reels { box-shadow: 0 0 14px 2px rgba(244, 114, 182, 0.8); }
+.cabinet[data-scene="death"] .reels { box-shadow: 0 0 14px 2px rgba(159, 18, 57, 0.85); }
+body[data-navi="red"] .stop-btn { box-shadow: 0 0 14px 3px #ff3b30; }
+body[data-navi="purple"] .stop-btn { box-shadow: 0 0 16px 4px #a855f7; }
+body.fx-lite #fx-canvas { display: none; }
+body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; }
+
+/* 1.19.11 デモ中はリール枠がゆっくり脈打つ */
+.cabinet.demo .reels { animation: demo-pulse 3s ease-in-out infinite; }
+@keyframes demo-pulse { 0%, 100% { box-shadow: 0 0 6px 1px rgba(250, 204, 21, 0.3); } 50% { box-shadow: 0 0 18px 4px rgba(250, 204, 21, 0.8); } }
