@@ -11,7 +11,7 @@ const SYM_FALLBACK = { replay: '<div class="sym-replay">REPLAY</div>', bar: '<di
 function symbolHTML(key, glow) {
   const fb = (SYM_FALLBACK[key] || '<div class="sym-seven">7</div>').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   const alt = key.startsWith('7') ? '7' : key;
-  return `<img class="sym-img ${glow || ''}" src="${ASSET_DIR.img}${key}.png?v=${APP_VERSION}" alt="${alt}" draggable="false" onerror="if(this.parentNode)this.outerHTML='${fb}'">`;
+  return `<img class="sym-img ${glow || ''}" src="${SYM_IMG[key] || ASSET_DIR.img + key + '.png?v=' + APP_VERSION}" alt="${alt}" draggable="false" onerror="if(this.parentNode)this.outerHTML='${fb}'">`;
 }
 const lineOf = (g, l) => g[l[0]] === g[l[1]] && g[l[1]] === g[l[2]];
 
