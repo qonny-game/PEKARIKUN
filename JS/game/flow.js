@@ -368,6 +368,10 @@ function handleSpin() {
   if (reach) isHit = true;
   // 小役は1回の乱数で決める（実機と同じ。確率は従来の順番抽選と同じ配分）
   const role = isHit ? 'hit' : drawRole(inAT);
+  if (!isDebugRun) {
+    const rk = role === 'bell' ? 'bell' : role === 'replay' ? 'replay' : /^melon/.test(role) ? 'melon' : /^cherry/.test(role) ? 'cherry' : /^chance/.test(role) ? 'chance' : null;
+    if (rk) roleStat[rk]++;
+  }
 
   if (isHit) {
     // 天国中の当選 / ボーナス終了後32G以内の当選: 左右のPEKAランプ

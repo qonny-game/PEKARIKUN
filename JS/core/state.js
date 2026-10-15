@@ -10,6 +10,7 @@ function recordPoint() {
   gameHistory.push({ g: cumulativeGames, diff: diffCoins });
   if (gameHistory.length > 20000) gameHistory.shift();
 }
+const roleStat = { bell: 0, replay: 0, melon: 0, cherry: 0, chance: 0 };   // 小役カウント（グラフ画面に表示）
 let totalGames = 0;       // 表示用G数 (ボーナス当選でリセット)
 let cumulativeGames = 0;  // 合算確率計算用の累計G数
 let bigCount = 0;

@@ -267,7 +267,14 @@ function runRole(kind, done, navi) {
     if (navi) { plan.navi = navi.order; showNavi(navi.order, navi.style); }
     startReels(plan, res => {
       omenOff();
-      if (navi) hideNavi();
+      if (navi) {
+        hideNavi();
+        // 押し順がナビと違ったとき: 一言と下降音でわかるようにする
+        if (res.order && res.order.some((c, i) => c !== navi.order[i])) {
+          showAtToast('ナビ違い');
+          if (soundEnabled) { initAudio(); const t0 = audioCtx.currentTime; [330, 247].forEach((f, i) => tone(f, t0 + i * 0.1, 0.18, 'triangle', 0.1)); }
+        }
+      }
       markWin(winIdxOf(kind, res.grid), '');
       markChance(kind, res.grid);
       done(res);
