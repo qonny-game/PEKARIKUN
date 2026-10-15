@@ -94,10 +94,12 @@
     if (!box || !reelsEl) return;
     const w = box.clientWidth, h = box.clientHeight;
     if (!w || !h) return;
-    const top = (parseFloat(el.style.height) || el.offsetHeight || 186) + 4 + 2;
-    const sc = Math.max(1, Math.min(w / 198, (h - top - 2) / 126));
+    // リールは幅いっぱいに拡大 (高さ102px×倍率)。残りの高さはすべて演出液晶に回す
+    const sc = Math.max(1, Math.min(w / 198, 2));
+    const lcdH = Math.max(150, Math.round(h - 4 - 2 - 102 * sc - 4));
+    box.style.setProperty('--lcd-h', lcdH + 'px');
     reelsEl.style.transform = `scale(${sc.toFixed(3)})`;
-    reelsEl.style.marginTop = top + 'px';
+    reelsEl.style.marginTop = (lcdH + 6) + 'px';
   }
   fitReels();
   window.addEventListener('resize', fitReels);
@@ -108,10 +110,10 @@
   try {
     if (typeof showStatic === 'function' && !isReelSpinning && cumulativeGames === 0) showStatic(gridOf([0, 1, 2].map(() => Math.floor(rnd() * STRIP_LEN))), null);
   } catch (e) { /* 表示だけなので無視 */ }
-  setTimeout(() => { if (!isDebugRun) { say('PEKARI-KUN', 'レバーをタップ', 2600, 'happy', 'peek'); } }, 700);
+  setTimeout(() => { if (!isDebugRun) { say('PEKARI-KUN', `今日のラッキー役 ${LUCKY[1]}`, 3200, 'happy', 'peek'); } }, 700);
 
   /* ---------- 飛来物 ---------- */
-  const SPRITES = { leaf: 3600, whale: 5200, bird: 3000, bat: 2600, flock: 3400, coin: 1000, ripple: 1000, star: 900, ufo: 2000, rocket: 1400, balloon: 2600, rainbow: 2200, cloud: 3200, thunder: 3200, fire: 1100, chest: 1900, eye: 1800 };
+  const SPRITES = { firefly: 4200, leaf: 3600, whale: 5200, bird: 3000, bat: 2600, flock: 3400, coin: 1000, ripple: 1000, star: 900, ufo: 2000, rocket: 1400, balloon: 2600, rainbow: 2200, cloud: 3200, thunder: 3200, fire: 1100, chest: 1900, eye: 1800 };
   function spawn(type, lv) {
     const d = document.createElement('div');
     const base = type === 'thunder' ? 'cloud' : type;
@@ -126,7 +128,7 @@
     if (window.TRO) TRO.seen('lcd:' + type);
     return d;
   }
-  const NAMES = { leaf: '葉', whale: 'クジラ', bird: '鳥', bat: 'コウモリ', flock: '鳥の群れ', coin: 'コイン', ripple: '波紋', star: '流れ星', ufo: 'UFO', rocket: 'ロケット', balloon: '気球', rainbow: '虹', cloud: '雲', thunder: '雷雲', fire: '花火', chest: '宝箱', eye: '目' };
+  const NAMES = { firefly: 'ホタル', leaf: '葉', whale: 'クジラ', bird: '鳥', bat: 'コウモリ', flock: '鳥の群れ', coin: 'コイン', ripple: '波紋', star: '流れ星', ufo: 'UFO', rocket: 'ロケット', balloon: '気球', rainbow: '虹', cloud: '雲', thunder: '雷雲', fire: '花火', chest: '宝箱', eye: '目' };
   const LVW = { hit: [18, 30, 32, 20], rare: [30, 36, 24, 10], mid: [50, 35, 12, 3], none: [72, 24, 4, 0] };
   const wpick = w => { let x = rnd() * w.reduce((a, b) => a + b, 0); for (let i = 0; i < w.length; i++) { x -= w[i]; if (x < 0) return i; } return 0; };
   function preview(cls) {
@@ -137,6 +139,11 @@
     if (lv >= 2) { say(['', '', '', 'HOT!!'][lv], NAMES[type], 1600, 'shock', lv >= 3 ? 'jump' : 'shake'); }
     return lv;
   }
+  /* 今日のラッキー役: 日付で決まる。成立すると一言と演出が出る（出玉には影響しない） */
+  const LUCKY_LIST = [['cherry', 'チェリー'], ['melon', 'スイカ'], ['chance', 'チャンス目'], ['bell', 'ベル'], ['replay', 'リプレイ']];
+  const _d = new Date(), _doy = Math.floor((_d - new Date(_d.getFullYear(), 0, 0)) / 86400000);
+  const LUCKY = LUCKY_LIST[(_doy * 7 + _d.getFullYear()) % LUCKY_LIST.length];
+  const luckyOf = kind => /^(cherry|melon|chance|bell|replay)/.exec(kind) ? /^(cherry|melon|chance|bell|replay)/.exec(kind)[1] : '';
   const ROLE_MSG = { cherryW: ['弱チェリー', 'CHERRY'], cherryS: ['強チェリー', 'CHERRY!!'], melonW: ['弱スイカ', 'MELON'], melon: ['強スイカ', 'MELON!!'], chanceW: ['弱チャンス目', 'CHANCE'], chanceS: ['強チャンス目', 'CHANCE!!'] };
 
   /* ---------- 小役の成立とペカり ---------- */
@@ -150,6 +157,9 @@
     return _rr(kind, res => {
       const WIN_LAMP = LAMP_TABLE.win;
       const aimedRole = kind === 'cherryW' || kind === 'cherryS' || kind === 'melon';   // 狙う役だけ成否がある（ベル・リプレイ・弱スイカは success が付かない）
+      if (!isDebugRun && !bonusRun && luckyOf(kind) === LUCKY[0] && (!aimedRole || (res && res.success) || kind === 'chanceW' || kind === 'chanceS')) {
+        setTimeout(() => { say('LUCKY!', `今日のラッキー役 ${LUCKY[1]}`, 2200, 'happy', 'jump'); spawn('fire', 1); for (let i = 0; i < 5; i++) setTimeout(() => spawn('coin', 2), i * 100); }, 350);
+      }
       if (WIN_LAMP[kind] && (!aimedRole || (res && res.success))) sideLampFlash(WIN_LAMP[kind], 1500);   // 当たった役の色
       if (!isDebugRun) {
         const r = ROLE_MSG[kind];
@@ -310,8 +320,8 @@
     const sc = scene();
     if (sc === 'day') { spawn(pick(['cloud', 'cloud', 'balloon', 'bird', 'flock', 'leaf']), 0); if (rnd() < 0.5) setTimeout(() => spawn('leaf', 0), 500); }
     else if (sc === 'death') spawn(rnd() < 0.6 ? 'bat' : 'cloud', 2);
-    else if (sc === 'night') spawn(rnd() < 0.25 ? 'whale' : 'star', 0);
-    else if (sc === 'dusk') spawn('cloud', 0);
+    else if (sc === 'night') { spawn(rnd() < 0.25 ? 'whale' : 'star', 0); for (let i = 0; i < 4; i++) setTimeout(() => spawn('firefly', 0), i * 500); }
+    else if (sc === 'dusk') spawn(rnd() < 0.12 ? 'whale' : pick(['cloud', 'leaf']), 0);
     else if (atGames > 0 && rnd() < 0.5) spawn(pick(['star', 'fire', 'rocket']), sc === 'death' ? 2 : 1);
   }, 6500);
   /* ---------- デモ画面: 45秒操作がないと、ランプと液晶が客寄せ表示になる。触れたら戻る ---------- */

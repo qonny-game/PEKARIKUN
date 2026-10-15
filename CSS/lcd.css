@@ -4,7 +4,7 @@
 .gogo-lamp { padding-top: 128px; box-sizing: border-box; }
 .sub-lcd {
   --lc1: #1d4ed8; --lc2: #7dd3fc;
-  position: absolute; left: 6px; right: 6px; top: 4px; height: 186px; z-index: 12;
+  position: absolute; left: 6px; right: 6px; top: 4px; height: var(--lcd-h, 240px); z-index: 12;
   border-radius: 10px; overflow: hidden; pointer-events: none;
   border: 2px solid #4b3a8f; box-shadow: inset 0 0 14px rgba(0, 0, 0, .55), 0 0 10px rgba(120, 90, 255, .35);
   background: linear-gradient(180deg, var(--lc1), var(--lc2));
@@ -146,3 +146,7 @@
 .sp-whale::before { content: ''; position: absolute; right: -32px; top: -14px; width: 46px; height: 40px; background: #1e3a8a; clip-path: polygon(0 55%, 55% 40%, 100% 0, 80% 50%, 100% 100%, 45% 70%, 0 75%); }
 .sp-whale::after { content: ''; position: absolute; left: 24px; top: 16px; width: 8px; height: 8px; border-radius: 50%; background: #e0f2fe; }
 @keyframes sp-whale { 0% { transform: translate(0, 10px); } 50% { transform: translate(300px, -20px); } 100% { transform: translate(560px, 6px); } }
+
+/* ホタル (夜): ゆっくり漂う光 */
+.sp-firefly { left: var(--dx, 40%); top: calc(40px + var(--dy)); width: 9px; height: 9px; border-radius: 50%; background: #fef08a; box-shadow: 0 0 10px 3px #fde047, 0 0 22px 6px rgba(253, 224, 71, .5); opacity: 0; animation: sp-ff 4.2s ease-in-out forwards; }
+@keyframes sp-ff { 0% { opacity: 0; transform: translate(0, 0); } 15% { opacity: 1; } 35% { transform: translate(40px, -30px); opacity: .3; } 55% { transform: translate(10px, -60px); opacity: 1; } 80% { transform: translate(-40px, -40px); opacity: .4; } 100% { opacity: 0; transform: translate(-60px, -80px); } }

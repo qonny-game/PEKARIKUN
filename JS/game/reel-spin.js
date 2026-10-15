@@ -10,7 +10,7 @@ function saveOpt() { try { localStorage.setItem(OPT_KEY, JSON.stringify({ autoSt
 
 const SPIN_SPEED = 28;    // 1秒に流れる図柄の数 (日本機と同じ: 80回転/分 = 1周0.75秒 = 21コマ/0.75秒)
 const SLIP_MAX = 4;       // 目押し: 狙った図柄が中段の4コマ手前までなら引き込める
-const CELL_H = 42;   // 絵柄1コマの高さ(px)。CSS の .reels / .reel-ov の高さと揃える
+const CELL_H = 34;   // 絵柄1コマの高さ(px)。CSS の .reels / .reel-ov の高さと揃える
 let reelSpin = null;
 let isReelSpinning = false;
 let reelLocked = false;   // 停止直後の誤タップ防止

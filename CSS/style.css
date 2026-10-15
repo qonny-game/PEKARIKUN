@@ -290,12 +290,12 @@ body {
 .reels {
   position: relative;
   width: 198px;
-  height: 126px;
+  height: 102px;
   transform: scale(1.4);
   margin: 30px auto 28px;
   display: grid;
   grid-template-columns: repeat(3, 66px);
-  grid-template-rows: repeat(3, 42px);
+  grid-template-rows: repeat(3, 34px);
   justify-content: center;
 }
 /* 枠なし。図柄は枠より大きく描いて、隣と少し重ねる */
@@ -968,8 +968,8 @@ main { overflow: visible !important; }
 .set-levels button.on { background: #2563eb; border-color: #60a5fa; }
 
 /* 回転中のリール (1列ぶん。上下は枠で隠す) */
-.reel-ov { position: absolute; top: 0; width: 66px; height: 126px; overflow: hidden; }
-.reel-ov .reel { position: absolute; left: 0; top: 0; width: 66px; height: 42px; animation: none !important; will-change: transform; }
+.reel-ov { position: absolute; top: 0; width: 66px; height: 102px; overflow: hidden; }
+.reel-ov .reel { position: absolute; left: 0; top: 0; width: 66px; height: 34px; animation: none !important; will-change: transform; }
 .reel-ov .sym-img, .reel-ov .sym-emoji, .reel-ov .sym-bar, .reel-ov .sym-replay { filter: blur(0.6px); }
 
 /* 緊張演出: 画面の縁が赤くなり、脈打つ (ボーナス最終ゲーム / AT最終ゲーム) */
@@ -1262,7 +1262,7 @@ main { overflow: visible !important; }
   0%   { filter: brightness(1.9) drop-shadow(0 0 8px #fff3a0) drop-shadow(0 0 16px #ffd23f); }
   50%  { filter: brightness(0.95) drop-shadow(0 0 0 transparent); }
 }
-.payline { position: absolute; left: 0; top: 0; width: 198px; height: 150px; z-index: 4; pointer-events: none; overflow: visible; }
+.payline { position: absolute; left: 0; top: 0; width: 198px; height: 102px; z-index: 4; pointer-events: none; overflow: visible; }
 .payline line { stroke: #fff3a0; stroke-width: 4; stroke-linecap: round; filter: drop-shadow(0 0 5px #ffb300) drop-shadow(0 0 10px #ff8a00); animation: payline-blink 0.42s steps(1) infinite; }
 @keyframes payline-blink { 0% { opacity: 1; } 50% { opacity: 0.15; } }
 
@@ -1608,10 +1608,10 @@ body[data-mode="at"] .cab-marquee { color: #ffe6a6; text-shadow: 0 0 10px #ff9d0
 /* リールは演出液晶の下に置く（重ならない） */
 .gogo-lamp .align-display .reels { margin: 132px auto 0; transform-origin: 50% 0; }
 /* 図柄: 全図柄とも同じ1マス。7とバーだけマスいっぱい（縦は低く潰す）、小役・レア役は小さく */
-.sym-img[alt="7"], .reel.win .sym-img[alt="7"] { width: 62px; height: 40px; object-fit: fill; }
-.reels .sym-seven, .reel.win .sym-seven { font-size: 2.2rem; transform: none; width: 62px; height: 40px; display: flex; align-items: center; justify-content: center; }
-.reels .sym-bar, .reel.win .sym-bar { width: 62px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
-.reels .sym-emoji, .reel.win .sym-emoji { font-size: 22px; }
+.sym-img[alt="7"], .reel.win .sym-img[alt="7"] { width: 62px; height: 32px; object-fit: fill; }
+.reels .sym-seven, .reel.win .sym-seven { font-size: 1.8rem; transform: none; width: 62px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.reels .sym-bar, .reel.win .sym-bar { width: 62px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+.reels .sym-emoji, .reel.win .sym-emoji { font-size: 19px; }
 .reels .sym-replay, .reel.win .sym-replay { font-size: 9px; }
 
 /* ---- 1.18.3 ---- */
@@ -1854,3 +1854,16 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 #lcd-stage #gogo-subtext { font-size: 12px; margin-top: 0; }
 #lcd-stage #gogo-text-container .gogo-text { visibility: hidden; }
 .peka #lcd-stage #gogo-text-container .gogo-text, .gogo-lamp.peka #lcd-stage #gogo-text-container .gogo-text { visibility: visible; }
+
+/* ===== 1.19.25 リールを低くして液晶を高く / 電光掲示を1段に ===== */
+.gogo-lamp { height: 28rem; }
+.sub-lcd, .lcd-stage { height: var(--lcd-h, 240px); }
+.sym-img { width: 32px; height: 32px; } .reel.win .sym-img { width: 34px; height: 34px; }
+.reels .sym-bar, .reel.win .sym-bar { font-size: 12px; }
+/* PAYOUT / MEDAL / TOTAL GET とランプを1段に */
+.cab-panel { display: flex; align-items: center; gap: 6px; padding: 2px 0 0; }
+.panel-lamps { display: grid; grid-template-columns: auto auto; gap: 2px 3px; margin: 0; flex: none; justify-content: start; }
+.pl { padding: 1px 4px; font-size: 7.5px; letter-spacing: .04em; text-align: center; white-space: nowrap; }
+.led-row { flex: 1; min-width: 0; display: grid; grid-template-columns: .9fr 1.1fr 1.1fr; gap: 2px; }
+.led-label { font-size: 7px; letter-spacing: .06em; white-space: nowrap; }
+.dg { font-size: 17px; line-height: 1.1; }
