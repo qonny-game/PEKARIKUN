@@ -28,13 +28,31 @@ function rainCoins(n) {
     particles.push(makeParticle('gold', Math.random() * w, -10 - Math.random() * 140, (Math.random() - 0.5) * 2.4, 2 + Math.random() * 4, 0.28));
   }
   ensureParticleLoop();
-  if (soundEnabled) {
+  if (soundEnabled && n < 30) {
     initAudio();
     const t0 = audioCtx.currentTime;
     for (let i = 0; i < 6; i++) tone(2093 + Math.random() * 900, t0 + 0.05 + i * 0.06, 0.12, 'triangle', 0.06);
   }
 }
+/* 15枚GET: コインがじゃらじゃらと大量に出てくる音 (約2.6秒) */
+function playJaraJara(len) {
+  if (!soundEnabled) return;
+  initAudio();
+  const t0 = audioCtx.currentTime + 0.02;
+  const n = Math.round(len * 26);
+  for (let i = 0; i < n; i++) {
+    const k = i / n;
+    const t = t0 + len * Math.pow(k, 0.85) + Math.random() * 0.025;
+    const f = 2200 + Math.random() * 2600;
+    const v = 0.07 * (1 - k * 0.55) * (0.6 + Math.random() * 0.4);
+    tone(f, t, 0.05 + Math.random() * 0.05, 'triangle', v);
+    tone(f * 1.51, t + 0.012, 0.04, 'square', v * 0.35);
+    if (i % 3 === 0) tone(380 + Math.random() * 260, t, 0.07, 'sine', v * 1.4);   // 山積みのコインが落ちる低い音
+  }
+  tone(1568, t0 + len, 0.5, 'triangle', 0.07);   // 最後の余韻
+}
 function showGet(coins) {
+  if (coins >= 15) playJaraJara(2.6);
   getPop.innerHTML = `0<span>枚 GET</span>`;
   cancelAnimationFrame(getRAF);
   const g0 = performance.now();

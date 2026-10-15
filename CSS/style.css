@@ -1887,3 +1887,7 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 .reels .sym-img, .reel.win .sym-img, .reels .sym-img[alt], .reel.win .sym-img[alt] { width: 66px; height: 33px; max-width: none; object-fit: contain; flex: none; }
 .reel.win .sym-img { transform: scale(1.06); }
 .rv-img, .rv-img[alt] { width: 54px; height: 27px; max-width: none; object-fit: contain; }
+
+/* 1.19.31 押し順ナビ: 大きさが違っても中心を揃える */
+.navi { align-items: center; }
+.navi b { margin: 0; }

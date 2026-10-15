@@ -331,6 +331,7 @@ function clearChance() {
 function drawPayline(winIdx) {
   const old = reelsEl.querySelector(':scope > .payline');
   if (old) old.remove();
+  return;   // 1.19.31: 揃ったラインの線は表示しない
   if (!winIdx || winIdx.length < 3) return;
   const c = i => [(i % 3) * 66 + 33, Math.floor(i / 3) * CELL_H + CELL_H / 2];
   const [x1, y1] = c(winIdx[0]);
