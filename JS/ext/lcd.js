@@ -144,6 +144,7 @@
     if (bonusRun) return bonusRun.zone ? 'zone' : 'bonus';
     if (atGames > 0 || atEnding) return atType === 1 ? 'heaven' : atType === 2 ? 'death' : 'at';
     if (zenchoLeft > 0 || fakeZencho > 0) return 'zencho';
+    if (czLeft > 0) return 'cz';
     return stageNow();
   }
   /* 前兆の連続演出: 毎ゲーム一言ずつ進む。本物もガセも同じ流れで、最後のゲームだけ結果が分かれる */
@@ -154,6 +155,7 @@
     const t = ZSTEPS[z.i >= z.n ? 4 : Math.min(3, z.i - 1)];
     say(`STORY ${z.i}/${z.n}`, t, 2000, z.i >= 3 ? 'shock' : 'happy');
   };
+  window.onCzEnd = function () { if (!isDebugRun) say('', 'ゾーン終了…', 2200, 'sad'); };
   let last = '';
   setInterval(() => {
     const sc = scene();
@@ -164,6 +166,7 @@
       if (sc === 'dusk') say('DUSK', '', 1200);
       if (sc === 'night') say('NIGHT', '', 1200);
       if (sc === 'zencho') say('ZENCHO', '', 1500);
+      if (sc === 'cz') say('CHANCE ZONE', '', 1500);
     }
     if (Date.now() < hold) return;
     if (bonusRun) {
@@ -175,6 +178,7 @@
       const gain = atRun ? diffCoins - atRun.startDiff : 0;
       m2.textContent = `残り ${atGames}G  ${gain >= 0 ? '+' : ''}${gain}`;
     } else if (zenchoLeft > 0 || fakeZencho > 0) { m1.textContent = 'ZENCHO'; m2.textContent = ''; }
+    else if (czLeft > 0) { m1.textContent = 'CHANCE ZONE'; m2.textContent = `残り ${czLeft}G`; }
     else { m1.textContent = ''; m2.textContent = ''; }
   }, 300);
   /* 通常時のひとこと / 背景の動き */
@@ -198,7 +202,7 @@
   }, { passive: true }));
   const cabinetOnly = on => { const c = document.querySelector('.cabinet'); if (c) c.classList.toggle('demo', on); };
   setInterval(() => {
-    const busy = isDebugRun || bonusRun || atGames > 0 || isReelSpinning || isPekared || isBonusAligned || isAtResult || isPushing || FX.busy > 0 || zenchoLeft > 0 || fakeZencho > 0 || (typeof AUTOPLAY !== 'undefined' && AUTOPLAY);
+    const busy = isDebugRun || bonusRun || atGames > 0 || isReelSpinning || isPekared || isBonusAligned || isAtResult || isPushing || FX.busy > 0 || zenchoLeft > 0 || fakeZencho > 0 || czLeft > 0 || (typeof AUTOPLAY !== 'undefined' && AUTOPLAY);
     if (busy) { lastInput = Date.now(); return; }
     if (!demoOn && Date.now() - lastInput > 45000) { demoOn = true; demoStep = 0; cabinetOnly(true); }
     if (!demoOn) return;

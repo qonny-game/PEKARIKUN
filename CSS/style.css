@@ -1672,3 +1672,5 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 /* 1.19.11 デモ中はリール枠がゆっくり脈打つ */
 .cabinet.demo .reels { animation: demo-pulse 3s ease-in-out infinite; }
 @keyframes demo-pulse { 0%, 100% { box-shadow: 0 0 6px 1px rgba(250, 204, 21, 0.3); } 50% { box-shadow: 0 0 18px 4px rgba(250, 204, 21, 0.8); } }
+
+.cabinet[data-scene="cz"] .reels { box-shadow: 0 0 16px 3px rgba(56, 189, 248, 0.85); }

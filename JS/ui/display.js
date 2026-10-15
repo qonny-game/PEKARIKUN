@@ -121,6 +121,8 @@ function resetData() {
     Object.keys(roleStat).forEach(k => { roleStat[k] = 0; });
     replayPending = false;
     zenchoLeft = 0;
+    czLeft = 0;
+    fakeZencho = 0;
     atGames = 0;
     modeGames = 0;
     modeMult = 1;

@@ -853,7 +853,7 @@
     if (isAtResult) mode = null;
     else if (bonusRun) { mode = bonusRun.zone ? 'zone' : 'bonus'; lvl = bonusRun.zone ? bonusRun.zlv : Math.min(3, bonusRun.aura >> 1); }
     else if (atGames > 0) { mode = 'at'; lvl = Math.min(3, (st.combo >= 10 ? 1 : 0) + (st.combo >= 25 ? 1 : 0) + (atGames <= 5 ? 1 : 0) + (atType ? 1 : 0)); }
-    else if (zenchoLeft > 0 || fakeZencho > 0) { mode = FXO.bgm ? 'zencho' : null; lvl = 1; }
+    else if (zenchoLeft > 0 || fakeZencho > 0 || czLeft > 0) { mode = FXO.bgm ? 'zencho' : null; lvl = 1; }
     else if (FXO.bgmN && !isDebugRun && !isAtResult) { mode = 'normal'; lvl = 0; }
     if (!soundEnabled || !(FXO.bgm || (mode === 'normal' && FXO.bgmN))) mode = null;
     bgmSet(mode, lvl);

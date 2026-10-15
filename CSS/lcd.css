@@ -100,3 +100,5 @@
 @keyframes sp-coin { 0% { transform: translateY(0) scaleX(1); } 50% { transform: translateY(-44px) scaleX(.2); } 100% { transform: translateY(-20px) scaleX(1); opacity: 0; } }
 .sp-ripple { left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px; border-radius: 50%; border: 2px solid var(--sc); box-shadow: 0 0 8px var(--sc); animation: sp-ripple 1s ease-out forwards; }
 @keyframes sp-ripple { from { transform: scale(1); opacity: 1; } to { transform: scale(14); opacity: 0; } }
+
+.sub-lcd[data-scene="cz"]{ --lc1: #0c4a6e; --lc2: #fde047; }

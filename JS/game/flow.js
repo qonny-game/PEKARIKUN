@@ -281,6 +281,10 @@ function drawRole(inAT) {
   return 'lose';
 }
 
+const AT_REVIVE_P = 0.3;            // AT最終ゲームで復活する確率
+/* CHANCE ZONE: 強レア等で突入する6G。ボーナス当選確率が大きく上がる（楽しむための設計。機械割は実機より高め） */
+let czLeft = 0, czNew = false;
+const CZ_MULT = 8, CZ_G = 6, CZ_ENTRY_STRONG = 0.5, CZ_ENTRY_WEAK = 0.08;
 let zenchoTotal = 0, fakeTotal = 0;   // 前兆の長さ（連続演出の何話目かの表示用）
 let fakeZencho = 0;                 // ガセ前兆の残りG数（当選しない）
 const FAKE_ZENCHO_P = 1 / 160;      // 通常時1Gごとにガセ前兆へ入る確率
@@ -328,7 +332,15 @@ function handleSpin() {
   if (inAT) {
     atGames--;
     if (atRun) atRun.games++;
-    if (atGames === 0) atEnding = true;   // リザルトはこのゲームの結果が出たあとに表示
+    if (atGames === 0) {
+      if (atRun && Math.random() < AT_REVIVE_P) {
+        // 最終ゲームで復活: 数ゲーム延長してATが続く
+        atGames = 3 + Math.floor(Math.random() * 5);
+        atRun.revives = (atRun.revives || 0) + 1;
+        const rg = atGames;
+        setTimeout(() => { if (window.FXBanner) window.FXBanner('復活！', `+${rg}G`, 'red', true, 1800); if (window.vibrate) window.vibrate([60, 40, 160]); }, 900);
+      } else atEnding = true;   // リザルトはこのゲームの結果が出たあとに表示
+    }
     updateAT();
     atTension(atGames);
   } else if (inMode) {
@@ -351,7 +363,12 @@ function handleSpin() {
   const inCherry = cherryGames > 0;
   if (inCherry) { cherryGames--; updateCherry(); }
   // AT中は当選しにくい / 次回モード中は当選しやすい / チェリー後は当選しやすい
-  const hitMult = (inAT ? AT_HIT_MULT * AT_TYPES[atType].hit : inMode ? modeMult : 1) * (inCherry ? cherryM : 1);
+  const inCZ = czLeft > 0 && !inAT && !bonusRun;
+  if (inCZ) {
+    czLeft--;
+    if (czNew) { czNew = false; if (window.FXBanner) window.FXBanner('CHANCE ZONE', `${CZ_G}G`, 'red', true, 1700); }
+  } else czLeft = 0;
+  const hitMult = (inAT ? AT_HIT_MULT * AT_TYPES[atType].hit : inMode ? modeMult : 1) * (inCherry ? cherryM : 1) * (inCZ ? CZ_MULT : 1);
   let isHit = false;
   // ガセ前兆: 前兆ステージに入るが当選はしない（本前兆と同じ3〜5G。ハズレの期待感を作る）
   let zStep = null;   // 前兆の連続演出（本物・ガセ共通の見た目。最後だけ結果が分かれる）
@@ -370,11 +387,20 @@ function handleSpin() {
 
   if (zStep && typeof window.onZenchoStep === 'function') window.onZenchoStep(zStep);
 
+  if (inCZ && (isHit || zenchoLeft > 0)) czLeft = 0;     // 当選(前兆に入った場合も)でゾーン終了
+  else if (inCZ && czLeft === 0 && window.onCzEnd) window.onCzEnd(false);
+
   // 通常時のサンド目（リーチ目）: ボーナス確定。当選と同じ流れで、サンド目の形で止まる
   const reach = !inAT && !isHit && zenchoLeft === 0 && Math.random() < SAND_REACH_P;
   if (reach) isHit = true;
   // 小役は1回の乱数で決める（実機と同じ。確率は従来の順番抽選と同じ配分）
   const role = isHit ? 'hit' : drawRole(inAT);
+  // CHANCE ZONE の突入抽選: 強レアは入りやすい。突入は次ゲームから
+  if (!inAT && !bonusRun && !isHit && czLeft === 0 && zenchoLeft === 0 && fakeZencho === 0) {
+    const strong = ['cherryS', 'melonS', 'chanceS'].includes(role);
+    const weak = ['cherryW', 'melonW', 'chanceW'].includes(role);
+    if ((strong && Math.random() < CZ_ENTRY_STRONG) || (weak && Math.random() < CZ_ENTRY_WEAK)) { czLeft = CZ_G; czNew = true; }
+  }
   if (!isDebugRun) {
     const rk = role === 'bell' ? 'bell' : role === 'replay' ? 'replay' : /^melon/.test(role) ? 'melon' : /^cherry/.test(role) ? 'cherry' : /^chance/.test(role) ? 'chance' : null;
     if (rk) roleStat[rk]++;
