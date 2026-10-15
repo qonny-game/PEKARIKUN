@@ -155,13 +155,5 @@ gogoBox.addEventListener('pointerdown', e => {
   if (isReelSpinning) { stopNextReel(); return; }   // タップは左から順に止まる
   if (!spinBtn.disabled) handleSpin();
 });
-// 操作ガイド: 状態管理用ボタンの文言を、リール下の表示に反映
-const tapHint = document.getElementById('tap-hint');
-function syncTapHint() {
-  tapHint.textContent = spinBtn.disabled ? spinBtn.innerText : `タップ: ${spinBtn.innerText}`;
-  tapHint.classList.toggle('off', spinBtn.disabled);
-}
-new MutationObserver(syncTapHint).observe(spinBtn, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['disabled'] });
-syncTapHint();
 document.getElementById('reset-btn').addEventListener('click', resetData);
 

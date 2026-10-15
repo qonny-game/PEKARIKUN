@@ -43,7 +43,8 @@ const leftCherries = g => [0, 3, 6].filter(i => g[i] === 'cherry').length;
 /* 役ごとに、成立する停止位置の組み合わせ (3リール分の中段位置) を全部数えておく。
    ハズレ・ベル・リプレイ・チェリーは、必ずこの中から選ぶ (配列どおりの図柄で止まる) */
 const ROLE_COMBOS = { lose: [], replay: [], cherry: [], cherryW: [], cherryS: [], melonW: [], chanceW: [], chanceS: [], sand: [], bell0: [], bell1: [], bell2: [] };
-/* チャンス目 (ハズレ目の特定パターン): 弱=各リールのどこかにスイカがバラけて停止 / 強=各リールのどこかに7がバラけて停止 */
+/* 上段のスイカ（第1リール上段）は、スイカ系（弱=左上→右下の斜め / 強=上段横）か弱チャンス目の確定のときだけ。それ以外の役・ハズレでは出さない
+   弱チャンス目: 左上・中央・第3リール中段がスイカでテンパイし、揃わない / 強チャンス目: 各リールのどこかに7がバラけて停止 */
 const colHas = (g, c, f) => [c, 3 + c, 6 + c].some(i => f(g[i]));
 
 (function buildCombos() {
@@ -52,20 +53,24 @@ const colHas = (g, c, f) => [c, 3 + c, 6 + c].some(i => f(g[i]));
     const g = gridOf(ts);
     const L = alignedLines(g);
     const lc = leftCherries(g);
+    const topMelon = g[0] === 'melon';   // 第1リール上段のスイカ
     if (L.length === 0) {
       if (lc === 0) {
-        if ([0, 1, 2].every(k => colHas(g, k, isSeven))) ROLE_COMBOS.chanceS.push(ts);
-        else if ([0, 1, 2].every(k => colHas(g, k, s => s === 'melon'))) ROLE_COMBOS.chanceW.push(ts);
+        if (topMelon) {
+          if (g[4] === 'melon' && g[5] === 'melon' && g[8] !== 'melon') ROLE_COMBOS.chanceW.push(ts);   // 斜めテンパイ＋第3リール中段スイカ
+        }
+        else if ([0, 1, 2].every(k => colHas(g, k, isSeven))) ROLE_COMBOS.chanceS.push(ts);
         else if (g[1] === 'bar' && g[4] === 'cherry' && g[7] === 'bar') ROLE_COMBOS.sand.push(ts);   // サンド目 (第2リール: バー・チェリー・バー)
         else ROLE_COMBOS.lose.push(ts);
-      } else if (lc === 1) {
+      } else if (lc === 1 && !topMelon) {
         ROLE_COMBOS.cherry.push(ts);
         (g[3] === 'cherry' ? ROLE_COMBOS.cherryS : ROLE_COMBOS.cherryW).push(ts);   // 中段=強 / 上下段=弱
       }
     } else if (L.length === 1 && lc === 0) {
       const { i, sym } = L[0];
-      if (sym === 'melon' && (i === 6 || i === 7)) ROLE_COMBOS.melonW.push(ts);   // 斜めスイカ=弱スイカ
-      if (sym === 'replay') ROLE_COMBOS.replay.push(ts);
+      if (sym === 'melon' && i === 6 && topMelon) ROLE_COMBOS.melonW.push(ts);   // 左上→右下の斜め=弱スイカ（強スイカは上段横で pickMelonPlan が作る）
+      if (topMelon) { /* スイカ系の揃いはここでは扱わない */ }
+      else if (sym === 'replay') ROLE_COMBOS.replay.push(ts);
       else if (sym === 'bell') {
         if (i <= 2) ROLE_COMBOS.bell0.push(ts);
         else if (i === 6) ROLE_COMBOS.bell1.push(ts);
@@ -76,15 +81,16 @@ const colHas = (g, c, f) => [c, 3 + c, 6 + c].some(i => f(g[i]));
 })();
 const pickCombo = kind => { const l = ROLE_COMBOS[kind]; return l[Math.floor(Math.random() * l.length)]; };
 
-/* スイカ: 中段に揃う。第1・第3リールは自動で揃うが、中リールは自分で狙わないと揃わない */
+/* 強スイカ: 上段の横に揃う。第1・第3リールは上段にスイカで自動停止、第2リールは自分で狙わないと揃わない
+   windowOf の上段 = strip[t+1] なので、上段にスイカが来る停止位置は t = 図柄の位置 - 1 */
 function pickMelonPlan() {
-  const idxs = c => STRIPS[c].map((k, i) => (k === 'melon' ? i : -1)).filter(i => i >= 0);
+  const tops = c => STRIPS[c].map((k, i) => (k === 'melon' ? mod(i - 1) : -1)).filter(t => t >= 0);
   const opts = [];
-  idxs(0).forEach(t0 => idxs(2).forEach(t2 => {
-    const ok = idxs(1).every(t1 => {
+  tops(0).forEach(t0 => tops(2).forEach(t2 => {
+    const ok = tops(1).every(t1 => {
       const g = gridOf([t0, t1, t2]);
       const L = alignedLines(g);
-      return leftCherries(g) === 0 && L.length === 1 && L[0].i === 1 && L[0].sym === 'melon';
+      return leftCherries(g) === 0 && L.length === 1 && L[0].i === 0 && L[0].sym === 'melon';
     });
     if (ok) opts.push([t0, t2]);
   }));

@@ -50,7 +50,6 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `led-win` | `JS/ui/display.js` |  |
 | `led-credit` | `JS/ui/display.js` |  |
 | `led-total` | `JS/ui/display.js` |  |
-| `tap-hint` | `JS/ui/display.js` |  |
 | `spin-btn` | `JS/core/state.js` |  |
 | `align-btn` | `JS/core/state.js` |  |
 | `auto-btn` | `JS/game/auto.js` |  |

@@ -141,7 +141,7 @@
     return ['blue', 'red', 'gold'][weightedPick(allowBlue ? w : [0, w[1], w[2]])];
   }
   function showCutin(color, success, done) {
-    const TEXT = { blue: 'CHANCE', red: 'PEKA CHANCE', gold: 'PEKA!!', rainbow: 'GOGO!!', yellow: 'BELL', green: 'MELON', white: '??' };
+    const TEXT = { blue: 'REPLAY', red: 'PEKA CHANCE', gold: 'PEKA!!', rainbow: 'GOGO!!', yellow: 'BELL', green: 'MELON', white: '??' };
     const el = put(`fx-cutin c-${color}`, `${mascot(success ? 'happy' : 'shock')}<b>${TEXT[color]}</b>`, 1550);
     if (color === 'gold' || color === 'rainbow') { unlock('cutin_gold'); triggerFlash(); sndUp(6); }
     else if (color === 'red') sndUp(4); else sndUp(3);
@@ -240,11 +240,11 @@
   const PV = {
     parade(s, d) {
       const n = 5;
-      pvRun('parade', Array.from({ length: n }, (_, i) => `<span class="pv-m${s && i === n - 1 ? ' big' : ''}" style="--d:${(i * 0.2).toFixed(2)}s">${mascotSVG(s && i === n - 1 ? 'happy' : 'happy', s && i === n - 1 ? '#ffd700' : '')}</span>`).join(''), 2400, 1600, s, s ? 'CHANCE' : '', d);
+      pvRun('parade', Array.from({ length: n }, (_, i) => `<span class="pv-m${s && i === n - 1 ? ' big' : ''}" style="--d:${(i * 0.2).toFixed(2)}s">${mascotSVG(s && i === n - 1 ? 'happy' : 'happy', s && i === n - 1 ? '#ffd700' : '')}</span>`).join(''), 2400, 1600, s, '', d);
       snd([392, 440, 494, 523], 0.2, 0.15, 'square', 0.06);
     },
     button(s, d) {
-      const el = pvRun('button', '<i class="pv-btn">PUSH</i>', 2000, 1100, s, s ? 'CHANCE' : '...', d);
+      const el = pvRun('button', '<i class="pv-btn">PUSH</i>', 2000, 1100, s, s ? '' : '...', d);
       wait(700, () => { el.classList.add('press'); snd([220], 0, 0.15, 'square', 0.12); });
     },
     roulette(s, d) {
@@ -272,7 +272,7 @@
     rain(s, d) {
       // 虹は大きな当たりの色。通常時は虹が出るのは大きな当たりのときだけ
       const rbw = pvColor === null || pvColor === 'rainbow' ? '<i class="pv-rbw"></i>' : '';
-      pvRun('rain', `<i class="pv-rain"></i>${rbw}`, 2300, 1300, s, s ? 'CHANCE' : '', d);
+      pvRun('rain', `<i class="pv-rain"></i>${rbw}`, 2300, 1300, s, '', d);
       snd([196, 175], 0.3, 0.5, 'sine', 0.06);
     },
     coin(s, d) {

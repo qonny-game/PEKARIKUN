@@ -51,7 +51,7 @@
     const type = pick(['star', 'star', 'ufo', 'rocket', 'balloon', 'rainbow', 'thunder', 'fire', 'chest', 'eye']);
     if (type === 'star') { for (let i = 0; i <= lv; i++) setTimeout(() => spawn('star', lv), i * 220); }
     else spawn(type, lv);
-    if (lv >= 2) { say(['', '', 'CHANCE', 'HOT!!'][lv], NAMES[type], 1600, 'shock', 'shake'); }
+    if (lv >= 2) { say(['', '', '', 'HOT!!'][lv], NAMES[type], 1600, 'shock', 'shake'); }
     return lv;
   }
   const ROLE_MSG = { cherryW: ['弱チェリー', 'CHERRY'], cherryS: ['強チェリー', 'CHERRY!!'], melonW: ['弱スイカ', 'MELON'], melon: ['強スイカ', 'MELON!!'], chanceW: ['弱チャンス目', 'CHANCE'], chanceS: ['強チャンス目', 'CHANCE!!'] };

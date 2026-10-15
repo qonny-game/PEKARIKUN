@@ -106,9 +106,9 @@ function stopCol(c, auto) {
     if (c === 0) { tele = true; t = p.t0; }
     else if (c === 2) { tele = true; t = p.t2; }
     else {
-      const a = cands.find(x => stripSym(1, x) === 'melon');
+      const a = cands.find(x => stripSym(1, x + 1) === 'melon');   // 上段にスイカが来る位置
       if (a !== undefined) { T = a; t = mod(a); }
-      else if (auto) { tele = true; t = STRIPS[1].indexOf('melon'); }
+      else if (auto) { tele = true; t = mod(STRIPS[1].indexOf('melon') - 1); }
       else {
         const ok = cands.filter(x => alignedLines(gridOf([p.t0, mod(x), p.t2])).length === 0);
         T = (ok.length ? ok : cands)[0]; t = mod(T);
@@ -201,7 +201,7 @@ function finishReels() {
   let success = false;
   if (rs.plan.kind === 'seven') success = isSeven(f[0][1]) && f[1][1] === f[0][1] && f[2][1] === f[0][1];
   else if (rs.plan.kind === 'cherry') success = f[0].includes('cherry');
-  else if (rs.plan.kind === 'melon') success = f[0][1] === 'melon' && f[1][1] === 'melon' && f[2][1] === 'melon';
+  else if (rs.plan.kind === 'melon') success = f[0][0] === 'melon' && f[1][0] === 'melon' && f[2][0] === 'melon';
   else if (rs.plan.kind === 'sand') success = f[1][0] === 'bar' && f[1][1] === 'cherry' && f[1][2] === 'bar';
   spinBtn.innerText = 'レバーON';
   reelLocked = true;
