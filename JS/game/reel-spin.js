@@ -239,7 +239,26 @@ const FAKE_OMEN_RATE = 0.07;   // ハズレ時のフェイク予告 (外れて�
 /* 赤ランプ(チェリー予告)は、チェリー当選の確定か、ボーナス確定中のハズレ（矛盾）のときだけ */
 const OMEN_OF = { cherryW: 'cherry', cherryS: 'cherry', melonW: 'melon', chanceW: 'chance', chanceS: 'chance' };
 const OMEN_LAMP = LAMP_TABLE.omen;   // 予告の色（赤=チェリー / 緑=スイカ / 紫ピンク=チャンス目）
+/* 2択予告: 左右のランプが別の色で光り、その2つの役のどちらかが成立している（外れ・ガセなし） */
+const OMEN_GROUP = { bell0: 'bell', bell1: 'bell', bell2: 'bell', replay: 'replay', cherryW: 'cherry', cherryS: 'cherry', melon: 'melon', melonW: 'melon', chanceW: 'chance', chanceS: 'chance' };
+const OMEN_PAIRS = [['bell', 'replay'], ['bell', 'cherry'], ['melon', 'cherry'], ['cherry', 'chance']];
+const OMEN_PAIR_COLOR = { bell: 'yellow', replay: 'blue', cherry: 'red', melon: 'green', chance: 'pink' };
+const PAIR_OMEN_P = 0.1;
 function omenThen(kind, go) {
+  const grp = OMEN_GROUP[kind];
+  if (grp && Math.random() < PAIR_OMEN_P * (window.FXO_FREQ ? window.FXO_FREQ() : 1)) {
+    const cands = OMEN_PAIRS.filter(p => p.includes(grp));
+    const pair = cands[Math.floor(Math.random() * cands.length)];
+    const ord = Math.random() < 0.5 ? pair : [pair[1], pair[0]];   // 左右はランダムに入れ替え
+    reelLocked = true;
+    sideLampPair(OMEN_PAIR_COLOR[ord[0]], OMEN_PAIR_COLOR[ord[1]]);
+    if (window.FXBanner) window.FXBanner('どっち？', '', '', false, 1100);
+    pekaLater(() => { reelLocked = false; go(); }, 1200);
+    return;
+  }
+  omenThen2(kind, go);
+}
+function omenThen2(kind, go) {
   let shown = OMEN_OF[kind] === undefined ? kind : OMEN_OF[kind];
   if (kind === 'lose' && Math.random() < FAKE_OMEN_RATE) shown = pendingBonusType && Math.random() < 0.7 ? 'cherry' : 'melon';
   if (!OMEN_LAMP[shown]) { go(); return; }
@@ -272,6 +291,7 @@ function runRole(kind, done, navi) {
         // 押し順がナビと違ったとき: 一言と下降音でわかるようにする
         if (res.order && res.order.some((c, i) => c !== navi.order[i])) {
           showAtToast('ナビ違い');
+          if (window.LCDX) { LCDX.say('', 'ナビ違い！', 2300, 'angry'); LCDX.act('angry'); }
           if (soundEnabled) { initAudio(); const t0 = audioCtx.currentTime; [330, 247].forEach((f, i) => tone(f, t0 + i * 0.1, 0.18, 'triangle', 0.1)); }
         }
       }

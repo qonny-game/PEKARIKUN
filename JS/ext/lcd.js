@@ -17,7 +17,68 @@
   let mood = '';
   function setMood(m) { if (m !== mood) { mood = m; actor.innerHTML = FX.mascotSVG(m); } }
   setMood('happy');
-  function anim(c) { actor.classList.remove('hop', 'spin', 'shake'); void actor.offsetWidth; actor.classList.add(c); }
+  function anim(c) {
+    if (ACTS[c]) { act(c); return; }
+    actor.classList.remove('hop', 'spin', 'shake'); void actor.offsetWidth; actor.classList.add(c);
+  }
+  /* ---------- ペカり君の動き: 液晶を横切る / 跳ねる / 怒る / 落ち込む / ひょっこり ---------- */
+  const lcdW = () => el.clientWidth || 340;
+  const selfW = () => actor.offsetWidth || 68;
+  let actId = 0;
+  function runAnim(frames, ms, ease, done) {
+    actor.classList.remove('hop', 'spin', 'shake');
+    actor.getAnimations().forEach(a => a.cancel());
+    const a = actor.animate(frames, { duration: ms, easing: ease || 'ease-in-out' });
+    const id = ++actId;
+    a.onfinish = () => { if (id === actId && done) done(); };
+    return a;
+  }
+  const back = () => { if (Date.now() >= hold) setMood('happy'); };
+  const ACTS = {
+    // 右へ駆け抜けて、左から戻ってくる
+    cross() {
+      setMood('happy');
+      const W = lcdW() + 20, fr = [];
+      for (let i = 0; i <= 10; i++) fr.push({ transform: `translate(${Math.round(W * i / 10)}px, ${i % 2 ? -26 : 0}px) rotate(${i % 2 ? 10 : -6}deg)` });
+      runAnim(fr, 1900, 'linear', () => runAnim([{ transform: `translateX(${-selfW() - 20}px)` }, { transform: 'translateX(0)' }], 800, 'ease-out'));
+    },
+    // 左右どちらかから猛ダッシュ (回転しながら)
+    dash() {
+      setMood('shock');
+      const W = lcdW() + 20;
+      runAnim([{ transform: 'translate(0, 0) rotate(0)' }, { transform: `translate(${W / 2}px, -50px) rotate(360deg) scale(1.3)` }, { transform: `translate(${W}px, 0) rotate(720deg)` }], 1000, 'ease-in',
+        () => { back(); runAnim([{ transform: `translateX(${-selfW() - 20}px)` }, { transform: 'translateX(0)' }], 600, 'ease-out'); });
+    },
+    // 液晶の真ん中まで大ジャンプ
+    jump() {
+      setMood('happy');
+      const cx = Math.max(0, lcdW() / 2 - selfW() / 2 - 6);
+      runAnim([{ transform: 'translate(0, 0) scale(1)' }, { transform: `translate(${cx}px, -70px) scale(1.6) rotate(180deg)`, offset: .45 }, { transform: `translate(${cx}px, -78px) scale(1.7) rotate(360deg)`, offset: .6 }, { transform: 'translate(0, 0) scale(1)' }], 1300, 'ease-out');
+    },
+    // 怒り: 真ん中に出てきて大きくなり、ぷるぷる震える
+    angry() {
+      setMood('angry');
+      const cx = Math.max(0, lcdW() / 2 - selfW() / 2 - 6), fr = [{ transform: 'translate(0, 0) scale(1)' }, { transform: `translate(${cx}px, -40px) scale(2)`, offset: .2 }];
+      for (let i = 0; i < 8; i++) fr.push({ transform: `translate(${cx + (i % 2 ? 7 : -7)}px, -40px) scale(${2.05 + (i % 2) * .08}) rotate(${i % 2 ? 4 : -4}deg)`, offset: .2 + (i + 1) * .09 });
+      fr.push({ transform: 'translate(0, 0) scale(1)' });
+      if (window.vibrate) window.vibrate([60, 30, 60]);
+      runAnim(fr, 2300, 'linear', () => { setMood('happy'); });
+    },
+    // 残念: しょんぼり歩いて、うなだれる
+    sad() {
+      setMood('sad');
+      const x = lcdW() * .4;
+      runAnim([{ transform: 'translate(0, 0) rotate(0)' }, { transform: `translate(${x * .5}px, -4px) rotate(-6deg)`, offset: .25 }, { transform: `translate(${x}px, 0) rotate(-9deg)`, offset: .5 }, { transform: `translate(${x}px, 8px) rotate(-16deg) scale(.92)`, offset: .75 }, { transform: 'translate(0, 0) rotate(0)' }], 2800, 'ease-in-out', back);
+    },
+    // 下からひょっこり
+    peek() {
+      setMood('happy');
+      runAnim([{ transform: 'translateY(90px) rotate(-12deg)' }, { transform: 'translateY(-6px) rotate(8deg)', offset: .3 }, { transform: 'translateY(0) rotate(-8deg)', offset: .5 }, { transform: 'translateY(0) rotate(6deg)', offset: .7 }, { transform: 'translateY(90px) rotate(-12deg)' }], 1700, 'ease-out',
+        () => runAnim([{ transform: 'translateY(90px)' }, { transform: 'translateY(0)' }], 400, 'ease-out'));
+    }
+  };
+  function act(name) { if (isDebugRun) return; const f = ACTS[name]; if (f) f(); }
+  window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0) };
   let hold = 0;
   function say(a, b, ms, md, an) {
     m1.textContent = a || ''; m2.textContent = b || '';
@@ -27,6 +88,22 @@
     if (an) anim(an);
   }
 
+  /* ---------- リールを枠いっぱいに拡大 (液晶の下の余白をなくす) ---------- */
+  const box = document.getElementById('gogo-box'), reelsEl = document.getElementById('reels');
+  function fitReels() {
+    if (!box || !reelsEl) return;
+    const w = box.clientWidth, h = box.clientHeight;
+    if (!w || !h) return;
+    const top = (parseFloat(el.style.height) || el.offsetHeight || 186) + 4 + 2;
+    const sc = Math.max(1, Math.min(w / 198, (h - top - 2) / 126));
+    reelsEl.style.transform = `scale(${sc.toFixed(3)})`;
+    reelsEl.style.marginTop = top + 'px';
+  }
+  fitReels();
+  window.addEventListener('resize', fitReels);
+  if (window.ResizeObserver && box) new ResizeObserver(fitReels).observe(box);
+  window.fitReels = fitReels;
+
   /* ---------- 飛来物 ---------- */
   const SPRITES = { coin: 1000, ripple: 1000, star: 900, ufo: 2000, rocket: 1400, balloon: 2600, rainbow: 2200, cloud: 3200, thunder: 3200, fire: 1100, chest: 1900, eye: 1800 };
   function spawn(type, lv) {
@@ -34,11 +111,11 @@
     const base = type === 'thunder' ? 'cloud' : type;
     d.className = `sp sp-${base}${type === 'thunder' ? ' dark' : ''}`;
     d.dataset.lv = lv;
-    d.style.setProperty('--dy', Math.round(rnd() * 20) + 'px');
-    if (base === 'coin') d.style.left = (20 + Math.round(rnd() * 60)) + '%';
-    if (base === 'star') d.style.top = (2 + Math.round(rnd() * 14)) + 'px';
+    d.style.setProperty('--dy', Math.round(rnd() * 90) + 'px');
+    d.style.setProperty('--dx', (12 + Math.round(rnd() * 62)) + '%');
+    if (base === 'coin') d.style.left = (8 + Math.round(rnd() * 82)) + '%';
     fg.appendChild(d);
-    if (type === 'chest') setTimeout(() => d.classList.add('open'), 900);
+    if (type === 'chest') setTimeout(() => { d.classList.add('open'); for (let i = 0; i < 4 + lv * 2; i++) setTimeout(() => spawn('coin', Math.min(3, lv)), i * 90); }, 900);
     setTimeout(() => d.remove(), SPRITES[type] + 100);
     if (window.TRO) TRO.seen('lcd:' + type);
     return d;
@@ -51,7 +128,7 @@
     const type = pick(['star', 'star', 'ufo', 'rocket', 'balloon', 'rainbow', 'thunder', 'fire', 'chest', 'eye']);
     if (type === 'star') { for (let i = 0; i <= lv; i++) setTimeout(() => spawn('star', lv), i * 220); }
     else spawn(type, lv);
-    if (lv >= 2) { say(['', '', '', 'HOT!!'][lv], NAMES[type], 1600, 'shock', 'shake'); }
+    if (lv >= 2) { say(['', '', '', 'HOT!!'][lv], NAMES[type], 1600, 'shock', lv >= 3 ? 'jump' : 'shake'); }
     return lv;
   }
   const ROLE_MSG = { cherryW: ['弱チェリー', 'CHERRY'], cherryS: ['強チェリー', 'CHERRY!!'], melonW: ['弱スイカ', 'MELON'], melon: ['強スイカ', 'MELON!!'], chanceW: ['弱チャンス目', 'CHANCE'], chanceS: ['強チャンス目', 'CHANCE!!'] };
@@ -70,7 +147,7 @@
       if (WIN_LAMP[kind] && (!aimedRole || (res && res.success))) sideLampFlash(WIN_LAMP[kind], 1500);   // 当たった役の色
       if (!isDebugRun) {
         const r = ROLE_MSG[kind];
-        if (r) { const strong = kind === 'cherryS' || kind === 'melon' || kind === 'chanceS'; say(r[1], r[0], 1700, strong ? 'shock' : 'happy', strong ? 'hop' : null); }
+        if (r) { const strong = kind === 'cherryS' || kind === 'melon' || kind === 'chanceS'; say(r[1], r[0], 1700, strong ? 'shock' : 'happy', strong ? 'jump' : null); }
         else if (kind === 'replay') say('REPLAY', '', 900);
         normalPlay(kind);
       }
@@ -102,7 +179,7 @@
     if (!isDebugRun) {
       if (window.vibrate) window.vibrate([80, 40, 80, 40, 200]);
       el.classList.add('flash', 'rainbow');
-      say('PEKA!!', 'GOGO LAMP', 2400, 'happy', 'spin');
+      say('PEKA!!', 'GOGO LAMP', 2400, 'happy', 'jump');
       spawn('fire', 3);
       setTimeout(() => el.classList.remove('flash', 'rainbow'), 2600);
     }
@@ -151,11 +228,11 @@
   const ZSTEPS = ['ようすが…', 'ざわざわ…', '何かが近づいてる', 'チャンス！', '来るか…！'];
   window.onZenchoStep = function (z) {
     if (isDebugRun) return;
-    if (z.end && !z.real) { say('', 'あれ…？', 2200, 'sad'); return; }
+    if (z.end && !z.real) { say('', 'あれ…？', 2800, 'sad', 'sad'); return; }
     const t = ZSTEPS[z.i >= z.n ? 4 : Math.min(3, z.i - 1)];
     say(`STORY ${z.i}/${z.n}`, t, 2000, z.i >= 3 ? 'shock' : 'happy');
   };
-  window.onCzEnd = function () { if (!isDebugRun) say('', 'ゾーン終了…', 2200, 'sad'); };
+  window.onCzEnd = function () { if (!isDebugRun) say('', 'ゾーン終了…', 2800, 'sad', 'sad'); };
   let last = '';
   setInterval(() => {
     const sc = scene();
@@ -165,8 +242,11 @@
       if (sc === 'day') say('NEW DAY', '', 1500);
       if (sc === 'dusk') say('DUSK', '', 1200);
       if (sc === 'night') say('NIGHT', '', 1200);
-      if (sc === 'zencho') say('ZENCHO', '', 1500);
-      if (sc === 'cz') say('CHANCE ZONE', '', 1500);
+      if (sc === 'zencho') say('ZENCHO', '', 1500, 'shock', 'peek');
+      if (sc === 'cz') say('CHANCE ZONE', '', 1500, 'happy', 'dash');
+      if (sc === 'at' || sc === 'heaven') say('', '', 1, 'happy', 'cross');
+      if (sc === 'death') say('DEATH', '', 1500, 'angry', 'angry');
+      if (sc === 'bonus' || sc === 'zone') act('jump');
     }
     if (Date.now() < hold) return;
     if (bonusRun) {
@@ -181,6 +261,13 @@
     else if (czLeft > 0) { m1.textContent = 'CHANCE ZONE'; m2.textContent = `残り ${czLeft}G`; }
     else { m1.textContent = ''; m2.textContent = ''; }
   }, 300);
+  const _miss = missEffect;
+  missEffect = function () { _miss(); if (!isDebugRun) say('', '残念…', 2200, 'sad', 'sad'); };
+  /* ときどき画面を横切ったり、ひょっこり出てくる */
+  setInterval(() => {
+    if (isDebugRun || FX.busy || Date.now() < hold || document.hidden) return;
+    if (rnd() < 0.5 * freq()) act(pick(['cross', 'peek', 'jump', 'peek', 'cross']));
+  }, 11000);
   /* 通常時のひとこと / 背景の動き */
   setInterval(() => {
     if (isDebugRun || bonusRun || atGames > 0 || Date.now() < hold || FX.busy) return;

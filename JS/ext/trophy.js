@@ -49,7 +49,7 @@
   const CUP = c => `<svg viewBox="0 0 32 32" width="30" height="30"><path d="M9 4h14v7a7 7 0 0 1-14 0z" fill="${c}" stroke="#fff" stroke-width="1.2"/><path d="M9 7H4q0 7 6 8M23 7h5q0 7-6 8" fill="none" stroke="${c}" stroke-width="2"/><rect x="14" y="17" width="4" height="6" fill="${c}"/><rect x="9" y="23" width="14" height="4" rx="1.5" fill="${c}" stroke="#fff" stroke-width="1"/></svg>`;
   const wrap = document.createElement('div');
   wrap.className = 'tro-wrap';
-  document.body.appendChild(wrap);
+  (document.querySelector('.cab-lcd') || document.body).appendChild(wrap);   // 液晶の中に出す
   const q = []; let showing = false;
   function toast(head, body, color, kind) { q.push({ head, body, color, kind }); if (!showing) next(); }
   function next() {

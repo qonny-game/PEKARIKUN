@@ -44,6 +44,21 @@ function sideLampFlash(kind, ms) {
   const tok = sideTok;
   setTimeout(() => { if (tok === sideTok) sideLampOff(); }, ms);
 }
+/* 2択予告: 左右のサイドランプを別の色で同時に点灯。2つの役のどちらかが成立している */
+function sideLampPair(colorL, colorR) {
+  sideTok++;
+  [[sideL, colorL], [sideR, colorR]].forEach(([el, c]) => {
+    if (!el) return;
+    el.classList.remove('on', 'heaven', 'lit', 'pat-chase', 'pat-sweep', 'pat-pulse', 'pat-solid'); void el.offsetWidth;
+    el.classList.add('on', 'lit', 'pat-solid');
+    el.style.setProperty('--sl', SIDE_COLOR[c] || SIDE_COLOR.red);
+  });
+  if (soundEnabled) {
+    initAudio();
+    const t = audioCtx.currentTime;
+    [660, 880].forEach((f, i) => tone(f, t + i * 0.12, 0.2, 'triangle', 0.1));
+  }
+}
 function sideLampOff() { sideTok++; [sideL, sideR].forEach(el => el && el.classList.remove('on', 'heaven', 'lit')); }
 
 /* ランプ点灯そのもの */
@@ -145,8 +160,11 @@ function freezeToZone(debug) {
   isSuspense = true;                       // フリーズ中はレバーが効かない
   startTension('FREEZE');
   // フリーズ: 暗転して静まる → ドン! ×3 (だんだん強く) → 弾ける
-  const mainEl = document.querySelector('.cabinet') || document.body;
+  // 暗転するのは液晶だけ。リールは見えたまま、図柄のバックランプだけ落とす
+  const mainEl = document.getElementById('sub-lcd') || document.body;
+  const cabEl = document.querySelector('.cabinet');
   mainEl.classList.add('freeze-dark');
+  if (cabEl) cabEl.classList.add('freeze-dim');
   sideLampOff();
   const thud = (lv) => {
     shakeMain(180 + lv * 120);
@@ -159,11 +177,12 @@ function freezeToZone(debug) {
   };
   const dons = [1100, 1900, 2700].map((ms, i) => setTimeout(() => {
     thud(i);
-    if (i === 2) mainEl.classList.remove('freeze-dark');
+    if (i === 2) { mainEl.classList.remove('freeze-dark'); if (cabEl) cabEl.classList.remove('freeze-dim'); }
   }, ms));
   suspenseTimer = setTimeout(() => {
     dons.forEach(clearTimeout);
     mainEl.classList.remove('freeze-dark');
+    if (cabEl) cabEl.classList.remove('freeze-dim');
     stopTension();
     isSuspense = false;
     tripleFlash();
@@ -438,8 +457,8 @@ function handleSpin() {
     if (inAT && atRun) atRun.bells++;
     const type = pickBellType(inAT);
     // AT中のベル: 揃いやすいが、ナビが出ないことがあり、ナビなしのときはハズレ目になることもある
-    const atNavi = inAT && Math.random() < 0.6 ? naviFor('') : null;   // ベルのナビは黄
-    const atBellMiss = inAT && !atNavi && Math.random() < 0.3;
+    const atNavi = inAT && Math.random() < 0.85 ? naviFor('') : null;   // ベルのナビは黄
+    const atBellMiss = inAT && !atNavi && Math.random() < 0.1;
     runRole(atBellMiss ? 'lose' : 'bell' + type, () => {
       if (atBellMiss) { stopTension(); updateUI(); maybeShowAtResult(); return; }
       stopTension();

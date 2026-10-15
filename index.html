@@ -13,12 +13,6 @@
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-5 select-none">
 
-  <div id="fx-overlay"></div>
-  <canvas id="fx-canvas" class="fixed inset-0 pointer-events-none" style="z-index: 5;"></canvas>
-  <div id="flash-overlay" class="fixed inset-0 pointer-events-none z-50"></div>
-  <div id="aura" class="aura"></div>
-  <div id="judge-overlay" class="judge-overlay"></div>
-  <div id="judge-text" class="judge-text"></div>
 
   <main class="w-full max-w-md p-3 flex flex-col gap-3 relative z-10 overflow-hidden">
 
@@ -44,6 +38,43 @@
         <div id="side-l" class="side-lamp"><i style="--i:0">P</i><i style="--i:1">E</i><i style="--i:2">K</i><i style="--i:3">A</i><i style="--i:4">R</i><i style="--i:5">I</i><i style="--i:6">K</i><i style="--i:7">U</i><i style="--i:8">N</i></div>
 
         <div class="cab-lcd">
+          <!-- 演出レイヤー: 液晶の中だけに出す -->
+          <!-- ATリザルト -->
+          <div id="at-result" class="at-result">
+            <div class="at-result-card">
+              <div id="at-result-title" class="at-result-title">AT RESULT</div>
+              <div class="at-result-label">獲得枚数</div>
+              <div id="at-result-gain" class="at-result-gain">+0</div>
+              <div class="at-result-stats">
+                <div id="ar-row-games"><span>AT G数</span><b id="ar-games">0 G</b></div>
+                <div id="ar-row-bells"><span>ベル揃い</span><b id="ar-bells">0 回</b></div>
+                <div><span>ボーナス当選</span><b id="ar-bonus">0 回</b></div>
+                <div><span>総回転数</span><b id="ar-total">0 G</b></div>
+              </div>
+              <div id="ar-trophy" class="ar-trophy"></div>
+              <div id="ar-hint-row" class="ar-hint"><span>次回示唆</span><div id="ar-hint-bar" class="ar-hint-bar" data-lv="0"><i></i><i></i><i></i><i></i></div><b id="ar-hint-text" data-lv="0">弱</b></div>
+              <button type="button" id="at-result-close">閉じる</button>
+            </div>
+          </div>
+          <div id="fx-overlay"></div>
+          <canvas id="fx-canvas" class="fixed inset-0 pointer-events-none" style="z-index: 5;"></canvas>
+          <div id="flash-overlay" class="fixed inset-0 pointer-events-none z-50"></div>
+          <div id="aura" class="aura"></div>
+          <div id="judge-overlay" class="judge-overlay"></div>
+          <div id="judge-text" class="judge-text"></div>
+            <!-- AT突入演出 -->
+            <div id="rush-overlay" class="rush-overlay">
+              <div class="rush-text">
+                <div class="rush-line">PEKA</div>
+                <div class="rush-line">RUSH!!!</div>
+                <div id="rush-sub" class="rush-sub"></div>
+              </div>
+            </div>
+            <!-- PUSHボタン (G数獲得) -->
+            <div id="push-overlay" class="push-overlay">
+              <button type="button" id="push-btn" class="push-btn">PUSH</button>
+              <div id="push-result" class="push-result"></div>
+            </div>
           <div id="at-status" class="at-status"><div class="as-left"><span id="at-label" class="at-label">AT</span><span>残り <span id="at-remain" class="digital-font">0</span> G</span></div><span class="at-gain">獲得 <span id="at-gain" class="digital-font">0</span></span></div>
           <div id="cherry-status" class="cherry-status">CHERRY&nbsp;&nbsp;当選率UP 残り <span id="cherry-remain" class="digital-font">0</span> G</div>
 
@@ -182,38 +213,6 @@
     </div>
   </div>
 
-  <!-- AT突入演出 -->
-  <div id="rush-overlay" class="rush-overlay">
-    <div class="rush-text">
-      <div class="rush-line">PEKA</div>
-      <div class="rush-line">RUSH!!!</div>
-      <div id="rush-sub" class="rush-sub"></div>
-    </div>
-  </div>
-
-  <!-- PUSHボタン (G数獲得) -->
-  <div id="push-overlay" class="push-overlay">
-    <button type="button" id="push-btn" class="push-btn">PUSH</button>
-    <div id="push-result" class="push-result"></div>
-  </div>
-
-  <!-- ATリザルト -->
-  <div id="at-result" class="at-result">
-    <div class="at-result-card">
-      <div id="at-result-title" class="at-result-title">AT RESULT</div>
-      <div class="at-result-label">獲得枚数</div>
-      <div id="at-result-gain" class="at-result-gain">+0</div>
-      <div class="at-result-stats">
-        <div id="ar-row-games"><span>AT G数</span><b id="ar-games">0 G</b></div>
-        <div id="ar-row-bells"><span>ベル揃い</span><b id="ar-bells">0 回</b></div>
-        <div><span>ボーナス当選</span><b id="ar-bonus">0 回</b></div>
-        <div><span>総回転数</span><b id="ar-total">0 G</b></div>
-      </div>
-      <div id="ar-trophy" class="ar-trophy"></div>
-      <div id="ar-hint-row" class="ar-hint"><span>次回示唆</span><div id="ar-hint-bar" class="ar-hint-bar" data-lv="0"><i></i><i></i><i></i><i></i></div><b id="ar-hint-text" data-lv="0">弱</b></div>
-      <button type="button" id="at-result-close">閉じる</button>
-    </div>
-  </div>
 
   <script src="JS/data/config.js"></script>
   <script src="JS/core/settings.js"></script>

@@ -31,9 +31,12 @@ let particleMode = null; // 'gold' | 'mega' | null
 let particleRAF = null;
 
 function resizeCanvas() {
-  fxCanvas.width = window.innerWidth;
-  fxCanvas.height = window.innerHeight;
+  // 粒子は液晶の中だけに出す（キャンバスは液晶と同じ大きさ）
+  const r = (fxCanvas.parentElement || document.body).getBoundingClientRect();
+  fxCanvas.width = Math.max(1, Math.round(r.width) || window.innerWidth);
+  fxCanvas.height = Math.max(1, Math.round(r.height) || window.innerHeight);
 }
+if (window.ResizeObserver && fxCanvas.parentElement) new ResizeObserver(resizeCanvas).observe(fxCanvas.parentElement);
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 

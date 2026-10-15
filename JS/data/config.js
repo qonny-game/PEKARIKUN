@@ -32,7 +32,7 @@ const DEFAULT_SETTINGS = {
   bonusBellPay: 15,    // ボーナス中: 1ゲームのベル払い出し枚数
   replay: 13.7,        // ハズレのうちリプレイになる割合 (約1/7.3)
   bellNormal: 13.3,       // 通常時: ハズレのうちベルが揃う割合
-  bellAt: 40,          // AT中: ハズレのうちベルが揃う割合
+  bellAt: 55,          // AT中: ハズレのうちベルが揃う割合
   replayAt: 35,        // AT中: ハズレのうちリプレイになる割合
   atHitMult: 0.4,      // AT中のボーナス当選確率の倍率 (低いほど当選しにくい)
   atW50: 80,           // AT継続G数の比率: +50G (ほとんどこれ)
@@ -42,9 +42,9 @@ const DEFAULT_SETTINGS = {
   bellStraight: 15,    // 通常時のベル比率: 直線 (6枚)
   bellDiagTL: 74,      // 斜め 左上から (1枚)
   bellDiagBL: 11,      // 斜め 左下から (15枚)
-  atBellStraight: 45,  // AT中のベル比率: 直線 (6枚)
-  atBellDiagTL: 15,    // 斜め 左上から (1枚)
-  atBellDiagBL: 40,    // 斜め 左下から (15枚)
+  atBellStraight: 30,  // AT中のベル比率: 直線 (6枚)
+  atBellDiagTL: 5,     // 斜め 左上から (1枚)
+  atBellDiagBL: 65,    // 斜め 左下から (15枚)
   cherry: 3,           // 通常時: ハズレのうちチェリーが揃う割合 (左列に1個で成立)
   cherryMult: 2,       // チェリー後 (内部高確率) のボーナス当選確率の倍率
   cherryG: 15,         // チェリー後の内部高確率の期間 (G)
@@ -69,7 +69,7 @@ const DEFAULT_SETTINGS = {
   typeW1: 12,          // HEAVEN
   typeW2: 4            // DEATH
 };
-const APP_VERSION = '1.19.15';
+const APP_VERSION = '1.19.19';
 const SETTINGS_KEY = 'pekari-settings-v5';   // v5: モード (本気/極楽/遊) を追加。機械割は100〜130%
 
 // ==========================================

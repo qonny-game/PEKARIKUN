@@ -73,10 +73,14 @@
   function mascotSVG(mood, glow) {
     const eyes = { happy: '<path d="M21 33q4-6 8 0M35 33q4-6 8 0" stroke="#3b2200" stroke-width="2.6" fill="none" stroke-linecap="round"/>',
       sad: '<circle cx="25" cy="34" r="2.6" fill="#3b2200"/><circle cx="39" cy="34" r="2.6" fill="#3b2200"/><path d="M20 28l8 3M44 28l-8 3" stroke="#3b2200" stroke-width="2" stroke-linecap="round"/>',
+      angry: '<path d="M18 26l13 6M46 26l-13 6" stroke="#3b0a00" stroke-width="3.2" stroke-linecap="round"/><circle cx="25" cy="35" r="2.9" fill="#3b2200"/><circle cx="39" cy="35" r="2.9" fill="#3b2200"/>',
       shock: '<circle cx="25" cy="33" r="4.4" fill="#fff" stroke="#3b2200" stroke-width="2"/><circle cx="39" cy="33" r="4.4" fill="#fff" stroke="#3b2200" stroke-width="2"/><circle cx="25" cy="33" r="1.6" fill="#3b2200"/><circle cx="39" cy="33" r="1.6" fill="#3b2200"/>' }[mood] || '';
     const mouth = { happy: '<path d="M25 42q7 9 14 0z" fill="#b3261e" stroke="#3b2200" stroke-width="1.6" stroke-linejoin="round"/>',
       sad: '<path d="M26 47q6-6 12 0" stroke="#3b2200" stroke-width="2.4" fill="none" stroke-linecap="round"/>',
+      angry: '<path d="M23 49q9-8 18 0" stroke="#3b2200" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M27 46l2 3M32 45l0 3M37 46l-2 3" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>',
       shock: '<ellipse cx="32" cy="46" rx="4" ry="5" fill="#7a1a12" stroke="#3b2200" stroke-width="1.6"/>' }[mood] || '';
+    const extra = { angry: '<circle cx="32" cy="38" r="22" fill="#ff2a1a" opacity=".38"/><path d="M45 12q5 0 5 5M55 12q-5 0-5 5M45 22q5 0 5-5M55 22q-5 0-5-5" stroke="#e11d48" stroke-width="2.6" fill="none" stroke-linecap="round"/>',
+      sad: '<circle cx="32" cy="38" r="22" fill="#3b82f6" opacity=".16"/><path class="tear" d="M21 38q-3.5 6 0 8.5q3.5-2.5 0-8.5z" fill="#7dd3fc" stroke="#0369a1" stroke-width="1"/><path class="tear t2" d="M43 38q-3.5 6 0 8.5q3.5-2.5 0-8.5z" fill="#7dd3fc" stroke="#0369a1" stroke-width="1"/>' }[mood] || '';
     const c = COSTUMES[costumeIdx()];
     const acc = { hat: '<path d="M16 22q16-22 32 0z" fill="#e0342b" stroke="#7a1410" stroke-width="1.5"/><rect x="14" y="21" width="36" height="4" rx="2" fill="#7a1410"/>',
       glass: '<circle cx="25" cy="33" r="7" fill="none" stroke="#223" stroke-width="2"/><circle cx="39" cy="33" r="7" fill="none" stroke="#223" stroke-width="2"/><path d="M32 33h0" stroke="#223" stroke-width="2"/>',
@@ -87,7 +91,7 @@
     return `<svg viewBox="0 0 64 64"><circle cx="32" cy="38" r="22" fill="#ffd23f" stroke="#b8860b" stroke-width="2.5"/>`
       + `<circle cx="32" cy="38" r="22" fill="url(#none)"/><ellipse cx="22" cy="26" rx="7" ry="4" fill="#fff" opacity=".45"/>`
       + `<path d="M26 17h12v-5a6 6 0 0 0-12 0z" fill="${glow || '#ff8c1a'}" stroke="#7a4a00" stroke-width="1.5"/>`
-      + `<circle cx="20" cy="41" r="3.2" fill="#ff8a8a" opacity=".7"/><circle cx="44" cy="41" r="3.2" fill="#ff8a8a" opacity=".7"/>${eyes}${mouth}${acc}</svg>`;
+      + `<circle cx="20" cy="41" r="3.2" fill="#ff8a8a" opacity=".7"/><circle cx="44" cy="41" r="3.2" fill="#ff8a8a" opacity=".7"/>${extra}${eyes}${mouth}${acc}</svg>`;
   }
   const mascot = (mood, glow) => `<span class="fx-m">${mascotSVG(mood, glow)}</span>`;
   FX.mascotSVG = mascotSVG; FX.outcomeClass = null;

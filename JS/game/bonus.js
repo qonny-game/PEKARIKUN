@@ -87,7 +87,7 @@ function showChanceIntro() {
     el.id = 'chance-intro';
     el.className = 'chance-intro';
     el.innerHTML = '<span class="ci-1">PEKA!</span><span class="ci-2">CHANCE!</span>';
-    document.body.appendChild(el);
+    (document.querySelector('.cab-lcd') || document.body).appendChild(el);
   }
   el.classList.remove('on');
   void el.offsetWidth;
@@ -200,7 +200,7 @@ function donShake(n, done) {
     d.className = 'don-pop';
     d.textContent = 'DON'.repeat(1);
     d.style.setProperty('--i', i);
-    document.body.appendChild(d);
+    (document.querySelector('.cab-lcd') || document.body).appendChild(d);
     setTimeout(() => d.remove(), 600);
     shakeMain(300);
     if (soundEnabled) { initAudio(); thump(audioCtx.currentTime, 0.55 + i * 0.1); }
@@ -314,7 +314,7 @@ function showZoneEnd(total) {
     el.id = 'zone-end';
     el.className = 'zone-end';
     el.innerHTML = '<span class="ze-t">ZONE END</span><span class="ze-n"><i>+</i><b>0</b><em>G</em></span><span class="ze-s"></span>';
-    document.body.appendChild(el);
+    (document.querySelector('.cab-lcd') || document.body).appendChild(el);
   }
   const num = el.querySelector('.ze-n b');
   el.dataset.rank = total >= 100 ? 3 : total >= 50 ? 2 : total >= 20 ? 1 : 0;
