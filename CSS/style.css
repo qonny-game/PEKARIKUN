@@ -1891,3 +1891,31 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 /* 1.19.31 押し順ナビ: 大きさが違っても中心を揃える */
 .navi { align-items: center; }
 .navi b { margin: 0; }
+
+/* ---- 1.19.32 ---- */
+/* STOPボタン: 各リールの真下 */
+.cabinet > .stop-row { padding: 8px calc((100% - var(--reel-w, 198px)) / 2) 6px; gap: 0; box-sizing: border-box; }
+/* INSERT〜WAIT は3列2行 */
+.panel-lamps { grid-template-columns: repeat(3, auto); gap: 2px 3px; }
+.pl { min-width: 0; padding: 1px 2px; font-size: 6.5px; }
+.panel-lamps { gap: 3px 2px; }
+/* PAYOUT / MEDAL / TOTAL GET: すきまを詰めて数字を大きく */
+.cab-panel { gap: 6px; }
+.led-row { display: flex; flex: 1; min-width: 0; justify-content: space-between; align-items: flex-end; gap: 0 3px; }
+.led { flex: none; }
+.dg { font-size: 27px; }
+.led-row { gap: 0 2px; }
+/* PEKA CHANCE: 文字が重ならないよう、トースト等は下へ退避 */
+#lcd-stage > .chance-logo { top: 44px; line-height: .92; }
+#lcd-stage .chance-logo span, #lcd-stage .chance-logo .cl-peka, #lcd-stage .chance-logo .cl-chance { font-size: 40px; line-height: .95; }
+.gogo-lamp:has(.chance-logo.on) #lcd-stage > .at-toast { top: auto; bottom: 8px; }
+.gogo-lamp:has(.chance-logo.on) #lcd-stage > .tro-wrap { top: auto !important; bottom: 6px; }
+/* 図柄ヒント (液晶の中) */
+.lcd-hint { position: absolute; left: 0; right: 0; top: 46%; z-index: 64; display: none; justify-content: center; align-items: center; gap: 6px; pointer-events: none; transform: translateY(-50%); }
+.lcd-hint.on { display: flex; animation: hint-pop .55s cubic-bezier(.2,1.6,.4,1) both; }
+.lcd-hint img { display: block; filter: drop-shadow(0 0 10px rgba(255,255,255,.85)) drop-shadow(0 3px 5px rgba(0,0,0,.8)); }
+.lcd-hint.one img { width: 150px; height: 75px; }
+.lcd-hint.one.big img { width: 190px; height: 95px; filter: drop-shadow(0 0 16px #ffd23f) drop-shadow(0 3px 5px rgba(0,0,0,.8)); }
+.lcd-hint.pair img { width: 108px; height: 54px; }
+.lcd-hint i { font-family: 'Orbitron', sans-serif; font-style: normal; font-weight: 900; font-size: 14px; color: #fff; text-shadow: 0 0 8px #38bdf8, 0 2px 3px rgba(0,0,0,.9); }
+@keyframes hint-pop { 0% { transform: translateY(-50%) scale(.2) rotate(-10deg); opacity: 0; } 60% { transform: translateY(-50%) scale(1.15) rotate(2deg); opacity: 1; } 100% { transform: translateY(-50%) scale(1); opacity: 1; } }

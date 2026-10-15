@@ -80,7 +80,6 @@ function landCol(col) {
   col.el.remove();
   const cells = reelsEl.querySelectorAll(':scope > .reel');
   col.final.forEach((k, r) => { cells[r * 3 + col.c].innerHTML = symbolHTML(k, ''); });
-  playStopSound(col.c);
 }
 
 /* c番目のリールを止める。引き込める範囲(4コマ)で、役に合う位置を選ぶ */
@@ -166,6 +165,8 @@ function stopCol(c, auto) {
   }
   col.T = T; col.t = t; col.state = 'slip';
   rs.order.push(c);
+  playStopSound(c);   // 押した瞬間に「ドン」
+  if (window.LCDX && LCDX.hintStop) LCDX.hintStop(rs.plan, rs.order.length);
   refreshNavi();
 }
 
@@ -231,6 +232,7 @@ function missEffect() {
 /* チェリー/スイカ成立時: リール回転の前に、筐体まわりのランプが光って予告する */
 const cabinetEl = document.querySelector('.cabinet');
 function omenOff() {
+  if (window.LCDX && LCDX.hintClear) LCDX.hintClear();
   if (cabinetEl) cabinetEl.classList.remove('omen', 'omen-melon', 'omen-cherry', 'omen-chance', 'omen-miss');
   sideLampOff();
 }
@@ -252,6 +254,7 @@ function omenThen(kind, go) {
     const ord = Math.random() < 0.5 ? pair : [pair[1], pair[0]];   // 左右はランダムに入れ替え
     reelLocked = true;
     sideLampPair(OMEN_PAIR_COLOR[ord[0]], OMEN_PAIR_COLOR[ord[1]]);
+    if (window.LCDX && LCDX.pair) LCDX.pair(ord[0], ord[1]);
     if (window.FXBanner) window.FXBanner('どっち？', '', '', false, 1100);
     pekaLater(() => { reelLocked = false; go(); }, 1200);
     return;
@@ -283,6 +286,7 @@ function runRole(kind, done, navi) {
   clearChance();
   omenThen(kind, () => {
     const plan = planFor(kind);
+    plan.role = kind;
     if (navi) { plan.navi = navi.order; showNavi(navi.order, navi.style); }
     startReels(plan, res => {
       omenOff();
@@ -361,8 +365,16 @@ function playStopSound(c = 0) {
   if (!soundEnabled) return;
   initAudio();
   const t = audioCtx.currentTime;
-  const k = [1, 1.06, 0.94][c] || 1;   // 左・中・右で音程をわずかに変える
-  tone(180 * k, t, 0.07, 'square', 0.16);
-  tone(90 * k, t, 0.1 + (c === 2 ? 0.04 : 0), 'sine', c === 2 ? 0.36 : 0.3);
+  const k = [1.12, 1, 0.88][c] || 1;   // 左 → 中 → 右で少しずつ低くなる「ドン」「ドン」「ドン」
+  tone(300 * k, t, 0.05, 'square', 0.18);                       // 打撃のアタック
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();   // 腹に響く低音
+  o.type = 'sine';
+  o.frequency.setValueAtTime(170 * k, t);
+  o.frequency.exponentialRampToValueAtTime(42, t + 0.26);
+  g.gain.setValueAtTime(0.7 + c * 0.08, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(t); o.stop(t + 0.32);
+  tone(80 * k, t, 0.16, 'triangle', 0.3);
 }
 

@@ -78,7 +78,43 @@
     }
   };
   function act(name) { if (isDebugRun) return; const f = ACTS[name]; if (f) f(); }
-  window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0) };
+  /* ---------- 図柄ヒント: 2択予告の2図柄 / 停止時にフラグの図柄を液晶へ出す ---------- */
+  const stageEl = document.getElementById('lcd-stage');
+  const hintEl = document.createElement('div');
+  hintEl.id = 'lcd-hint'; hintEl.className = 'lcd-hint';
+  if (stageEl) stageEl.appendChild(hintEl);
+  let hintTimer = 0, hintPair = false;
+  const symSrc = k => (window.SYM_IMG && SYM_IMG[k]) || `assets/img/${k}.png`;
+  function hintShow(keys, ms, big) {
+    if (!stageEl) return;
+    clearTimeout(hintTimer);
+    hintEl.className = 'lcd-hint';
+    hintEl.innerHTML = keys.map(k => `<img src="${symSrc(k)}" alt="" draggable="false">`).join('<i>OR</i>');
+    void hintEl.offsetWidth;
+    hintEl.classList.add('on', keys.length > 1 ? 'pair' : 'one');
+    if (big) hintEl.classList.add('big');
+    if (ms) hintTimer = setTimeout(hintClear, ms);
+    if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; (keys.length > 1 ? [784, 988] : [988, 1319]).forEach((f, i) => tone(f, t + i * 0.09, 0.18, 'triangle', 0.09)); }
+  }
+  function hintClear() { clearTimeout(hintTimer); hintPair = false; hintEl.classList.remove('on'); }
+  const PAIR_SYM = { bell: 'bell', replay: 'replay', cherry: 'cherry', melon: 'melon', chance: 'melon' };
+  function pair(a, b) { hintShow([PAIR_SYM[a] || a, PAIR_SYM[b] || b], 0); hintPair = true; }
+  /* 通常時のみ: 成立役に応じて、決まった停止順で図柄を出す (たまにガセ) */
+  const HINT_AT = { replay: [1, 'replay'], cherryW: [1, 'cherry'], cherryS: [1, 'cherry'], melon: [2, 'melon'], melonW: [2, 'melon'], chanceW: [2, 'melon'], chanceS: [2, 'melon'], bell0: [2, 'bell'], bell1: [2, 'bell'], bell2: [2, 'bell'] };
+  const HINT_RATE = { replay: 0.7, bell0: 0.7, bell1: 0.7, bell2: 0.7, cherryW: 0.9, cherryS: 1, melon: 0.9, melonW: 0.9, chanceW: 0.8, chanceS: 1 };
+  function hintStop(plan, n) {
+    if (!plan || hintPair) return;
+    const normal = !(typeof bonusRun !== 'undefined' && bonusRun) && !(typeof atGames !== 'undefined' && atGames > 0) && !(typeof atEnding !== 'undefined' && atEnding);
+    if (!normal) return;
+    let d = HINT_AT[plan.role];
+    if (d) {
+      if (d[0] === n && rnd() < (HINT_RATE[plan.role] || 0.7)) hintShow([d[1]], 0, plan.role === 'cherryS' || plan.role === 'chanceS');
+    } else if (plan.role === 'lose' && rnd() < 0.04 * freq()) {   // ガセ
+      const f = pick([[1, 'replay'], [2, 'bell']]);
+      if (f[0] === n) hintShow([f[1]], 0);
+    }
+  }
+  window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0), pair, hintStop, hintClear, hint: hintShow };
   let hold = 0;
   function say(a, b, ms, md, an) {
     m1.textContent = a || ''; m2.textContent = b || '';
@@ -100,6 +136,7 @@
     box.style.setProperty('--lcd-h', lcdH + 'px');
     reelsEl.style.transform = `scale(${sc.toFixed(3)})`;
     reelsEl.style.marginTop = (lcdH + 6) + 'px';
+    document.documentElement.style.setProperty('--reel-w', (198 * sc).toFixed(1) + 'px');   // STOPボタンをリールの真下に合わせる
   }
   fitReels();
   window.addEventListener('resize', fitReels);
