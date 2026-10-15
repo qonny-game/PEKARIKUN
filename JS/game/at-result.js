@@ -165,13 +165,14 @@ function hideLoseReels() {
 }
 
 /* 枚数の数字の大きさ: 枚数(レベル)が大きいほどデカく、桁数に合わせて画面幅いっぱいまで */
+const lcdW = () => (document.getElementById('lcd-stage') || gogoBox).clientWidth;   // 演出液晶の幅
 const PAY_BASE_PX = { 1: 92, 2: 104, 3: 116, 4: 128, 5: 140, 6: 152, 7: 164 };
 function applyPayoutStyle(coins, level) {
   payoutNum.className = `payout-num pay-l${level}`;
-  const avail = Math.max(180, gogoBox.clientWidth - 16);
+  const avail = Math.max(120, lcdW() - 16);
   const digits = String(coins).length;
   const fit = avail / (digits * 0.78 + 0.55);            // 桁数ぶんが横幅に収まる最大サイズ
-  payoutNum.style.setProperty('--fs', Math.min(PAY_BASE_PX[level] || 100, fit) + 'px');
+  payoutNum.style.setProperty('--fs', Math.min((PAY_BASE_PX[level] || 100) * 0.62, fit) + 'px');
 }
 
 /* 枚数表示のアニメーションを最初から再生 */
@@ -253,7 +254,7 @@ function showPayout() {
   };
   if (pendingZone) {
     // ラッシュ中: 枚数は出ない。G数の上乗せチャンスのみ
-    payoutNum.style.setProperty('--fs', Math.min(PAY_BASE_PX[level] || 100, Math.max(180, gogoBox.clientWidth - 16) / 3.4) + 'px');
+    payoutNum.style.setProperty('--fs', Math.min((PAY_BASE_PX[level] || 100) * 0.62, Math.max(120, lcdW() - 16) / 3.4) + 'px');
     payoutValue.textContent = 'G UP!';
     setLedWin(0);
     setTimeout(onCounted, 700);

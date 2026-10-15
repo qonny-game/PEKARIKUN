@@ -36,7 +36,7 @@
   };
 
   /* ---------- DOM ---------- */
-  const lcd = document.querySelector('.cab-lcd');
+  const lcd = document.getElementById('lcd-stage');
   const cab = document.querySelector('.cabinet');
   if (!lcd || !cab) return;
   const layer = document.createElement('div');

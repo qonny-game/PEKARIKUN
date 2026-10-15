@@ -1637,8 +1637,8 @@ main > .op-area { display: contents; }
 
 /* ---- 1.18.10 ---- */
 /* 残りG=液晶の左上 / 獲得枚数=液晶の右上（固定） */
-.cab-lcd .at-status { position: absolute; top: 6px; left: 8px; right: 8px; z-index: 40; justify-content: space-between; pointer-events: none; }
-.cab-lcd .at-status .as-left { display: flex; align-items: center; gap: 6px; }
+
+#lcd-stage .at-status .as-left { display: flex; align-items: center; gap: 6px; }
 .at-gain { display: none; }
 .at-gain.has-gain { display: inline; }
 
@@ -1768,37 +1768,89 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 .led { background: transparent; border: none; box-shadow: none; }
 .led.green, .led.amber { border: none; }
 
-/* 1.19.17 演出はすべて液晶(.cab-lcd)の中だけに出す: 全画面だった重ねレイヤーを液晶内に収める */
-.cab-lcd { overflow: hidden; }
-.cab-lcd > #fx-overlay, .cab-lcd > #aura, .cab-lcd > #judge-overlay, .cab-lcd > #flash-overlay,
-.cab-lcd > .rush-overlay, .cab-lcd > .push-overlay, .cab-lcd > .chance-intro, .cab-lcd > .zone-end {
+/* 1.19.17 演出はすべて液晶の中だけに出す: 全画面だった重ねレイヤーを液晶内に収める */
+#lcd-stage > #fx-overlay, #lcd-stage > #aura, #lcd-stage > #judge-overlay, #lcd-stage > #flash-overlay,
+#lcd-stage > .rush-overlay, #lcd-stage > .push-overlay, #lcd-stage > .chance-intro, #lcd-stage > .zone-end {
   position: absolute !important; inset: 0 !important; width: auto; height: auto;
 }
-.cab-lcd > #fx-canvas { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; z-index: 40 !important; pointer-events: none; }
-.cab-lcd > #fx-overlay { z-index: 1; }
-.cab-lcd > #aura { z-index: 25; }
-.cab-lcd > #judge-overlay { z-index: 26; }
-.cab-lcd > #flash-overlay { z-index: 60 !important; }
-.cab-lcd > .judge-text { position: absolute !important; left: 0; right: 0; top: 24%; z-index: 61; font-size: clamp(1.6rem, 9vw, 2.6rem); }
-.cab-lcd > .rush-overlay { z-index: 70 !important; }
-.cab-lcd > .push-overlay { z-index: 72 !important; }
-.cab-lcd > .chance-intro { z-index: 66 !important; }
-.cab-lcd > .zone-end { z-index: 66 !important; }
-.cab-lcd > .don-pop { position: absolute !important; z-index: 67 !important; top: 46%; }
-.cab-lcd .push-btn { width: min(48%, 10.5rem); }
-.cab-lcd .rush-line { font-size: min(14vw, 3.4rem); }
+#lcd-stage > #fx-canvas { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; z-index: 40 !important; pointer-events: none; }
+#lcd-stage > #fx-overlay { z-index: 1; }
+#lcd-stage > #aura { z-index: 25; }
+#lcd-stage > #judge-overlay { z-index: 26; }
+#lcd-stage > #flash-overlay { z-index: 60 !important; }
+#lcd-stage > .judge-text { position: absolute !important; left: 0; right: 0; top: 24%; z-index: 61; font-size: clamp(1.6rem, 9vw, 2.6rem); }
+#lcd-stage > .rush-overlay { z-index: 70 !important; }
+#lcd-stage > .push-overlay { z-index: 72 !important; }
+#lcd-stage > .chance-intro { z-index: 66 !important; }
+#lcd-stage > .zone-end { z-index: 66 !important; }
+#lcd-stage > .don-pop { position: absolute !important; z-index: 67 !important; top: 46%; }
+#lcd-stage .push-btn { width: min(48%, 10.5rem); }
+#lcd-stage .rush-line { font-size: min(14vw, 3.4rem); }
 
 /* 1.19.18 ATリザルト・トロフィー通知も液晶の中に収める */
-.cab-lcd > .at-result { position: absolute !important; inset: 0 !important; z-index: 75 !important; padding: 8px; background: rgba(4, 8, 24, 0.9); }
-.cab-lcd .at-result-card { max-width: none; width: 100%; padding: 6px 6px 8px; border: none; border-radius: 0; background: transparent; box-shadow: none; }
-.cab-lcd .at-result-title { font-size: 0.95rem; }
-.cab-lcd .at-result-label { margin-top: 4px; font-size: 11px; }
-.cab-lcd .at-result-gain { font-size: clamp(2.2rem, 11vw, 3.2rem); filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff); }
-.cab-lcd .at-result-stats { margin: 6px 0; gap: 4px; }
-.cab-lcd .at-result-stats div { font-size: 10px; }
-.cab-lcd .at-result-stats b { font-size: 13px; }
-.cab-lcd .ar-trophy.show { margin: 0 0 4px; }
-.cab-lcd .ar-trophy svg { width: 26px; height: 26px; }
-.cab-lcd #at-result-close { padding: 6px 24px; }
-.cab-lcd > .tro-wrap { position: absolute !important; top: 6px; z-index: 80; }
-.cab-lcd .tro-toast { min-width: 0; max-width: 94%; padding: 5px 12px 5px 8px; }
+#lcd-stage > .at-result { position: absolute !important; inset: 0 !important; z-index: 75 !important; padding: 8px; background: rgba(4, 8, 24, 0.9); }
+#lcd-stage .at-result-card { max-width: none; width: 100%; padding: 6px 6px 8px; border: none; border-radius: 0; background: transparent; box-shadow: none; }
+#lcd-stage .at-result-title { font-size: 0.95rem; }
+#lcd-stage .at-result-label { margin-top: 4px; font-size: 11px; }
+#lcd-stage .at-result-gain { font-size: clamp(2.2rem, 11vw, 3.2rem); filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff); }
+#lcd-stage .at-result-stats { margin: 6px 0; gap: 4px; }
+#lcd-stage .at-result-stats div { font-size: 10px; }
+#lcd-stage .at-result-stats b { font-size: 13px; }
+#lcd-stage .ar-trophy.show { margin: 0 0 4px; }
+#lcd-stage .ar-trophy svg { width: 26px; height: 26px; }
+#lcd-stage #at-result-close { padding: 6px 24px; }
+#lcd-stage > .tro-wrap { position: absolute !important; top: 6px; z-index: 80; }
+#lcd-stage .tro-toast { min-width: 0; max-width: 94%; padding: 5px 12px 5px 8px; }
+
+/* ===== 1.19.21 演出ステージ: 演出液晶(sub-lcd)と同じ範囲。数字・文字・キャラの演出はすべてこの中に収める ===== */
+.lcd-stage { position: absolute; left: 6px; right: 6px; top: 4px; height: 186px; z-index: 60; overflow: hidden; border-radius: 10px; pointer-events: none; }
+.lcd-stage > * { pointer-events: none; }
+.lcd-stage .push-btn, .lcd-stage #at-result-close, .lcd-stage .at-result { pointer-events: auto; }
+#lcd-stage > #fx-layer { z-index: 60; border-radius: 0; }
+#lcd-stage > .at-status { position: absolute; top: 4px; left: 6px; right: 6px; z-index: 40; justify-content: space-between; font-size: 12px; }
+#lcd-stage > .cherry-status { position: absolute; top: 24px; left: 0; right: 0; z-index: 40; font-size: 11px; }
+#lcd-stage > .at-toast { top: 30px; font-size: 1.1rem; }
+#lcd-stage > .get-pop { top: 52%; }
+#lcd-stage .get-pop.g-big { font-size: 3.6rem; } #lcd-stage .get-pop.g-mid { font-size: 3rem; } #lcd-stage .get-pop.g-small { font-size: 2.4rem; }
+#lcd-stage > .over-pop { top: 30%; font-size: 2.4rem; } #lcd-stage > .over-pop.big { font-size: 2.8rem; }
+#lcd-stage > .navi { bottom: 8px; width: calc(100% - 12px); top: auto; transform: translateX(-50%); }
+#lcd-stage .navi b { width: 32px; height: 32px; font-size: 17px; }
+#lcd-stage .navi b.next, #lcd-stage .navi.purple b.next { width: 54px; height: 54px; font-size: 30px; }
+#lcd-stage .navi.purple b, #lcd-stage .navi.red b { width: 32px; height: 32px; font-size: 17px; }
+#lcd-stage > .chance-logo { top: 14px; }
+#lcd-stage .chance-logo span, #lcd-stage .chance-logo .cl-peka, #lcd-stage .chance-logo .cl-chance { font-size: 46px; }
+#lcd-stage .chance-logo.zone .cl-peka { font-size: 17px; } #lcd-stage .chance-logo.zone .cl-chance { font-size: 21px; }
+#lcd-stage > .bell-badge { bottom: 6px; font-size: 1rem; }
+#lcd-stage > .next-hint { position: absolute; left: 0; right: 0; bottom: 4px; margin: 0; text-align: center; font-size: .95rem; z-index: 38; }
+#lcd-stage > .payout-display { position: absolute; inset: 0; }
+#lcd-stage .payout-display .align-sub { font-size: 11px; margin-bottom: 2px; }
+#lcd-stage > .chance-count { position: absolute; inset: 0; top: 0; z-index: 36; justify-content: center; }
+#lcd-stage .chance-count .cc-n { font-size: 120px; -webkit-text-stroke-width: 3px; }
+#lcd-stage .chance-count .cc-s { font-size: 15px; letter-spacing: 6px; }
+#lcd-stage .rush-line { font-size: min(11vw, 2.5rem); }
+#lcd-stage > .judge-text { top: 28%; font-size: clamp(1.4rem, 7vw, 2.2rem); }
+#lcd-stage > .don-pop { top: 48%; font-size: calc(46px + var(--i, 1) * 12px); -webkit-text-stroke-width: 2px; }
+#lcd-stage .chance-intro .ci-1 { font-size: 62px; } #lcd-stage .chance-intro .ci-2 { font-size: 48px; }
+#lcd-stage .zone-end .ze-t { font-size: 15px; } #lcd-stage .zone-end .ze-n { -webkit-text-stroke-width: 2px; }
+#lcd-stage .zone-end .ze-n b { font-size: 64px; } #lcd-stage .zone-end .ze-n i, #lcd-stage .zone-end .ze-n em { font-size: 24px; }
+#lcd-stage .zone-end .ze-s { font-size: 12px; margin-top: 2px; }
+#lcd-stage .push-btn { width: 100px; border-width: 4px; font-size: 1.5rem; letter-spacing: 1px; box-shadow: 0 0 20px #ef4444, 0 5px 0 #7f1d1d; }
+#lcd-stage .push-overlay .push-result { font-size: 3rem; -webkit-text-stroke-width: 2px; }
+#lcd-stage > .bell-badge { bottom: 30px; }
+#lcd-stage > .at-result { padding: 4px 6px; justify-content: center; }
+#lcd-stage .at-result-card { padding: 2px 4px; }
+#lcd-stage .at-result-title { font-size: .8rem; }
+#lcd-stage .at-result-label { display: none; }
+#lcd-stage .at-result-gain { font-size: 2.2rem; line-height: 1.05; margin: 2px 0; }
+#lcd-stage .at-result-stats { margin: 2px 0; gap: 2px 4px; }
+#lcd-stage .at-result-stats div { font-size: 9px; flex-direction: row; gap: 3px; align-items: baseline; }
+#lcd-stage .at-result-stats b { font-size: 11px; }
+#lcd-stage .ar-hint { font-size: 10px; margin: 2px 0; }
+#lcd-stage #at-result-close { padding: 3px 18px; font-size: 12px; margin-top: 3px; }
+#lcd-stage > .tro-wrap { top: 4px; }
+/* GOGO! ランプ文字も液晶の中。点灯(ペカ)したときだけ表示する */
+#lcd-stage > #gogo-text-container { position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0; }
+#lcd-stage #gogo-text { font-size: 3.4rem; line-height: 1; }
+#lcd-stage #gogo-subtext { font-size: 12px; margin-top: 0; }
+#lcd-stage #gogo-text-container .gogo-text { visibility: hidden; }
+.peka #lcd-stage #gogo-text-container .gogo-text, .gogo-lamp.peka #lcd-stage #gogo-text-container .gogo-text { visibility: visible; }
