@@ -1,0 +1,350 @@
+// ==========================================
+// JS/game/bonus.js  —  ボーナス消化・押し順ナビ・ドンドンドン
+// 読み込み順は index.html の <script> 並びどおり。グローバル変数で共有するので順序を変えない。
+// ==========================================
+/* ---------- ボーナス消化 (ATへのCZを兼ねる) ----------
+   ボーナス枚数は、毎ゲーム揃うベルで少しずつ獲得する。
+   消化中は画面の周りのオーラ色(白→青→黄→緑→赤→金→虹)でAT期待度を示す。
+   ボーナス枚数が多いほどAT突入率が高い。一度も昇格しない白は逆に激アツ。 */
+const AURA_NAMES = ['白', '青', '黄', '緑', '赤', '金', '虹'];
+const AURA_WIN_W = [0, 8, 16, 22, 24, 20, 10];   // AT当選時の最終オーラ (白は auraWhite で別枠)
+const AURA_LOSE_W = [2, 40, 28, 17, 9, 4, 0];    // AT非当選時の最終オーラ (虹は当選確定)
+const auraEl = document.getElementById('aura');
+
+function atEntryRateFor(coins) {
+  const lo = BIG_TIERS[0].coins, hi = BIG_TIERS[BIG_TIERS.length - 1].coins;
+  const t = Math.min(1, Math.max(0, (coins - lo) / (hi - lo)));
+  return AT_ENTRY_MIN + (AT_ENTRY_MAX - AT_ENTRY_MIN) * t;
+}
+function pickAuraLevel(atWin) {
+  if (atWin) return Math.random() < AURA_WHITE ? 0 : weightedPick(AURA_WIN_W);
+  return weightedPick(AURA_LOSE_W);
+}
+/* opts: {atWin, level, debug} (デバッグ用に結果を指定できる) */
+/* ペカ!ペカ!マウンテン (AT中の当選): 5〜10G。ロゴの段階(0〜3)で上乗せの期待値が変わる */
+const ZONE_G_CHOICES = [5, 10, 20, 30, 50, 100];
+const ZONE_G_WEIGHTS = [[50, 30, 15, 5, 0, 0], [30, 30, 25, 12, 3, 0], [10, 20, 30, 25, 13, 2], [0, 5, 20, 30, 35, 10]];
+const ZONE_LOGO_NAMES = ['青', '緑', '金', '虹'];
+function makeBonusPlan(coins, opts = {}) {
+  const games = opts.zone ? 5 + Math.floor(Math.random() * 6) : Math.ceil(coins / BONUS_BELL_PAY);
+  const atWin = opts.atWin !== undefined ? opts.atWin : Math.random() < atEntryRateFor(coins);
+  const level = Math.min(games, opts.level !== undefined ? opts.level : pickAuraLevel(atWin));
+  // 昇格するゲームをランダムに決める (最終オーラ = 昇格した回数)
+  const pool = Array.from({ length: games }, (_, i) => i + 1);
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const promo = pool.slice(0, level).sort((a, b) => a - b);
+  return { total: coins, paid: 0, games, played: 0, atWin, level, promo, aura: 0, debug: !!opts.debug, zone: !!opts.zone, zoneG: 0,
+    zlv: opts.zlv !== undefined ? opts.zlv : weightedPick(AT_TYPES[atType].zlv), zonePay: Math.ceil(coins / games) };
+}
+function setAura(level, pop) {
+  if (level === null) { auraEl.className = 'aura'; return; }
+  auraEl.className = `aura on lv${level}`;
+  if (pop) { void auraEl.offsetWidth; auraEl.classList.add('pop'); }
+}
+function playAuraUp(level) {
+  if (!soundEnabled) return;
+  initAudio();
+  const t = audioCtx.currentTime;
+  const base = 523 * Math.pow(1.0595, level * 2);
+  [0, 4, 7].forEach((st, i) => tone(base * Math.pow(1.0595, st), t + i * 0.07, 0.3, 'triangle', 0.14));
+  if (level >= 5) [0, 4, 7, 12].forEach((st, i) => tone(base * 2 * Math.pow(1.0595, st), t + 0.25 + i * 0.07, 0.35, 'sine', 0.12));
+}
+
+/* PEKA CHANCE! ロゴ: ボーナス消化の開始から、最終ゲーム(ジャッジメント)の結果まで */
+const chanceLogo = document.getElementById('chance-logo');
+function setZoneLogoLevel(lv) {
+  if (!chanceLogo) return;
+  chanceLogo.classList.remove('z0', 'z1', 'z2', 'z3');
+  chanceLogo.classList.add('z' + lv);
+}
+function showChance(zone, zlv) {
+  if (!chanceLogo) return;
+  chanceLogo.querySelector('.cl-peka').innerHTML = zone ? 'PEKA<br>PEKA' : 'PEKA';
+  chanceLogo.querySelector('.cl-chance').textContent = zone ? 'MOUNTAIN!' : 'CHANCE!';
+  chanceLogo.classList.toggle('zone', !!zone);
+  if (zone) setZoneLogoLevel(zlv || 0);
+  chanceLogo.classList.remove('on', 'judge');
+  void chanceLogo.offsetWidth;
+  chanceLogo.classList.add('on');
+  if (soundEnabled) {
+    initAudio();
+    const t = audioCtx.currentTime;
+    [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, t + i * 0.06, 0.28, 'sawtooth', 0.07));
+    tone(130, t, 0.4, 'sine', 0.2);
+  }
+  triggerFlash();
+  if (!zone) showChanceIntro();
+}
+/* PEKA! CHANCE! の初回表示: 画面いっぱいにどでかく */
+function showChanceIntro() {
+  if (window.TRO) TRO.seen('chance_intro');
+  let el = document.getElementById('chance-intro');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'chance-intro';
+    el.className = 'chance-intro';
+    el.innerHTML = '<span class="ci-1">PEKA!</span><span class="ci-2">CHANCE!</span>';
+    document.body.appendChild(el);
+  }
+  el.classList.remove('on');
+  void el.offsetWidth;
+  el.classList.add('on');
+}
+/* ラスト3G: どでかいカウントダウン (3 → 2 → 1) */
+function showLastCount(n) {
+  if (window.TRO && n === 3) TRO.seen('last_count');
+  let el = document.getElementById('chance-count');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'chance-count';
+    el.className = 'chance-count';
+    el.innerHTML = '<span class="cc-n"></span><span class="cc-s">LAST</span>';
+    document.body.appendChild(el);
+  }
+  el.querySelector('.cc-n').textContent = n;
+  el.dataset.n = n;
+  el.classList.remove('on');
+  void el.offsetWidth;
+  el.classList.add('on');
+  if (chanceLogo) chanceLogo.classList.add('counting');
+  if (soundEnabled) {
+    initAudio();
+    const t = audioCtx.currentTime;
+    tone(220 / n, t, 0.35, 'sine', 0.3);
+    tone(660 + (4 - n) * 220, t, 0.12, 'square', 0.1);
+  }
+}
+function hideLastCount() {
+  const el = document.getElementById('chance-count');
+  if (el) el.classList.remove('on');
+  if (chanceLogo) chanceLogo.classList.remove('counting');
+}
+function hideChance() { if (chanceLogo) chanceLogo.classList.remove('on', 'judge', 'counting'); hideLastCount(); }
+
+function beginBonus(plan) {
+  bonusRun = plan;
+  pendingZone = false;
+  showChance(plan.zone, plan.zlv);
+  if (plan.zone && window.TRO) TRO.seen('zone');
+  sinceEnd = null;
+  // ボーナス開始からリザルトまでの獲得枚数を数える
+  if (!atRun && !plan.debug) atRun = { startDiff: diffCoins, games: 0, bells: 0, bonuses: 0 };
+  if (!plan.zone) setAura(0);
+  updateAT();
+}
+
+/* ---------- 押し順ナビ (ボーナス中: 1→2→3 の順に押すとベルが揃う) ---------- */
+const naviEl = document.getElementById('navi');
+let naviOrder = null;   // 例: [1, 2, 0] = 中→右→左の順に止める
+let naviPartial = false;   // 1だけナビ: 最初に押すリールだけ表示 (残りは自由)
+function showNavi(order, style = '', partial = false) {
+  naviOrder = order;
+  naviPartial = !!partial;
+  naviEl.className = 'navi on ' + style + (partial ? ' partial' : '');     // red: チェリー / purple: スイカ (上乗せ確定)
+  [...naviEl.children].forEach((el, c) => {
+    el.textContent = partial ? (c === order[0] ? '1' : '') : (order.indexOf(c) + 1) + (style === 'purple' ? '!' : '');
+    el.className = '';
+  });
+  refreshNavi();
+  spinBtn.dataset.navi = (partial ? [order[0]] : order).map(c => ['左', '中', '右'][c]).join('→');
+}
+function refreshNavi() {
+  if (!naviOrder || !naviEl) return;
+  const done = reelSpin ? reelSpin.order : [];
+  [...naviEl.children].forEach((el, c) => {
+    el.classList.toggle('done', done.includes(c));
+    el.classList.toggle('next', !done.includes(c) && naviOrder[done.length] === c && (!naviPartial || done.length === 0));
+  });
+}
+function hideNavi() { naviOrder = null; naviPartial = false; if (naviEl) naviEl.className = 'navi'; }
+function sameOrder(a, b) { return !!a && a.length === b.length && a.every((v, i) => v === b[i]); }
+
+/* ドンドンドン!: 画面が揺れた回数で期待度を示す。3回揺れたら発展 (ボーナス中は次のオーラ昇格のサイン) */
+function donShake(n, done) {
+  if (window.TRO) TRO.seen('don' + Math.min(3, n));
+  let i = 0;
+  const gap = 520;
+  if (window.FX) FX.hold(n * gap + 700);
+  const step = () => {
+    if (i >= n) {
+      if (n >= 3) {
+        showAtToast('発展');
+        triggerFlash();
+        if (soundEnabled) { initAudio(); [523, 659, 784, 1047].forEach((f, k) => tone(f, audioCtx.currentTime + k * 0.06, 0.25, 'square', 0.1)); }
+      }
+      setTimeout(done, n >= 3 ? 700 : 250);
+      return;
+    }
+    i++;
+    const d = document.createElement('div');
+    d.className = 'don-pop';
+    d.textContent = 'DON'.repeat(1);
+    d.style.setProperty('--i', i);
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 600);
+    shakeMain(300);
+    if (soundEnabled) { initAudio(); thump(audioCtx.currentTime, 0.55 + i * 0.1); }
+    setTimeout(step, gap);
+  };
+  step();
+}
+function bonusGame() {
+  const b = bonusRun;
+  // ドンドンドン!: 昇格するゲームほど多く揺れる (ガセもある)
+  const promo = !b.zone && b.promo.includes(b.played + 1);
+  const don = weightedPick(promo ? [0, 15, 30, 55] : [90, 6, 3, 1]);
+  if (don > 0 && !b.debug) {
+    spinBtn.disabled = true;
+    donShake(don, () => { spinBtn.disabled = false; bonusGameMain(); });
+    return;
+  }
+  bonusGameMain();
+}
+function bonusGameMain() {
+  const b = bonusRun;
+  playClickSound();
+  setLedWin(0);
+  const isFinal = !b.zone && b.played + 1 >= b.games;   // 最終ゲームはジャッジメント (ここでATの当否が決まる)
+  const navi = [0, 1, 2].sort(() => Math.random() - 0.5);   // 押し順ナビ
+  const partial = Math.random() < 0.3;                       // 1だけナビ (最初の1つだけ表示)
+  showNavi(navi, '', partial);
+  if (partial && window.TRO) TRO.seen('navi_partial');
+  if (!b.zone && b.games - b.played <= 3) showLastCount(b.games - b.played); else hideLastCount();
+  if (isFinal) { startTension('JUDGEMENT'); if (chanceLogo) chanceLogo.classList.add('judge'); }
+  updateAT();
+  runRole('bell2', res => {
+    hideNavi();
+    // 押し順を間違えた: ベルこぼし (1枚だけ。ゲーム数は消化されない)
+    if (!AUTO_STOP && !(partial ? res.order[0] === navi[0] : sameOrder(res.order, navi))) {
+      const pay1 = Math.max(0, Math.min(1, b.total - b.paid - 1));
+      b.paid += pay1;
+      if (!b.debug && pay1) { diffCoins += pay1; recordPoint(); }
+      setLedWin(pay1);
+      if (isFinal) { stopTension(); if (chanceLogo) chanceLogo.classList.remove('judge'); }
+      missEffect();
+      updateAT();
+      updateUI();
+      return;
+    }
+    b.played++;
+    // ゾーンは5〜10Gで枚数を均等に払い出し、最終ゲームで残りを払う
+    const pay = b.zone
+      ? (b.played >= b.games ? b.total - b.paid : Math.min(b.zonePay, b.total - b.paid))
+      : Math.min(BONUS_BELL_PAY, b.total - b.paid);
+    b.paid += pay;
+    if (!b.debug) {
+      diffCoins += pay;
+      recordPoint();
+    }
+    setLedWin(pay);
+    if (pay > 0 || !b.zone) showBellResult(pay, true);
+    if (b.promo.includes(b.played)) {
+      b.aura++;
+      setAura(b.aura, true);
+      playAuraUp(b.aura);
+      if (b.aura >= 4) triggerFlash();
+    }
+    updateAT();
+    updateUI();
+    if (b.zone) {
+      // ペカ!ペカ!マウンテン: リールを止めるたびにPUSHで +5G〜+100G を上乗せ。ロゴが昇格すると期待値アップ
+      if (b.zlv < 3 && Math.random() < 0.14) {
+        b.zlv++;
+        setZoneLogoLevel(b.zlv);
+        playAuraUp(b.zlv + 2);
+        triggerFlash();
+      }
+      const g = scaleG(Math.round(ZONE_G_CHOICES[weightedPick(ZONE_G_WEIGHTS[b.zlv])] * AT_TYPES[atType].zg));
+      b.zoneG += g;
+      const last = b.played >= b.games;
+      pushReveal(`+${g}G`, g >= 50, () => {
+        if (!b.debug) atGames += g;
+        atEnding = false;
+        updateAT();
+        if (last) finishZone(b);
+      });
+      return;
+    }
+    if (b.paid >= b.total) {
+      finishBonus();
+    } else if (!b.zone) {
+      // 残りが少ないときの演出: 残り枚数を表示。次がジャッジメント
+      const rem = b.games - b.played;
+      if (rem <= 3) {
+        showAtToast(rem === 1 ? 'NEXT JUDGEMENT' : `REMAIN ${b.total - b.paid}`);
+        playTick(4 - rem);
+      }
+    }
+  });
+}
+
+/* 全ゲーム消化: 鼓動のあと、AT突入かどうかを見せる */
+/* 上乗せ特化ゾーン終了: ゾーン中に貯めたG数をATに上乗せ (PUSHで表示) */
+function finishZone(b) {
+  bonusRun = null;
+  hideChance();
+  updateAT();
+  showZoneEnd(b.zoneG);
+}
+/* ZONE END: ゾーンで上乗せした合計ゲーム数を、でかでかとカウントアップ表示 */
+function showZoneEnd(total) {
+  let el = document.getElementById('zone-end');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'zone-end';
+    el.className = 'zone-end';
+    el.innerHTML = '<span class="ze-t">ZONE END</span><span class="ze-n"><i>+</i><b>0</b><em>G</em></span><span class="ze-s"></span>';
+    document.body.appendChild(el);
+  }
+  const num = el.querySelector('.ze-n b');
+  el.dataset.rank = total >= 100 ? 3 : total >= 50 ? 2 : total >= 20 ? 1 : 0;
+  el.querySelector('.ze-s').textContent = `AT 残り ${atGames} G`;
+  num.textContent = '0';
+  el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
+  if (window.FX) FX.hold(3600);
+  const t0 = performance.now(), dur = 1100;
+  const frame = now => {
+    const p = Math.min(1, (now - t0) / dur);
+    num.textContent = Math.round(total * (1 - Math.pow(1 - p, 3)));
+    if (soundEnabled && audioCtx && p < 1 && Math.floor(p * 24) !== Math.floor(((now - 16 - t0) / dur) * 24)) tone(700 + 900 * p, audioCtx.currentTime, 0.04, 'square', 0.05);
+    if (p < 1) requestAnimationFrame(frame);
+    else {
+      triggerFlash();
+      if (total >= 50) burstParticles('gold', 70);
+      if (soundEnabled) { initAudio(); [523, 659, 784, 1047].forEach((f, k) => tone(f, audioCtx.currentTime + k * 0.07, 0.3, 'triangle', 0.14)); }
+    }
+  };
+  requestAnimationFrame(frame);
+  setTimeout(() => el.classList.remove('on'), 3400);
+}
+
+function finishBonus() {
+  const b = bonusRun;
+  if (b.zone) { finishZone(b); return; }
+  isSuspense = true;
+  startHeartbeat(2400, 400);
+  suspenseTimer = setTimeout(() => {
+    stopHeartbeat();
+    stopTension();
+    isSuspense = false;
+    bonusRun = null;
+    hideChance();
+    updateAT();
+    if (b.atWin) {
+      setAura(b.aura, true);
+      setTimeout(() => setAura(null), 1500);
+      if (!b.debug) atCount++;
+      updateUI();
+      startAT();
+    } else {
+      setAura(null);
+      showAtToast('BONUS END');
+      if (atRun && atRun.games === 0 && !b.debug) { atRun.bonusOnly = true; atEnding = true; }
+      maybeShowAtResult();
+    }
+  }, 2800);
+}
+

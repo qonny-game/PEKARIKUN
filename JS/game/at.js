@@ -1,0 +1,129 @@
+// ==========================================
+// JS/game/at.js  —  AT（ペカラッシュ）・PUSH演出
+// 読み込み順は index.html の <script> 並びどおり。グローバル変数で共有するので順序を変えない。
+// ==========================================
+/* ---------- AT ---------- */
+const atStatus = document.getElementById('at-status');
+const atRemain = document.getElementById('at-remain');
+const atLabel = document.getElementById('at-label');
+const atToast = document.getElementById('at-toast');
+
+function updateAT() {
+  if (!atStatus) return;
+  if (bonusRun) {
+    atStatus.classList.add('on', 'bonus');
+    atLabel.textContent = bonusRun.zone ? 'ZONE' : 'BONUS';
+    atRemain.textContent = Math.max(0, bonusRun.games - bonusRun.played);
+    atStatus.classList.toggle('low', !bonusRun.zone && bonusRun.games - bonusRun.played <= 3);
+    return;
+  }
+  atStatus.classList.remove('bonus');
+  atStatus.classList.toggle('low', atGames > 0 && atGames <= 5);
+  atStatus.classList.toggle('on', atGames > 0);
+  atLabel.textContent = AT_TYPES[atType].name;
+  atStatus.classList.toggle('heaven', atType === 1);
+  atStatus.classList.toggle('death', atType === 2);
+  atRemain.textContent = atGames;
+  updateAtGain();
+}
+/* ペカラッシュ中の合計獲得枚数 */
+function updateAtGain() {
+  const el = document.getElementById('at-gain');
+  if (!el) return;
+  const on = !!atRun && !bonusRun && atGames > 0 && !atRun.bonusOnly;
+  el.parentNode.classList.toggle('has-gain', on);
+  if (on) el.textContent = (diffCoins - atRun.startDiff >= 0 ? '+' : '') + (diffCoins - atRun.startDiff);
+}
+function showAtToast(text) {
+  if (!atToast) return;
+  atToast.textContent = text;
+  atToast.classList.remove('show', 'miss', 'advice');
+  void atToast.offsetWidth;
+  atToast.classList.add('show');
+}
+/* AT継続G数を比率から抽選: +50G (基本) / +100G・+200G・+300G (プレミア) */
+const AT_CHOICES = [50, 100, 200, 300];
+function pickAtGames() { return AT_CHOICES[weightedPick(AT_WEIGHTS)]; }
+
+/* ---------- PUSHボタン演出: G数獲得時、PUSHを押すと「+10G」などがでかでかと出る ---------- */
+const pushOverlay = document.getElementById('push-overlay');
+const pushBtn = document.getElementById('push-btn');
+const pushResult = document.getElementById('push-result');
+
+function pushReveal(text, premium, onDone) {
+  isPushing = true;
+  pushResult.textContent = text;
+  pushOverlay.className = 'push-overlay show waiting' + (premium ? ' premium' : '');
+  if (soundEnabled) {
+    initAudio();
+    const t = audioCtx.currentTime;
+    [988, 1319].forEach((f, i) => tone(f, t + i * 0.09, 0.2, 'triangle', 0.14));
+  }
+  const handler = () => {
+    pushBtn.removeEventListener('click', handler);
+    pushOverlay.className = 'push-overlay show revealed' + (premium ? ' premium' : '');
+    playPayoutSound(premium ? 6 : 3);
+    playPayoutFanfare(premium ? 8 : 3);
+    if (premium) { tripleFlash(); burstParticles('gold', 100); } else { triggerFlash(); burstParticles('gold', 40); }
+    setTimeout(() => {
+      pushOverlay.className = 'push-overlay';
+      isPushing = false;
+      if (onDone) onDone();
+    }, premium ? 1900 : 1400);
+  };
+  pushBtn.addEventListener('click', handler);
+}
+
+const rushOverlay = document.getElementById('rush-overlay');
+const rushSub = document.getElementById('rush-sub');
+const rushLines = rushOverlay.querySelectorAll('.rush-line');
+
+/* AT突入 (PEKA RUSH!!!): 演出のあとPUSHボタン → 獲得G数をでかでかと表示 */
+function startAT(games, typeId) {
+  atType = typeId !== undefined ? typeId : pickAtType();
+  if (window.TRO && atType > 0) TRO.seen(atType === 1 ? 'heaven' : 'death');
+  const T = AT_TYPES[atType];
+  const base = Math.max(games || pickAtGames(), T.minG);
+  const n = games ? base : scaleG(base);
+  const premium = n >= 100 || atType > 0;   // +100G以上・HEAVEN/DEATH はプレミア演出
+  atEnding = false;
+  sinceEnd = null;
+  if (!atRun) atRun = { startDiff: diffCoins, games: 0, bells: 0, bonuses: 0 };
+  atRun.type = atType;
+  isRushing = true;
+  rushSub.textContent = '';
+  rushLines[0].textContent = T.line1;
+  rushLines[1].textContent = T.line2;
+  rushOverlay.classList.remove('show', 'premium', 't-heaven', 't-death');
+  if (atType > 0) rushOverlay.classList.add('t-' + T.id);
+  void rushOverlay.offsetWidth;
+  rushOverlay.classList.add('show');
+  if (premium) rushOverlay.classList.add('premium');
+
+  playGakoSound('gako');
+  playPayoutSound(premium ? 6 : 4);
+  playPayoutFanfare(premium ? 10 : 6);
+  tripleFlash();
+  if (premium) {
+    burstParticles('mega', 160);
+    startParticles('gold');
+    shakeMain();
+  } else {
+    burstParticles('gold', 70);
+  }
+
+  const ms = premium ? 3000 : 2200;
+  setTimeout(() => {
+    rushOverlay.classList.remove('show', 'premium', 't-heaven', 't-death');
+    stopParticles();
+    mainEl.classList.remove('shake-main');
+    isRushing = false;
+    pushReveal(`+${n}G`, premium, () => {
+      atGames += n;
+      modeGames = 0;
+      modeMult = 1;
+      updateAT();
+    });
+  }, ms);
+}
+

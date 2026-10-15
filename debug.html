@@ -6,10 +6,10 @@
   <title>ペカり君 [DEBUG]</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="fx.css">
-  <link rel="stylesheet" href="lcd.css">
-  <link rel="stylesheet" href="trophy.css">
+  <link rel="stylesheet" href="CSS/style.css">
+  <link rel="stylesheet" href="CSS/fx.css">
+  <link rel="stylesheet" href="CSS/lcd.css">
+  <link rel="stylesheet" href="CSS/trophy.css">
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-5 select-none">
 
@@ -217,10 +217,29 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
-  <script src="fx.js"></script>
-  <script src="lcd.js"></script>
-  <script src="trophy.js"></script>
+  <script src="JS/data/config.js"></script>
+  <script src="JS/core/settings.js"></script>
+  <script src="JS/core/state.js"></script>
+  <script src="JS/core/audio.js"></script>
+  <script src="JS/core/effects.js"></script>
+  <script src="JS/game/flow.js"></script>
+  <script src="JS/game/reels.js"></script>
+  <script src="JS/game/reel-spin.js"></script>
+  <script src="JS/game/bell.js"></script>
+  <script src="JS/game/cherry.js"></script>
+  <script src="JS/game/at.js"></script>
+  <script src="JS/game/bonus.js"></script>
+  <script src="JS/game/at-result.js"></script>
+  <script src="JS/ui/display.js"></script>
+  <script src="JS/game/auto.js"></script>
+  <script src="JS/ui/settings-panel.js"></script>
+  <script src="JS/ui/graph.js"></script>
+  <script src="JS/ui/modal.js"></script>
+  <script src="JS/ui/reel-view.js"></script>
+  <script src="JS/ui/boot.js"></script>
+  <script src="JS/ext/fx.js"></script>
+  <script src="JS/ext/lcd.js"></script>
+  <script src="JS/ext/trophy.js"></script>
   <script>
     // ==========================================
     // デバッグ: 全演出をボタンで再生 (G数・回数・差枚数は変化しない)
