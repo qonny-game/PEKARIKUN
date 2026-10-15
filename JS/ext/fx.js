@@ -167,7 +167,7 @@
       i++;
       if (i >= L) {
         unlock('step_clear'); triggerFlash(); sndUp(5);
-        wait(700, () => { showCutin('gold', true, done); });
+        wait(700, () => { showCutin(hit ? 'gold' : 'white', true, done); });
         return;
       }
       wait(620, next);
@@ -206,12 +206,12 @@
     if (hit && rnd() < 0.6) st.rev = 'rev';
     // 矛盾は文字を出さず、不可解な音だけで感じさせる
     const end = () => { snd([466, 392, 466, 311, 277], 0.11, 0.32, 'sawtooth', 0.08); FX.hold(1400); wait(1250, done); };
-    const sadTalk = msg => { put('fx-talk sad', `${mascot('sad')}<span class="tk">${msg}</span>`, 1900); FX.hold(1900); wait(1800, end); };
+    const sadTalk = () => { FX.hold(1900); wait(1800, end); };   // 矛盾の台詞は出さず、間だけ置く
     const v = Math.floor(rnd() * 4);
     if (v === 0) {            // 金カットイン → 直後に暗転・静寂
-      showCutin('gold', true, () => { put('fx-dark', '', 1300); snd([98], 0, 1, 'sine', 0.16); FX.hold(1300); wait(1250, () => sadTalk('おかしいな、静かだ')); });
+      showCutin(hit ? 'gold' : 'white', true, () => { put('fx-dark', '', 1300); snd([98], 0, 1, 'sine', 0.16); FX.hold(1300); wait(1250, () => sadTalk('おかしいな、静かだ')); });
     } else if (v === 1) {     // 青カットインが崩れる → 突然のフラッシュ
-      showCutin('blue', false, () => { put('fx-flash', '', 520); triggerFlash(); sndUp(5); FX.hold(600); wait(550, end); });
+      showCutin('white', false, () => { put('fx-flash', '', 520); triggerFlash(); sndUp(5); FX.hold(600); wait(550, end); });
     } else if (v === 2) {     // ステップ完走 → 会話は弱気
       showStep(true, hit, () => sadTalk('光りそうで光らない'));
     } else {                  // 消灯焦らし風: グローと暗転が同時
@@ -233,6 +233,10 @@
     wait(T, done);
     return el;
   }
+  /* 矛盾の色: 通常時の黄(ベル)のうち約4%だけ緑で止まる（緑=スイカの約束を破る矛盾。ボーナス確定のような不可解さ） */
+  function mismatchColor() { return pvColor === 'yellow' && rnd() < 0.04 ? 'green' : pvColor; }
+  function mujunSound() { snd([466, 392, 466, 311, 277], 0.11, 0.32, 'sawtooth', 0.08); flashMarquee('hot', 2200); }
+  let pvColor = null;   // 通常時の予告の色 (結果から決まる)。AT中など結果が無いときは null
   const PV = {
     parade(s, d) {
       const n = 5;
@@ -244,12 +248,16 @@
       wait(700, () => { el.classList.add('press'); snd([220], 0, 0.15, 'square', 0.12); });
     },
     roulette(s, d) {
-      const C = ['青', '緑', '赤', '金'], fin = s ? pick([2, 3]) : pick([0, 1]);
-      const el = pvRun('roulette', '<i class="pv-roul">青</i>', 2100, 1300, s, '', d);
+      // 通常時は結果の色で止まる。ごくまれに黄(ベル)の結果なのに緑で止まる（矛盾）
+      const LBL = { blue: '青', green: '緑', red: '赤', gold: '金', yellow: '黄', rainbow: '虹', white: '白' };
+      const SET = pvColor ? Object.keys(LBL) : ['blue', 'green', 'red', 'gold'];
+      const land = pvColor ? mismatchColor() : null;
+      const fin = pvColor ? SET.indexOf(land) : (s ? pick([2, 3]) : pick([0, 1]));
+      const el = pvRun('roulette', `<i class="pv-roul" data-c="${SET[0]}">${LBL[SET[0]]}</i>`, 2100, 1300, s, '', d);
       const c = el.querySelector('.pv-roul');
       let k = 0;
-      const iv = setInterval(() => { k++; c.textContent = C[k % 4]; c.dataset.c = k % 4; snd([300 + (k % 4) * 80], 0, 0.04, 'square', 0.05); }, 90);
-      wait(1250, () => { clearInterval(iv); c.textContent = C[fin]; c.dataset.c = fin; });
+      const iv = setInterval(() => { k++; const j = k % SET.length; c.textContent = LBL[SET[j]]; c.dataset.c = SET[j]; snd([300 + j * 80], 0, 0.04, 'square', 0.05); }, 90);
+      wait(1250, () => { clearInterval(iv); c.textContent = LBL[SET[fin]]; c.dataset.c = SET[fin]; if (land !== pvColor) mujunSound(); });
     },
     timer(s, d) {
       const el = pvRun('timer', '<i class="pv-num">3</i>', 2000, 1500, s, s ? 'GET!' : '0', d);
@@ -262,14 +270,24 @@
       wait(500, () => snd([150, 120], 0, 0.2, 'sawtooth', 0.1));
     },
     rain(s, d) {
-      pvRun('rain', '<i class="pv-rain"></i><i class="pv-rbw"></i>', 2300, 1300, s, s ? 'CHANCE' : '', d);
+      // 虹は大きな当たりの色。通常時は虹が出るのは大きな当たりのときだけ
+      const rbw = pvColor === null || pvColor === 'rainbow' ? '<i class="pv-rbw"></i>' : '';
+      pvRun('rain', `<i class="pv-rain"></i>${rbw}`, 2300, 1300, s, s ? 'CHANCE' : '', d);
       snd([196, 175], 0.3, 0.5, 'sine', 0.06);
     },
     coin(s, d) {
-      const slot = s ? pick([1, 2]) : 0;
-      const el = pvRun('coin', '<i class="pv-coin"></i><span class="pv-slots"><em>青</em><em>赤</em><em>金</em></span>', 2100, 1300, s, '', d);
+      const LBL = { blue: '青', red: '赤', gold: '金', green: '緑', yellow: '黄', rainbow: '虹', white: '白' };
+      let labels = ['blue', 'red', 'gold'], slot = s ? pick([1, 2]) : 0, land = null;
+      if (pvColor) {   // 通常時: 光る枠は結果の色。ほかの枠は別の色（約束にならない）
+        land = mismatchColor();
+        const others = Object.keys(LBL).filter(c => c !== land).sort(() => rnd() - 0.5).slice(0, 2);
+        labels = [land, ...others].sort(() => rnd() - 0.5);
+        slot = labels.indexOf(land);
+      }
+      const html = labels.map(c => `<em data-c="${c}">${LBL[c]}</em>`).join('');
+      const el = pvRun('coin', `<i class="pv-coin"></i><span class="pv-slots">${html}</span>`, 2100, 1300, s, '', d);
       el.style.setProperty('--x', ((slot - 1) * 74) + 'px');
-      wait(1250, () => { const e = el.querySelectorAll('.pv-slots em')[slot]; if (e) e.classList.add('hit'); snd([880, 1175], 0, 0.15, 'triangle', 0.1); });
+      wait(1250, () => { const e = el.querySelectorAll('.pv-slots em')[slot]; if (e) e.classList.add('hit'); snd([880, 1175], 0, 0.15, 'triangle', 0.1); if (land !== pvColor) mujunSound(); });
     },
     meter(s, d) {
       const L = s ? 3 + Math.floor(rnd() * 2) : 1 + Math.floor(rnd() * 2);
@@ -303,6 +321,9 @@
     return 'white';
   }
   function playPreview(cls, hit, done, kind) {
+    pvColor = kind === undefined ? null : cutinColorFor(kind);
+    // 上部文字: 期待度が弱い予告は青、強い予告は赤（色は期待度だけ。役の約束にはしない）
+    flashMarquee(cls === 'mid' || cls === 'none' ? 'chance' : 'hot', 1800);
     const success = hit ? rnd() < PV_SUCCESS.hit : rnd() < PV_SUCCESS[cls];
     const type = pick(['cutin', 'cutin', 'step', 'talk', 'dark', ...PV_KEYS, ...PV_KEYS]);
     // 当選なのに失敗の見せ方 → ガッカリのあとに逆転
@@ -364,7 +385,7 @@
     };
     const reRun = (k, d, n) => _runRole(k, res => {
       if (st.pseudo > 0 && k === 'lose') {
-        st.pseudo--; showBanner('連続演出', '', 'blue'); FX.hold(1300);
+        st.pseudo--; showBanner('連続演出', '', ''); FX.hold(1300);
         wait(1100, () => { st.noOmen = true; reRun(k, d, n); });
         return;
       }
@@ -406,13 +427,13 @@
     clearTimeout(m._fxT);
     m._fxT = setTimeout(() => m.classList.remove(cls), ms);
   }
+  window.FXBanner = (...a) => showBanner(...a);   // 本体（サンド目など）から大きなバナーを出す
   function showBanner(text, sub, color, big, ms) {
     if (window.TRO) {
       const k = text === '連続演出' ? 'pseudo' : /^PEKA(\.\.\.)?\?/.test(text) ? 'saki' : text === '矛盾' ? 'mujun' : text === 'W RARE!' ? 'wrare' : /^\+\d+$/.test(text) ? 'milestone' : null;
       if (k) TRO.seen(k);
     }
     if (color === 'red' && big) flashMarquee('hot', 2200);
-    else if (color === 'blue' && big) flashMarquee('chance', 1800);
     return put(`fx-banner ${color || ''}${big ? ' big' : ''}`, `${text}${sub ? `<small>${sub}</small>` : ''}`, ms || 1750);
   }
 

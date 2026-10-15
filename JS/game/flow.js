@@ -330,7 +330,11 @@ function handleSpin() {
     // ベル揃い: 直線 / 斜め左上から1枚 / 斜め左下から15枚 (AT中は左下が出やすい)
     if (inAT && atRun) atRun.bells++;
     const type = pickBellType(inAT);
-    runRole('bell' + type, () => {
+    // AT中のベル: 揃いやすいが、ナビが出ないことがあり、ナビなしのときはハズレ目になることもある
+    const atNavi = inAT && Math.random() < 0.6 ? naviFor('red') : null;
+    const atBellMiss = inAT && !atNavi && Math.random() < 0.3;
+    runRole(atBellMiss ? 'lose' : 'bell' + type, () => {
+      if (atBellMiss) { stopTension(); updateUI(); maybeShowAtResult(); return; }
       stopTension();
       diffCoins += BELL_TYPES[type].coins;
       setLedWin(BELL_TYPES[type].coins);
@@ -338,7 +342,7 @@ function handleSpin() {
       showBellResult(BELL_TYPES[type].coins, inAT);
       updateUI();
       maybeShowAtResult();
-    });
+    }, atNavi);
   } else if (Math.random() < (inAT ? MELON_AT_RATE : MELON_RATE)) {
     // スイカ: 強=中段(中リールを狙う。取りこぼしあり) / 弱=斜め(自動で揃う)
     playRole(Math.random() < MELON_STRONG_P ? 'melon' : 'melonW', inAT);

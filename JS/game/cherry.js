@@ -65,6 +65,7 @@ const SAND_UP = [5, 10, 15, 20, 25, 30, 50];   // 揃えたときの上乗せG�
 /* サンド目: 第2リールを目押しで止める (バー・チェリー・バー)。揃えたら AT に上乗せ、外れは何も無し */
 function playSand() {
   const N = SAND_UP[Math.floor(Math.random() * SAND_UP.length)];
+  if (window.FXBanner) window.FXBanner('サンド目をそろえろ！！！', '', 'red', true, 1700);   // 液晶いっぱいにあおる
   runRole('sand', res => {
     stopTension();
     if (res.success) {
