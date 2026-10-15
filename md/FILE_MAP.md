@@ -14,7 +14,7 @@
 | 8 | `JS/game/reel-spin.js` | リール回転・目押し停止・予告・役の結果 | 339 | OPT_KEY, AUTO_STOP, saveOpt, SPIN_SPEED, SLIP_MAX, CELL_H, reelSpin, isReelSpinning …他27 |
 | 9 | `JS/game/bell.js` | ベル | 81 | BELL_TYPES, BELL_LINES, pickBellType, bellBadge, getPop, getRAF, rainCoins, showGet …他3 |
 | 10 | `JS/game/cherry.js` | チェリー | 142 | cherryStatus, cherryRemain, updateCherry, CHERRY_AT_CHOICES, pickCherryAtG, setBoost, cherryEffects, ROLE_INFO …他14 |
-| 11 | `JS/game/at.js` | AT（ペカラッシュ）・PUSH演出 | 129 | atStatus, atRemain, atLabel, atToast, updateAT, updateAtGain, showAtToast, AT_CHOICES …他9 |
+| 11 | `JS/game/at.js` | AT（ペカラッシュ）・PUSH演出 | 131 | atStatus, atRemain, atLabel, atToast, updateAT, updateAtGain, showAtToast, AT_CHOICES …他9 |
 | 12 | `JS/game/bonus.js` | ボーナス消化・押し順ナビ・ドンドンドン | 358 | AURA_NAMES, AURA_WIN_W, AURA_LOSE_W, auraEl, atEntryRateFor, pickAuraLevel, ZONE_G_CHOICES, ZONE_G_WEIGHTS …他26 |
 | 13 | `JS/game/at-result.js` | ATリザルト・獲得枚数OVER・次回示唆 | 367 | atResultEl, atResultGain, arHintBar, arHintText, atResultRAF, MODES, HINT_LABELS, decideNextMode …他26 |
 | 14 | `JS/ui/display.js` | 電光掲示（LED・ランプ表示） | 159 | setLed, ledWinEl, ledCreditEl, ledTotalEl, ledWin, setLedWin, creditNow, totalGetNow …他9 |
@@ -25,7 +25,7 @@
 | 19 | `JS/ui/reel-view.js` | リール配列の表示 | 28 | reelModal, reelView, miniSym, buildReelView |
 | 20 | `JS/ui/boot.js` | 起動時の初期化（iOS対策・画面スリープ防止） | 29 | lastTouchEnd |
 | 21 | `JS/ext/fx.js` | 追加演出 | 934 |  |
-| 22 | `JS/ext/lcd.js` | 演出液晶 | 155 |  |
+| 22 | `JS/ext/lcd.js` | 演出液晶 | 156 |  |
 | 23 | `JS/ext/trophy.js` | トロフィー / ミッション / ランキング | 217 |  |
 
 ## その他

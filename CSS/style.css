@@ -1634,3 +1634,10 @@ main > .op-area { display: contents; }
 /* LAST カウントダウン: 液晶の中に */
 .chance-count { position: absolute; inset: 0; z-index: 36; justify-content: center; }
 .chance-count .cc-n { font-size: 190px; }
+
+/* ---- 1.18.10 ---- */
+/* 残りG=液晶の左上 / 獲得枚数=液晶の右上（固定） */
+.cab-lcd .at-status { position: absolute; top: 6px; left: 8px; right: 8px; z-index: 40; justify-content: space-between; pointer-events: none; }
+.cab-lcd .at-status .as-left { display: flex; align-items: center; gap: 6px; }
+.at-gain { display: none; }
+.at-gain.has-gain { display: inline; }

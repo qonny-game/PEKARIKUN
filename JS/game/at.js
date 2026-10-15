@@ -14,6 +14,8 @@ function updateAT() {
     atStatus.classList.add('on', 'bonus');
     atLabel.textContent = bonusRun.zone ? 'ZONE' : 'BONUS';
     atRemain.textContent = Math.max(0, bonusRun.games - bonusRun.played);
+    const gainEl = document.getElementById('at-gain');   // ボーナス中の獲得枚数（右上）
+    if (gainEl) { gainEl.textContent = bonusRun.paid; gainEl.parentNode.classList.add('has-gain'); }
     atStatus.classList.toggle('low', !bonusRun.zone && bonusRun.games - bonusRun.played <= 3);
     return;
   }
