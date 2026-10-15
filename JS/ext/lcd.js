@@ -10,7 +10,7 @@
   const rnd = Math.random;
   const pick = a => a[Math.floor(rnd() * a.length)];
   const freq = () => (window.FXO_FREQ ? window.FXO_FREQ() : 1);
-  el.innerHTML = '<div class="sl-stars"></div><div class="sl-body"></div><div class="sl-aurora"></div><div class="sl-ground"></div><div class="sl-fg"></div><div class="sl-actor"></div><div class="sl-msg"><b></b><small></small></div>';
+  el.innerHTML = '<div class="sl-stars"></div><div class="sl-body"></div><div class="sl-aurora"></div><div class="sl-weather"></div><div class="sl-ground"></div><div class="sl-fg"></div><div class="sl-actor"></div><div class="sl-msg"><b></b><small></small></div>';
   const fg = el.querySelector('.sl-fg'), actor = el.querySelector('.sl-actor');
   const m1 = el.querySelector('.sl-msg b'), m2 = el.querySelector('.sl-msg small'), msg = el.querySelector('.sl-msg');
 
@@ -111,7 +111,7 @@
   setTimeout(() => { if (!isDebugRun) { say('PEKARI-KUN', 'レバーをタップ', 2600, 'happy', 'peek'); } }, 700);
 
   /* ---------- 飛来物 ---------- */
-  const SPRITES = { bird: 3000, bat: 2600, flock: 3400, coin: 1000, ripple: 1000, star: 900, ufo: 2000, rocket: 1400, balloon: 2600, rainbow: 2200, cloud: 3200, thunder: 3200, fire: 1100, chest: 1900, eye: 1800 };
+  const SPRITES = { leaf: 3600, whale: 5200, bird: 3000, bat: 2600, flock: 3400, coin: 1000, ripple: 1000, star: 900, ufo: 2000, rocket: 1400, balloon: 2600, rainbow: 2200, cloud: 3200, thunder: 3200, fire: 1100, chest: 1900, eye: 1800 };
   function spawn(type, lv) {
     const d = document.createElement('div');
     const base = type === 'thunder' ? 'cloud' : type;
@@ -126,7 +126,7 @@
     if (window.TRO) TRO.seen('lcd:' + type);
     return d;
   }
-  const NAMES = { bird: '鳥', bat: 'コウモリ', flock: '鳥の群れ', coin: 'コイン', ripple: '波紋', star: '流れ星', ufo: 'UFO', rocket: 'ロケット', balloon: '気球', rainbow: '虹', cloud: '雲', thunder: '雷雲', fire: '花火', chest: '宝箱', eye: '目' };
+  const NAMES = { leaf: '葉', whale: 'クジラ', bird: '鳥', bat: 'コウモリ', flock: '鳥の群れ', coin: 'コイン', ripple: '波紋', star: '流れ星', ufo: 'UFO', rocket: 'ロケット', balloon: '気球', rainbow: '虹', cloud: '雲', thunder: '雷雲', fire: '花火', chest: '宝箱', eye: '目' };
   const LVW = { hit: [18, 30, 32, 20], rare: [30, 36, 24, 10], mid: [50, 35, 12, 3], none: [72, 24, 4, 0] };
   const wpick = w => { let x = rnd() * w.reduce((a, b) => a + b, 0); for (let i = 0; i < w.length; i++) { x -= w[i]; if (x < 0) return i; } return 0; };
   function preview(cls) {
@@ -295,9 +295,9 @@
   setInterval(() => {
     if (isDebugRun || bonusRun || FX.busy) return;
     const sc = scene();
-    if (sc === 'day') spawn(pick(['cloud', 'cloud', 'balloon', 'bird', 'flock']), 0);
+    if (sc === 'day') { spawn(pick(['cloud', 'cloud', 'balloon', 'bird', 'flock', 'leaf']), 0); if (rnd() < 0.5) setTimeout(() => spawn('leaf', 0), 500); }
     else if (sc === 'death') spawn(rnd() < 0.6 ? 'bat' : 'cloud', 2);
-    else if (sc === 'night') spawn('star', 0);
+    else if (sc === 'night') spawn(rnd() < 0.25 ? 'whale' : 'star', 0);
     else if (sc === 'dusk') spawn('cloud', 0);
     else if (atGames > 0 && rnd() < 0.5) spawn(pick(['star', 'fire', 'rocket']), sc === 'death' ? 2 : 1);
   }, 6500);

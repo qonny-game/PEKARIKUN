@@ -125,3 +125,24 @@
 .sp-bat::before { left: -22px; } .sp-bat::after { right: -22px; }
 @keyframes sp-flap2 { from { transform: scaleY(1); } to { transform: scaleY(.4); } }
 @keyframes sp-bat { 0% { transform: translate(0, 0); } 25% { transform: translate(100px, 40px); } 50% { transform: translate(210px, -10px); } 75% { transform: translate(310px, 50px); } 100% { transform: translate(430px, 0); } }
+
+/* 天気・空気感 (シーンごと。表示だけ) */
+.sl-weather { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s; pointer-events: none; }
+.sub-lcd[data-scene="day"] .sl-weather { opacity: 1; background: repeating-linear-gradient(115deg, rgba(255, 255, 255, .13) 0 16px, transparent 16px 54px); background-size: 200% 100%; animation: sl-drift 14s linear infinite; }
+@keyframes sl-drift { to { background-position: 108px 0; } }
+.sub-lcd[data-scene="night"] .sl-weather { opacity: 1; background-image: radial-gradient(2.5px 2.5px at 18% 62%, #fde68a, transparent), radial-gradient(2px 2px at 42% 48%, #fde68a, transparent), radial-gradient(3px 3px at 66% 70%, #fef08a, transparent), radial-gradient(2px 2px at 84% 54%, #fde68a, transparent), radial-gradient(2.5px 2.5px at 30% 78%, #fef08a, transparent); animation: sl-fly 5s ease-in-out infinite alternate; }
+@keyframes sl-fly { from { transform: translate(0, 0); filter: brightness(.7); } to { transform: translate(14px, -16px); filter: brightness(1.6); } }
+.sub-lcd[data-scene="death"] .sl-weather { opacity: .8; background: repeating-linear-gradient(100deg, rgba(255, 60, 90, .35) 0 2px, transparent 2px 22px); background-size: 100% 200%; animation: sl-rain .5s linear infinite; }
+@keyframes sl-rain { to { background-position: -30px 60px; } }
+.sub-lcd[data-scene="zencho"] .sl-weather { opacity: 1; background: radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(220, 38, 38, .55) 100%); animation: sl-vig 1.4s ease-in-out infinite alternate; }
+@keyframes sl-vig { from { opacity: .5; } to { opacity: 1; } }
+.sub-lcd[data-scene="cz"] .sl-weather, .sub-lcd[data-scene="zone"] .sl-weather, .sub-lcd[data-scene="at"] .sl-weather, .sub-lcd[data-scene="heaven"] .sl-weather {
+  opacity: 1; background-image: radial-gradient(3px 3px at 12% 30%, #fff, transparent), radial-gradient(2px 2px at 34% 70%, #fff, transparent), radial-gradient(3px 3px at 58% 22%, #fff, transparent), radial-gradient(2px 2px at 76% 60%, #fff, transparent), radial-gradient(3px 3px at 90% 36%, #fff, transparent); animation: sl-sparkle .9s steps(2) infinite; }
+@keyframes sl-sparkle { 50% { transform: translateY(-8px); opacity: .5; } }
+/* 葉 / クジラ */
+.sp-leaf { top: -20px; left: calc(var(--dx, 40%) - 10%); width: 22px; height: 12px; border-radius: 100% 0 100% 0; background: linear-gradient(135deg, #86efac, #16a34a); animation: sp-leaf 3.6s ease-in-out forwards; }
+@keyframes sp-leaf { 0% { transform: translate(0, 0) rotate(0); } 25% { transform: translate(40px, 50px) rotate(120deg); } 50% { transform: translate(-10px, 100px) rotate(260deg); } 75% { transform: translate(44px, 150px) rotate(380deg); } 100% { transform: translate(10px, 215px) rotate(520deg); opacity: .4; } }
+.sp-whale { left: -190px; top: calc(40px + var(--dy)); width: 150px; height: 56px; border-radius: 70% 70% 50% 50% / 80% 80% 40% 40%; background: linear-gradient(180deg, #1e3a8a, #0f172a); box-shadow: 0 0 22px rgba(147, 197, 253, .5); animation: sp-whale 5.2s ease-in-out forwards; }
+.sp-whale::before { content: ''; position: absolute; right: -32px; top: -14px; width: 46px; height: 40px; background: #1e3a8a; clip-path: polygon(0 55%, 55% 40%, 100% 0, 80% 50%, 100% 100%, 45% 70%, 0 75%); }
+.sp-whale::after { content: ''; position: absolute; left: 24px; top: 16px; width: 8px; height: 8px; border-radius: 50%; background: #e0f2fe; }
+@keyframes sp-whale { 0% { transform: translate(0, 10px); } 50% { transform: translate(300px, -20px); } 100% { transform: translate(560px, 6px); } }

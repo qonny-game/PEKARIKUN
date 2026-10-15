@@ -25,7 +25,7 @@
     zone: 'MOUNTAIN 突入', freeze: 'フリーズ', heaven: 'PEKA RUSH! HEAVEN!', death: 'PEKA RUSH! DEATH!', wrare: 'W RARE!', milestone: '差枚マイルストーン',
     'pv:parade': '予告 パレード', 'pv:button': '予告 ボタン', 'pv:roulette': '予告 ルーレット', 'pv:timer': '予告 タイマー', 'pv:crack': '予告 画面割れ', 'pv:rain': '予告 雨', 'pv:coin': '予告 コイン', 'pv:meter': '予告 メーター', 'pv:omikuji': '予告 おみくじ', 'pv:lamp': '予告 ランプ',
     'lcd:star': '液晶 流れ星', 'lcd:ufo': '液晶 UFO', 'lcd:rocket': '液晶 ロケット', 'lcd:balloon': '液晶 気球', 'lcd:rainbow': '液晶 虹',
-    'lcd:coin': '液晶 コイン', 'lcd:ripple': '液晶 波紋', bell3: 'ベルコンボ x3', replay3: 'リプレイ連続 x3', 'lcd:cloud': '液晶 雲', 'lcd:thunder': '液晶 雷雲', 'lcd:fire': '液晶 花火', 'lcd:chest': '液晶 宝箱', 'lcd:eye': '液晶 目'
+    'lcd:coin': '液晶 コイン', 'lcd:bird': '液晶 鳥', 'lcd:flock': '液晶 鳥の群れ', 'lcd:bat': '液晶 コウモリ', 'lcd:leaf': '液晶 葉', 'lcd:whale': '液晶 クジラ', 'lcd:ripple': '液晶 波紋', bell3: 'ベルコンボ x3', replay3: 'リプレイ連続 x3', 'lcd:cloud': '液晶 雲', 'lcd:thunder': '液晶 雷雲', 'lcd:fire': '液晶 花火', 'lcd:chest': '液晶 宝箱', 'lcd:eye': '液晶 目'
   };
   const achName = id => { const a = (window.FX && FX.ACHS || []).find(x => x[0] === id); return a ? a[1] : id; };
   const nameOf = k => k.startsWith('ach:') ? achName(k.slice(4)) : (EFF[k] || k);
