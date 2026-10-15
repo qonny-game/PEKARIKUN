@@ -11,7 +11,8 @@
 
   /* ---------- 設定 (演出の頻度 / BGM) ---------- */
   const FXO_KEY = 'pekari-fx-v1';
-  const FXO = { freq: 'normal', bgm: true, wait: 'normal' };
+  const FXO = { freq: 'normal', bgm: true, wait: 'normal', vib: true };
+  window.vibrate = pat => { try { if (FXO.vib && navigator.vibrate) navigator.vibrate(pat); } catch (e) { /* 非対応 */ } };
   try { Object.assign(FXO, JSON.parse(localStorage.getItem(FXO_KEY) || '{}')); } catch (e) { /* 初期値 */ }
   const saveFxo = () => { try { localStorage.setItem(FXO_KEY, JSON.stringify(FXO)); } catch (e) { /* 無視 */ } };
   const freqMul = () => ({ off: 0, low: 0.5, normal: 1, high: 1.6 }[FXO.freq] ?? 1);
@@ -856,11 +857,13 @@
       <div class="set-group">
         <label class="set-row set-opt"><span class="set-label">予告の出やすさ</span><span class="set-field"><select id="fx-freq">${opt('low', '少なめ')}${opt('normal', '標準')}${opt('high', '多め')}${opt('off', 'なし')}</select></span></label>
         <label class="set-row set-opt"><span class="set-label">ウェイト (レバー間隔)</span><span class="set-field"><select id="fx-wait"><option value="normal"${FXO.wait === 'normal' ? ' selected' : ''}>標準 (4.1秒)</option><option value="short"${FXO.wait === 'short' ? ' selected' : ''}>短縮 (2秒)</option><option value="off"${FXO.wait === 'off' ? ' selected' : ''}>なし</option></select></span></label>
+        <label class="set-row set-opt"><span class="set-label">振動 (対応端末のみ)</span><span class="set-field"><input type="checkbox" id="fx-vib"${FXO.vib ? ' checked' : ''}></span></label>
         <label class="set-row set-opt"><span class="set-label">BGM (ボーナス・AT中)</span><span class="set-field"><input type="checkbox" id="fx-bgm"${FXO.bgm ? ' checked' : ''}></span></label>
         <div class="set-note">今日のペカり君: ${COSTUME_NAME[costumeIdx()]}</div>
       </div>`);
     body.querySelector('#fx-freq').addEventListener('change', e => { FXO.freq = e.target.value; saveFxo(); });
     body.querySelector('#fx-wait').addEventListener('change', e => { FXO.wait = e.target.value; saveFxo(); });
+    body.querySelector('#fx-vib').addEventListener('change', e => { FXO.vib = e.target.checked; saveFxo(); });
     body.querySelector('#fx-bgm').addEventListener('change', e => { FXO.bgm = e.target.checked; saveFxo(); });
   };
 

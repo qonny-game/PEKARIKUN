@@ -26,7 +26,8 @@ let sideTok = 0;   // 点灯のたびに変わる。古い消灯予約を無効�
 function sideLampShow(kind, quiet) {
   sideTok++;
   [sideL, sideR].forEach(el => {
-    el.classList.remove('on', 'heaven', 'lit'); void el.offsetWidth; el.classList.add('on');
+    el.classList.remove('on', 'heaven', 'lit', 'pat-chase', 'pat-sweep', 'pat-pulse', 'pat-solid'); void el.offsetWidth; el.classList.add('on');
+    if (kind !== 'heaven') el.classList.add('pat-' + (LAMP_TABLE.pattern[kind] || 'chase'));
     if (kind === 'heaven') el.classList.add('heaven');
     else { el.classList.add('lit'); el.style.setProperty('--sl', SIDE_COLOR[kind] || SIDE_COLOR.red); }
   });
@@ -149,6 +150,7 @@ function freezeToZone(debug) {
   sideLampOff();
   const thud = (lv) => {
     shakeMain(180 + lv * 120);
+    if (window.vibrate) window.vibrate(60 + lv * 80);
     if (!soundEnabled) return;
     initAudio();
     const t = audioCtx.currentTime;

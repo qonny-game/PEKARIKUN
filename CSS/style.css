@@ -1645,3 +1645,16 @@ main > .op-area { display: contents; }
 /* 1.19.2 フリーズ中の暗転 */
 .cabinet.freeze-dark { filter: brightness(0.25) saturate(0.6); transition: filter 0.6s ease; }
 .cabinet { transition: filter 0.25s ease; }
+
+/* 1.19.6 サイドランプの点灯パターン: 赤=追いかけ / 緑=速い上昇 / ピンク=全体が脈打つ / 青・黄=点きっぱなし */
+.side-lamp.on.lit.pat-sweep i { animation: side-sweep 0.5s steps(1) infinite; animation-delay: calc((3 - var(--i)) * 0.08s); }
+.side-lamp.on.lit.pat-pulse i { animation: side-pulse 0.9s ease-in-out infinite; animation-delay: 0s; }
+.side-lamp.on.lit.pat-solid i { animation: none; color: #fff; background: var(--sl); box-shadow: 0 0 12px var(--sl), 0 0 22px var(--sl); }
+@keyframes side-sweep {
+  0%   { color: #fff; background: var(--sl); box-shadow: 0 0 12px var(--sl); }
+  30%  { color: #4a3d78; background: #1b1238; box-shadow: none; }
+}
+@keyframes side-pulse {
+  0%, 100% { color: #4a3d78; background: #1b1238; box-shadow: none; }
+  50%      { color: #fff; background: var(--sl); box-shadow: 0 0 12px var(--sl), 0 0 22px var(--sl); }
+}

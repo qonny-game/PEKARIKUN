@@ -100,6 +100,7 @@
   const _tp = triggerPekari;
   triggerPekari = function (...a) {
     if (!isDebugRun) {
+      if (window.vibrate) window.vibrate([80, 40, 80, 40, 200]);
       el.classList.add('flash', 'rainbow');
       say('PEKA!!', 'GOGO LAMP', 2400, 'happy', 'spin');
       spawn('fire', 3);
@@ -114,12 +115,36 @@
     dusk: ['夕焼けがきれい', '空の色が変わってきた', '日が傾いてきたよ'],
     night: ['星がきれいだよ', '静かな夜だね', '月が明るい', '流れ星、来るかな']
   };
+  /* ステージ: 昼=通常 / 夕=高確示唆 / 夜=超高確示唆。AT後の隠れモードをにおわせる（示唆はズレることがあり、当選確率は変えない） */
+  let stage = 'day', stageLeft = 0, stageMode = 0, stageGame = -1;
+  function stageNow() {
+    if (stageGame !== cumulativeGames) {
+      stageGame = cumulativeGames;
+      if (modeGames > 0 && stageMode === 0) {
+        // モード突入: 倍率に応じてステージを決める（20%はズレる）
+        let lv = modeMult >= 8 ? 2 : modeMult >= 4 ? 1.5 : 1;
+        if (Math.random() < 0.2) lv = Math.max(0, lv - 1) + (Math.random() < 0.5 ? 0 : 1);
+        stage = lv >= 2 ? 'night' : lv >= 1 ? 'dusk' : 'day';
+        stageLeft = modeGames;
+      }
+      stageMode = modeGames;
+      if (stageLeft > 0) stageLeft--;
+      else if (stage !== 'day' && modeGames === 0) stage = 'day';
+      // 通常時にもたまに夕・夜に変わる（ガセ。10〜20G）
+      if (stage === 'day' && modeGames === 0 && stageLeft === 0 && !isDebugRun) {
+        const r = Math.random();
+        if (r < 1 / 140) { stage = 'dusk'; stageLeft = 10 + Math.floor(Math.random() * 11); }
+        else if (r < 1 / 140 + 1 / 700) { stage = 'night'; stageLeft = 10 + Math.floor(Math.random() * 11); }
+      }
+      if (stageLeft === 0 && modeGames === 0) stage = 'day';
+    }
+    return stage;
+  }
   function scene() {
     if (bonusRun) return bonusRun.zone ? 'zone' : 'bonus';
     if (atGames > 0 || atEnding) return atType === 1 ? 'heaven' : atType === 2 ? 'death' : 'at';
     if (zenchoLeft > 0 || fakeZencho > 0) return 'zencho';
-    const g = totalGames % 300;
-    return g < 100 ? 'day' : g < 200 ? 'dusk' : 'night';
+    return stageNow();
   }
   let last = '';
   setInterval(() => {
