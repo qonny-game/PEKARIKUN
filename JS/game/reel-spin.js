@@ -114,6 +114,13 @@ function stopCol(c, auto) {
         T = (ok.length ? ok : cands)[0]; t = mod(T);
       }
     }
+  } else if (p.kind === 'sand') {   // サンド目: 第2リールを目押し (バー・チェリー・バー)。左右は自動
+    if (auto || c !== 1) { tele = true; t = p.ts[c]; }
+    else {
+      const a = cands.find(x => windowOf(1, x).join() === 'bar,cherry,bar');
+      if (a !== undefined) { T = a; t = mod(a); }
+      else { T = cands[0]; t = mod(T); }   // 取りこぼし
+    }
   } else if (p.kind === 'cherry') {   // チェリー: 左リールで狙う (取りこぼしあり)
     if (auto) { tele = true; t = p.ts[c]; }
     else if (c === 0) {
@@ -195,6 +202,7 @@ function finishReels() {
   if (rs.plan.kind === 'seven') success = isSeven(f[0][1]) && f[1][1] === f[0][1] && f[2][1] === f[0][1];
   else if (rs.plan.kind === 'cherry') success = f[0].includes('cherry');
   else if (rs.plan.kind === 'melon') success = f[0][1] === 'melon' && f[1][1] === 'melon' && f[2][1] === 'melon';
+  else if (rs.plan.kind === 'sand') success = f[1][0] === 'bar' && f[1][1] === 'cherry' && f[1][2] === 'bar';
   spinBtn.innerText = 'レバーON';
   reelLocked = true;
   setTimeout(() => { reelLocked = false; }, 300);

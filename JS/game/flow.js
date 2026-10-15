@@ -281,6 +281,9 @@ function handleSpin() {
   recordPoint();
   updateUI();
 
+  // サンド目: AT中、スイカ・チェリー成立の次から3G以内に出す（ゲームの代わりに第2リールを目押し）
+  if (!inAT) sandLeft = 0;
+  else if (sandLeft > 0 && !atEnding && --sandLeft === 0) { playSand(); return; }
   // 通常時のフリーズ: そのまま PEKA! PEKA! MOUNTAIN! へ直撃
   if (!inAT && Math.random() < FREEZE_RATE) { freezeToZone(); return; }
 

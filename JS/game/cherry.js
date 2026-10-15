@@ -59,6 +59,27 @@ const ROLE_INFO = {
 const CHERRY_STRONG_P = 0.12;   // チェリーのうち強の割合
 const MELON_STRONG_P = 0.35;    // スイカのうち強の割合
 const CHANCE_S_P = 0.008, CHANCE_W_P = 0.035;   // ハズレ目のうち強/弱チャンス目になる割合 (通常時のみ)
+/* サンド目までの残りゲーム (AT中: スイカ・チェリー成立の次から3G以内) */
+let sandLeft = 0;
+const SAND_UP = [5, 10, 15, 20, 25, 30, 50];   // 揃えたときの上乗せG数 (どれか抽選)
+/* サンド目: 第2リールを目押しで止める (バー・チェリー・バー)。揃えたら AT に上乗せ、外れは何も無し */
+function playSand() {
+  const N = SAND_UP[Math.floor(Math.random() * SAND_UP.length)];
+  runRole('sand', res => {
+    stopTension();
+    if (res.success) {
+      atGames += N;
+      markWin([1, 4, 7], '');
+      showAtToast(`サンド目 上乗せ +${N}G`);
+      triggerFlash();
+    } else {
+      missEffect();
+    }
+    updateAT();
+    updateUI();
+    maybeShowAtResult();
+  });
+}
 function roleEffects(role, inAT) {
   const R = ROLE_INFO[role];
   const coins = R.coins();
@@ -85,6 +106,7 @@ function playRole(role, inAT) {
     if (!aimed || res.success) {
       roleEffects(role, inAT);
       showRoleBadge(R.label, R.coins(), R.notes);
+      if (inAT && /^(melon|cherry)/.test(role)) sandLeft = 1 + Math.floor(Math.random() * 3);
     } else {
       missEffect();
     }

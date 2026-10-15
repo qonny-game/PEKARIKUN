@@ -21,7 +21,7 @@ const lineOf = (g, l) => g[l[0]] === g[l[1]] && g[l[1]] === g[l[2]];
 const STRIP_LEN = 21;
 const STRIPS = [
   ['7red', 'replay', 'bell', 'cherry', 'bar', 'melon', 'replay', 'bell', '7blue', 'replay', 'bell', 'melon', 'cherry', 'replay', 'bell', '7white', 'replay', 'bell', 'melon', 'replay', 'bell'],
-  ['replay', 'bell', '7blue', 'replay', 'melon', 'bell', 'bar', 'replay', 'cherry', 'bell', '7white', 'replay', 'bell', 'melon', 'replay', '7red', 'bell', 'replay', 'cherry', 'bell', 'replay'],
+  ['replay', 'bell', '7blue', 'replay', 'melon', 'bell', 'bar', 'cherry', 'bar', 'bell', '7white', 'replay', 'bell', 'melon', 'replay', '7red', 'bell', 'replay', 'cherry', 'bell', 'replay'],
   ['bell', '7white', 'replay', 'melon', 'bell', 'replay', 'bar', 'bell', 'melon', 'replay', '7red', 'bell', 'melon', 'replay', 'cherry', 'bell', 'melon', 'replay', '7blue', 'bell', 'replay']
 ];
 const SEVENS = ['7red', '7blue', '7white'];
@@ -42,7 +42,7 @@ const leftCherries = g => [0, 3, 6].filter(i => g[i] === 'cherry').length;
 
 /* 役ごとに、成立する停止位置の組み合わせ (3リール分の中段位置) を全部数えておく。
    ハズレ・ベル・リプレイ・チェリーは、必ずこの中から選ぶ (配列どおりの図柄で止まる) */
-const ROLE_COMBOS = { lose: [], replay: [], cherry: [], cherryW: [], cherryS: [], melonW: [], chanceW: [], chanceS: [], bell0: [], bell1: [], bell2: [] };
+const ROLE_COMBOS = { lose: [], replay: [], cherry: [], cherryW: [], cherryS: [], melonW: [], chanceW: [], chanceS: [], sand: [], bell0: [], bell1: [], bell2: [] };
 /* チャンス目 (ハズレ目の特定パターン): 弱=各リールのどこかにスイカがバラけて停止 / 強=各リールのどこかに7がバラけて停止 */
 const colHas = (g, c, f) => [c, 3 + c, 6 + c].some(i => f(g[i]));
 
@@ -56,6 +56,7 @@ const colHas = (g, c, f) => [c, 3 + c, 6 + c].some(i => f(g[i]));
       if (lc === 0) {
         if ([0, 1, 2].every(k => colHas(g, k, isSeven))) ROLE_COMBOS.chanceS.push(ts);
         else if ([0, 1, 2].every(k => colHas(g, k, s => s === 'melon'))) ROLE_COMBOS.chanceW.push(ts);
+        else if (g[1] === 'bar' && g[4] === 'cherry' && g[7] === 'bar') ROLE_COMBOS.sand.push(ts);   // サンド目 (第2リール: バー・チェリー・バー)
         else ROLE_COMBOS.lose.push(ts);
       } else if (lc === 1) {
         ROLE_COMBOS.cherry.push(ts);
@@ -91,6 +92,7 @@ function pickMelonPlan() {
   return { kind: 'melon', t0: o[0], t2: o[1] };
 }
 function planFor(kind) {
+  if (kind === 'sand') return { kind: 'sand', ts: pickCombo('sand') };
   if (kind === 'cherry' || kind === 'cherryW' || kind === 'cherryS') return { kind: 'cherry', ts: pickCombo(kind), strong: kind === 'cherryS' };
   return kind === 'melon' ? pickMelonPlan() : { kind: 'fixed', ts: pickCombo(kind) };
 }
