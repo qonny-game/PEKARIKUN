@@ -20,7 +20,7 @@ def read(p):
 
 def script_order():
     html = read("index.html")
-    return re.findall(r'<script src="(JS/[^"]+)"></script>', html)
+    return re.findall(r'<script src="(JS/[^"?]+)(?:\?v=[^"]*)?"></script>', html)
 
 def describe(text):
     m = re.search(r"^// (\S+)\s+—\s+(.+)$", text, re.M)

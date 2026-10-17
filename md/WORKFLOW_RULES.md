@@ -10,7 +10,7 @@ QNPLAYERで効果があったルールのうち、このアプリに合うもの
 ## 2. 版と納品
 - 版は `x.y.z`。見た目・動作を変えない整理＝z、機能追加・変更＝y。1回の納品ごとに必ず上げる。
 - 版は `JS/data/config.js` の `APP_VERSION` が唯一の場所。上げたら `CHANGELOG.md` に1行足す。
-- 納品は**変更ファイルだけのパッチZIP**（フォルダ構造を保つ）。`PATCH_FILES.txt` は作らない。名前は `PEKARIKUN_v<版>_patch.zip`。
+- 納品は**前回渡した版からの差分だけのパッチZIP**（ユーザーが「全部ほしい」と言ったときだけ完全版）。基準フォルダは納品ごとに `cp -r PEKARIKUN base_<版>` で保存しておく（フォルダ構造を保つ）。`PATCH_FILES.txt` は作らない。名前は `PEKARIKUN_v<版>_patch.zip`。
 - 作成：`python3 -I md/tools/pack.py <前回渡した版のフォルダ> PEKARIKUN <版> <出力先>`。前回版が無いときは `none` で完全版。
 - 構成を変えた版（パスが動いた版）は、変更ファイルが実質全部になるので完全版になる。その旨を報告に書く。
 
@@ -38,7 +38,7 @@ QNPLAYERで効果があったルールのうち、このアプリに合うもの
 
 ## 演出の表示場所（1.19.17〜）
 - 数字・文字・キャラが出るアニメーション（バナー・カットイン・カウント・リザルト・トースト・DON・GOGO!文字・ナビ・枚数・メーター・粒子・フラッシュ等）は、すべて演出ステージ `#lcd-stage`（演出液晶 `#sub-lcd` と同じ範囲・はみ出しは切る）の中に置く。JSで動的に作る要素も `document.getElementById('lcd-stage')` に append する（`.cab-lcd` や body には置かない）。大きさは液晶(約274x186)に収まるよう、`#lcd-stage` 配下のCSSで調整する。
-- 新しい演出要素は `.cab-lcd` の子として追加する（`document.querySelector('.cab-lcd').appendChild(el)`）。CSSは `.cab-lcd > .xxx { position: absolute; inset: 0 }` の形
+- 新しい演出要素は `#lcd-stage` の子として追加する（`document.getElementById('lcd-stage').appendChild(el)`）。CSSは `#lcd-stage > .xxx { position: absolute; ... }` の形（`.cab-lcd` は旧方式）
 - 例外: 枠の色変化・リール枠の発光・サイドランプなど、液晶の外側の発光表現はそのままでよい。設定・グラフ・称号一覧などの画面（モーダル）は対象外
 
 - パックの前に必ず `python3 -I md/tools/stamp.py` を実行する（index.html の JS/CSS に ?v=バージョンを付け、ブラウザのキャッシュで古い表示が残らないようにする）

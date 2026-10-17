@@ -11,12 +11,12 @@ index.html        本体の画面。<script> の並び（＝読み込み順）�
 debug.html        演出確認パネル（同じJSを読む）
 guide.html        攻略ガイド
 CSS/              style.css（本体）/ fx.css / lcd.css / trophy.css
-JS/data/          config.js … 数字の表（確率・枚数・設定値・リール配列・バージョン・ASSET_DIR）
+JS/data/          config.js … 数字の表（確率・枚数・設定値・リール配列・バージョン・ASSET_DIR） / symimg.js … 図柄画像のdata URI（自動生成）
 JS/core/          settings（設定の適用・保存） / state（状態変数） / audio（音） / effects（画面演出）
 JS/game/          flow（ゲーム進行の中心） / reels / reel-spin / bell / cherry / at / bonus / at-result / auto
 JS/ui/            display（電光掲示） / settings-panel / graph / modal / reel-view / boot（起動処理）
 JS/ext/           fx / lcd / trophy … 本体の関数を包んで拡張する追加層（本体の後に読む）
-assets/img/       7red / 7blue / 7white（図柄）
+assets/img/       7red / 7blue / 7white / bar / bell / cherry / replay / melon（図柄 360x180。本体は JS/data/symimg.js に埋め込み済み）
 assets/img/guide/ 攻略ガイドの画像
 assets/sound/     gako.mp3 / vvv.mp3
 md/               このフォルダ
@@ -53,3 +53,18 @@ md/               このフォルダ
 - この再構築（1.16.1）より前の変更履歴は手元に無いので、CHANGELOG は 1.16.1 から書いている。
 - kit の `release.py` / `qa.py` は QNPLAYER 専用の部分が多いので未導入。代わりに `pack.py`（パッチZIP）と `regress.py`（回帰比較）を使う。
 - 回帰テストは通常のスピンのみを流す。ボーナス・AT突入などの経路は運任せで届きにくいので、変更がその周辺なら `debug.html` で手動確認する。
+
+
+## 5. 1.19系の構造メモ（引き継ぎ）
+- **演出ステージ `#lcd-stage`**（index.html の `#gogo-box` 内）: 数字・文字・キャラが動く演出はすべてここに入れる（演出液晶 `#sub-lcd` と同じ範囲、overflow hidden）。動的に作る要素も `document.getElementById('lcd-stage').appendChild(el)`。高さは CSS 変数 `--lcd-h`。
+- **`fitReels()`（ext/lcd.js）**: リールを幅に合わせて拡大し（`scale`）、残りの高さを `--lcd-h` に回す。`--reel-w` も設定する（STOPボタンをリールの真下に合わせるのに使用）。`#gogo-box` を ResizeObserver で監視。
+- **リール**: 1マス 66x34（`CELL_H`）、3x3 で 198x102。図柄は `symbolHTML(key)`（reels.js）が `<img>` を返す。画像は `SYM_IMG[key]`（data URI。JS/data/symimg.js）、無ければ `assets/img/<key>.png?v=版`、読めなければ文字/絵文字で代用。キー: 7red 7blue 7white bar bell cherry replay melon。画像を差し替えたら symimg.js を作り直す（240x120にリサイズしてbase64化）。
+- **キャッシュ対策**: パック前に必ず `python3 -I md/tools/stamp.py`（index.html/debug.html の JS/CSS に `?v=<APP_VERSION>`）。
+- **ペカり君（演出液晶）**: ext/lcd.js。`window.LCDX = {act, say, spawn, pair, hintStop, hintClear, hint}`。`act` は cross/dash/jump/angry/sad/peek（WAAPI）。
+- **図柄ヒント**: 2択予告で `LCDX.pair(a,b)`（reel-spin.js の omenThen から）、通常時の停止ヒントは `stopCol` → `LCDX.hintStop(plan, 停止数)`。停止順は `HINT_AT`、確率は `HINT_RATE`（ext/lcd.js）。成立役は `plan.role`（runRole が設定）。
+- **停止音「ドン」**: `playStopSound(c)`（reel-spin.js）。`stopCol` で押した瞬間に鳴らす（着地時ではない）。
+- **15枚GETの音**: `playJaraJara`（game/bell.js）。AT/ボーナス中のベルで 15枚以上のとき。
+- **ハマり救済**: `droughtMult(inAT)`（game/flow.js）。通常時250G超えから段階的に当選率UP（最大4倍）。
+- **電光掲示**: INSERT〜WAIT は3列2行、PAYOUT/MEDAL/TOTAL GET と同じ1段。アイコン（音・グラフ・歯車）は上のデータカウンタの右。
+- **揃ったラインの線**は出さない（`drawPayline` は即 return）。
+- **検証**: `md/tools/harness_example.py`（Playwrightで起動・撮影・関数呼び出し）。起動直後の pageerror 0件を毎回確認する。
