@@ -44,7 +44,7 @@ const leftCherries = g => [0, 3, 6].filter(i => g[i] === 'cherry').length;
    ハズレ・ベル・リプレイ・チェリーは、必ずこの中から選ぶ (配列どおりの図柄で止まる) */
 const ROLE_COMBOS = { lose: [], replay: [], cherry: [], cherryW: [], cherryS: [], melonW: [], chanceW: [], chanceS: [], sand: [], bell0: [], bell1: [], bell2: [] };
 /* 上段のスイカ（第1リール上段）は、スイカ系（弱=左上→右下の斜め / 強=上段横）か強チャンス目の確定のときだけ。それ以外の役・ハズレでは出さない
-   強チャンス目: 第1リール上段スイカ・第2リール中段スイカ・第3リール中段スイカ（揃わない）/ 弱チャンス目: 中段ベル・ベル・スイカ（揃わない） */
+   強チャンス目: 第1リール上段スイカ・第2リール中段スイカ・第3リール中段スイカ（揃わない）/ 弱チャンス目: 中段リプレイ・リプレイ・ベル（揃わない） */
 const colHas = (g, c, f) => [c, 3 + c, 6 + c].some(i => f(g[i]));
 
 (function buildCombos() {
@@ -59,7 +59,7 @@ const colHas = (g, c, f) => [c, 3 + c, 6 + c].some(i => f(g[i]));
         if (topMelon) {
           if (g[4] === 'melon' && g[5] === 'melon' && g[8] !== 'melon') ROLE_COMBOS.chanceS.push(ts);   // 強チャンス目: 上段・中段・中段のスイカ
         }
-        else if (g[3] === 'bell' && g[4] === 'bell' && g[5] === 'melon') ROLE_COMBOS.chanceW.push(ts);   // 中段ベル・ベル・スイカ=弱チャンス目
+        else if (g[3] === 'replay' && g[4] === 'replay' && g[5] === 'bell') ROLE_COMBOS.chanceW.push(ts);   // 中段リプレイ・リプレイ・ベル=弱チャンス目
         else if (g[1] === 'bar' && g[4] === 'cherry' && g[7] === 'bar') ROLE_COMBOS.sand.push(ts);   // サンド目 (第2リール: バー・チェリー・バー)
         else ROLE_COMBOS.lose.push(ts);
       } else if (lc === 1 && !topMelon) {
@@ -85,7 +85,7 @@ const pickCombo = kind => { const l = ROLE_COMBOS[kind]; return l[Math.floor(Mat
    windowOf の上段 = strip[t+1] なので、上段にスイカが来る停止位置は t = 図柄の位置 - 1 */
 function pickMelonPlan() {
   const tops = c => STRIPS[c].map((k, i) => (k === 'melon' ? mod(i - 1) : -1)).filter(t => t >= 0);
-  // 外したときの形（強チャンス目）: 第2リール中段スイカ・上段は非スイカ / 第3リール中段スイカ・下段は非スイカ
+  // 外したときの形: 第1リール上段スイカ・第2リール中段スイカ。第3リールは強チャンス目の形（中段スイカ）にならない停止位置（強チャンス目と見分けがつくように）
   const midMelonNoTop = c => STRIPS[c].map((k, i) => (k === 'melon' && STRIPS[c][mod(i + 1)] !== 'melon' && STRIPS[c][mod(i - 1)] !== 'melon' ? i : -1)).filter(i => i >= 0);
   const opts = [];
   tops(0).forEach(t0 => tops(2).forEach(t2 => {
@@ -97,10 +97,10 @@ function pickMelonPlan() {
     if (ok) opts.push([t0, t2]);
   }));
   // 外しの形は、同じ第1リールの上段スイカのまま、揃いが無い組み合わせを選ぶ
-  const m1 = midMelonNoTop(1), m2 = midMelonNoTop(2);
+  const m1 = midMelonNoTop(1), m2 = STRIPS[2].map((_, i) => i);   // 第3リールは何でもよいが、強チャンス目の形（上段・中段・中段のスイカ）だけは作らない
   const cand = opts.map(o => ({ o, pairs: m1.flatMap(t1 => m2.map(t2 => [t1, t2])).filter(([t1, t2]) => {
     const g = gridOf([o[0], t1, t2]);
-    return alignedLines(g).length === 0 && leftCherries(g) === 0;
+    return alignedLines(g).length === 0 && leftCherries(g) === 0 && !(g[4] === 'melon' && g[5] === 'melon');
   }) })).filter(x => x.pairs.length);
   const pick = cand[Math.floor(Math.random() * cand.length)];
   const [t1miss, t2mid] = pick.pairs[Math.floor(Math.random() * pick.pairs.length)];
