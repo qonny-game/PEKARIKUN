@@ -89,7 +89,7 @@
     if (!stageEl) return;
     clearTimeout(hintTimer);
     hintEl.className = 'lcd-hint';
-    hintEl.innerHTML = keys.map(k => `<img src="${symSrc(k)}" alt="" draggable="false">`).join('<i>OR</i>');
+    hintEl.innerHTML = keys.map(k => k[0] === '@' ? `<span class="lh-txt">${k.slice(1)}</span>` : `<img src="${symSrc(k)}" alt="" draggable="false">`).join('<i>OR</i>');
     void hintEl.offsetWidth;
     hintEl.classList.add('on', keys.length > 1 ? 'pair' : 'one');
     if (big) hintEl.classList.add('big');
@@ -97,14 +97,15 @@
     if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; (keys.length > 1 ? [784, 988] : [988, 1319]).forEach((f, i) => tone(f, t + i * 0.09, 0.18, 'triangle', 0.09)); }
   }
   function hintClear() { clearTimeout(hintTimer); hintPair = false; hintEl.classList.remove('on'); }
-  const PAIR_SYM = { bell: 'bell', replay: 'replay', cherry: 'cherry', melon: 'melon', chance: 'melon' };
-  function pair(a, b) { hintShow([PAIR_SYM[a] || a, PAIR_SYM[b] || b], 0); hintPair = true; }
+  const PAIR_SYM = { bell: 'bell', replay: 'replay', cherry: 'cherry', melon: 'melon', chance: '@CHANCE' };   // チャンス目はスイカ図柄にしない（揃ったように見えるため）
+  function pair(a, b) { if (pushPlan && !pushPlan.done) return; hintShow([PAIR_SYM[a] || a, PAIR_SYM[b] || b], 0); hintPair = true; }
   /* 通常時のみ: 成立役に応じて、決まった停止順で図柄を出す (たまにガセ) */
-  const HINT_AT = { replay: [1, 'replay'], cherryW: [1, 'cherry'], cherryS: [1, 'cherry'], melon: [2, 'melon'], melonW: [2, 'melon'], chanceW: [2, 'melon'], chanceS: [2, 'melon'], bell0: [2, 'bell'], bell1: [2, 'bell'], bell2: [2, 'bell'] };
+  const HINT_AT = { replay: [1, 'replay'], cherryW: [1, 'cherry'], cherryS: [1, 'cherry'], melon: [2, 'melon'], melonW: [2, 'melon'], chanceW: [2, '@CHANCE'], chanceS: [2, '@CHANCE'], bell0: [2, 'bell'], bell1: [2, 'bell'], bell2: [2, 'bell'] };
   const HINT_RATE = { replay: 0.7, bell0: 0.7, bell1: 0.7, bell2: 0.7, cherryW: 0.9, cherryS: 1, melon: 0.9, melonW: 0.9, chanceW: 0.8, chanceS: 1 };
   function hintStop(plan, n) {
     if (n === 2) pushReady();
-    if (!plan || hintPair) return;
+    if (wxPlan) { wxStep(n); return; }
+    if (!plan || hintPair || pushPlan) return;   // PUSH中は押すまで図柄を出さない
     const normal = !(typeof bonusRun !== 'undefined' && bonusRun) && !(typeof atGames !== 'undefined' && atGames > 0) && !(typeof atEnding !== 'undefined' && atEnding);
     if (!normal) return;
     let d = HINT_AT[plan.role];
@@ -172,14 +173,14 @@
   const wpick = w => { let x = rnd() * w.reduce((a, b) => a + b, 0); for (let i = 0; i < w.length; i++) { x -= w[i]; if (x < 0) return i; } return 0; };
   /* ---------- 液晶の予告: 飛来物は「役・フラグの示唆」のときだけ出す ----------
      役示唆      : クジラ=スイカ / 風船=ベル / 雲=リプレイ / 鳥=チェリー / UFO=チャンス目  (その役 or ハズレ)
-     ボーナス示唆: 流れ星=★ / ロケット・花火・雷=★★ / 目・宝箱・虹=★★★  (ボーナスかチャンスゾーン or ハズレ)
+     ボーナス示唆: 流れ星=★ / ロケット・花火=★★ / 目・宝箱・虹=★★★  (ボーナスかチャンスゾーン or ハズレ)
      ハズレだったときは、灰色のペカり君マーク「ハズレ」が出る */
   const ROLE_SPR = { melon: 'whale', bell: 'balloon', replay: 'cloud', cherry: 'bird', chance: 'ufo' };
   const ROLE_JP = { melon: 'スイカ', bell: 'ベル', replay: 'リプレイ', cherry: 'チェリー', chance: 'チャンス目' };
   const ROLE_COL = { melon: '#4ade80', bell: '#fde047', replay: '#60a5fa', cherry: '#f87171', chance: '#e879f9' };
   const groupOf = k => /^melon/.test(k) ? 'melon' : /^cherry/.test(k) ? 'cherry' : /^chance/.test(k) ? 'chance' : /^bell/.test(k) ? 'bell' : k === 'replay' ? 'replay' : '';
   const roleHintP = k => ({ cherryS: .55, cherryW: .3, melon: .6, melonW: .3, chanceS: .6, chanceW: .3 }[k] ?? (/^bell/.test(k) || k === 'replay' ? .1 : 0));
-  const FLAG_SPR = [null, ['star'], ['rocket', 'fire', 'thunder'], ['eye', 'chest', 'rainbow']];
+  const FLAG_SPR = [null, ['star'], ['rocket', 'fire'], ['eye', 'chest', 'rainbow']];
   const FLAG_TAG = ['', 'ボーナス示唆 ★', 'ボーナス示唆 ★★', 'ボーナス示唆 ★★★'];
   const FLAG_W = { hit: [0, 26, 36, 38], zone: [0, 46, 38, 16], none: [0, 86, 13, 1] };
   let forceLv = 0;   // ドン3回の「発展」: 次に強めのボーナス示唆が必ず出る
@@ -232,7 +233,59 @@
     setTimeout(() => pushResult(pl), auto ? 250 : 380);
   }
   pushEl.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); pushFire(false); });
-  const ROLE_SYM = { melon: 'melon', bell: 'bell', replay: 'replay', cherry: 'cherry', chance: 'melon' };
+  const ROLE_SYM = { melon: 'melon', bell: 'bell', replay: 'replay', cherry: 'cherry', chance: '@CHANCE' };
+  /* ---------- 天候ステップアップ: 停止ボタンを押すたびに 雨 → 豪雨 → 雷+ひび割れ と発展する。
+     雷まで発展(第3停止)したら、CHANCE ZONE(高確率ゾーン)かボーナスが確定。途中で止まったときは何も約束しない ---------- */
+  const wxEl = document.createElement('div');
+  wxEl.className = 'lcd-wx';
+  wxEl.innerHTML = '<i class="wx-r1"></i><i class="wx-r2"></i><svg class="wx-bolt" viewBox="0 0 60 120"><path d="M38 0 L12 62 L28 62 L16 120 L52 48 L33 48 L46 0 Z"/></svg><svg class="wx-crack" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M50 0 L46 18 L58 30 L42 48 L56 64 L47 82 L52 100 M46 18 L24 26 L10 40 M58 30 L80 26 L96 38 M42 48 L18 58 L4 74 M56 64 L78 72 L94 66 M47 82 L30 90"/></svg>';
+  if (stageEl) stageEl.appendChild(wxEl);
+  let wxPlan = null, wxT = 0;
+  function noiseBurst(dur, vol, type, freq) {
+    if (!soundEnabled) return;
+    initAudio();
+    const n = Math.floor(audioCtx.sampleRate * dur), buf = audioCtx.createBuffer(1, n, audioCtx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    const src = audioCtx.createBufferSource(), f = audioCtx.createBiquadFilter(), g = audioCtx.createGain();
+    src.buffer = buf; f.type = type; f.frequency.value = freq; g.gain.value = vol;
+    src.connect(f); f.connect(g); g.connect(audioCtx.destination);
+    src.start();
+  }
+  function wxClear() { clearTimeout(wxT); wxEl.className = 'lcd-wx'; }
+  function wxStep(n) {
+    if (!wxPlan) return;
+    const L = wxPlan.L;
+    if (n <= L) {
+      wxEl.className = 'lcd-wx on w' + n;
+      void wxEl.offsetWidth;
+      tag(['', '雨 1/3', '豪雨 2/3', '雷! 3/3  ボーナスかCHANCE ZONE確定'][n], n >= 3 ? 'f3' : 'f' + n, 2600);
+      if (n === 1) noiseBurst(0.7, 0.07, 'highpass', 3500);
+      if (n === 2) { noiseBurst(1, 0.14, 'highpass', 2500); noiseBurst(0.8, 0.12, 'lowpass', 300); }
+      if (n === 3) {
+        burst(); swoosh(3);
+        noiseBurst(1.4, 0.3, 'lowpass', 700);
+        if (soundEnabled) { tone(52, audioCtx.currentTime, 0.9, 'sine', 0.35); }
+        if (window.shakeMain) shakeMain(600);
+        act('shock' in ACTS ? 'shock' : 'jump');
+      }
+    } else if (n === L + 1) {
+      wxClear();
+      tag('ステップアップ終了', '', 1500);
+      if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(330, t, 0.2, 'triangle', 0.07); tone(262, t + 0.12, 0.3, 'triangle', 0.07); }
+    }
+  }
+  function planWeather(kind, hit0) {
+    const flagGame = hit0 || czNew;   // 雷(3)は、CHANCE ZONE突入かボーナスのゲームでしか出ない
+    let p, w;
+    if (flagGame) { p = .5; w = [0, 15, 30, 55]; }
+    else {
+      const rare = /^(cherryS|melon$|chanceS)/.test(kind), mid = /^(cherryW|melonW|chanceW)/.test(kind);
+      p = rare ? .18 : mid ? .1 : .04;
+      w = rare ? [0, 60, 40, 0] : [0, 85, 15, 0];
+    }
+    if (rnd() >= p * freq()) return null;
+    return { L: Math.max(1, wpick(w)), flag: flagGame };
+  }
   function planHint(kind) {
     const hit = FX.outcomeClass(kind) === 'hit';
     const zone = czLeft > 0 || czNew || zenchoLeft > 0 || fakeZencho > 0;
@@ -326,19 +379,25 @@
     const normalNow = !isDebugRun && !bonusRun && atGames === 0 && !atEnding;
     if (normalNow) {
       const second = FX.don;   // ドン演出のあとの再突入
-      if (!second) { hints = []; missGame = false; }
+      if (!second) { hints = []; missGame = false; wxPlan = null; wxClear(); }
       hit0 = FX.outcomeClass(kind) === 'hit';
-      if (!second || forceLv) { const h = planHint(kind); if (h) { hints.push(h); showHint(h); } }
+      // PUSHが出るゲームは、押す前に図柄や示唆は出さない（押したときに結果を見せる）
+      let armed = false;
       if (!second) {
+        pushPlan = null;
+      if (wxPlan) { wxPlan = null; wxT = setTimeout(wxClear, 800); }
         const rare = /^(cherryS|melon$|chanceS)/.test(kind);
         const pp = hit0 ? .5 : czNew ? .6 : ({ cherryS: .5, cherryW: .25, melon: .5, melonW: .25, chanceS: .5, chanceW: .25 }[kind] ?? (/^bell/.test(kind) || kind === 'replay' ? .05 : kind === 'lose' ? .03 : 0));
-        if (rnd() < pp * freq()) pushArm({ hit0, cz: !!czNew, group: groupOf(kind), rare });
-      }
+        if (!forceLv && rnd() < pp * freq()) { pushArm({ hit0, cz: !!czNew, group: groupOf(kind), rare }); armed = true; }
+      } else armed = !!pushPlan && !pushPlan.done;
+      if (!armed && !second && !forceLv) wxPlan = planWeather(kind, hit0);
+      if (!armed && !wxPlan && (!second || forceLv)) { const h = planHint(kind); if (h) { hints.push(h); showHint(h); } }
       if (!second && czLeft > 0) { spawn('star', 1); say('CHANCE ZONE', `残り ${czLeft}G`, 1600, 'happy', 'hop'); }
     }
     return _rr(kind, res => {
       const hintsNow = hints; hints = [];
       if (pushPlan && !pushPlan.done) pushFire(true);
+      pushPlan = null;
       const WIN_LAMP = LAMP_TABLE.win;
       const aimedRole = kind === 'cherryW' || kind === 'cherryS' || kind === 'melon';   // 狙う役だけ成否がある（ベル・リプレイ・弱スイカは success が付かない）
       if (!isDebugRun && !bonusRun && luckyOf(kind) === LUCKY[0] && (!aimedRole || (res && res.success) || kind === 'chanceW' || kind === 'chanceS')) {

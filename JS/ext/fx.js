@@ -332,6 +332,7 @@
       wait(1300, () => { clearInterval(iv); const n = s ? 5 : 2 + Math.floor(rnd() * 2); ls.forEach((x, i) => x.classList.toggle('on', i < n)); });
     }
   };
+  delete PV.rain; delete PV.crack;   // 雨・ひび割れは液晶の「天候ステップアップ」に統合
   delete PV.button;   // PUSHは液晶側の「PUSH」(第2停止から押せる)に統合
   const PV_KEYS = Object.keys(PV); FX.PV = PV;
 

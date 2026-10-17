@@ -322,7 +322,7 @@ function markWin(winIdx, glow) {
 }
 /* チャンス目: 対象の絵柄だけ光らせ、ほかは暗くする (弱=スイカ / 強=7) */
 function markChance(kind, grid) {
-  const want = kind === 'chanceW' || kind === 'chanceS' ? 'melon' : null;   // チャンス目はスイカの絵柄だけ光らせる
+  const want = null;   // チャンス目は揃っていない形なので、スイカを光らせたり他を暗くしたりしない（揃ったように見えるため）
   reelsEl.classList.toggle('has-chance', !!want);
   reelsEl.querySelectorAll(':scope > .reel').forEach((el, i) => {
     const sym = grid[i];

@@ -193,3 +193,23 @@
 .lcd-push.pressed { transform: translateY(5px); box-shadow: 0 0 20px #fde047, 0 0 0 #7f1d1d; }
 @keyframes tag-in2 { from { transform: scale(.2); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes push-ready { from { transform: scale(.94); box-shadow: 0 0 14px #ef4444, 0 5px 0 #7f1d1d; } to { transform: scale(1.08); box-shadow: 0 0 28px #fde047, 0 5px 0 #7f1d1d; } }
+.lcd-hint .lh-txt { font-family: 'Orbitron', sans-serif; font-weight: 900; font-style: italic; font-size: 34px; letter-spacing: 0; background: linear-gradient(100deg, #22d3ee, #a78bfa 35%, #f472b6 60%, #fde047); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-stroke: 1.5px #fff; filter: drop-shadow(0 0 8px #22d3ee) drop-shadow(0 3px 4px rgba(0, 0, 0, .8)); }
+.lcd-hint.pair .lh-txt { font-size: 22px; }
+
+/* 天候ステップアップ(停止ごとに 雨 → 豪雨 → 雷+ひび割れ) */
+.lcd-wx { position: absolute; inset: 0; z-index: 12; pointer-events: none; overflow: hidden; opacity: 0; }
+.lcd-wx.on { opacity: 1; }
+.lcd-wx i { position: absolute; inset: -20% 0 0 0; opacity: 0; background: repeating-linear-gradient(105deg, transparent 0 7px, rgba(170,210,255,.55) 7px 8px); animation: wx-fall .45s linear infinite; }
+.lcd-wx .wx-r2 { background: repeating-linear-gradient(105deg, transparent 0 4px, rgba(190,225,255,.75) 4px 6px); animation-duration: .22s; }
+.lcd-wx.on.w1 .wx-r1, .lcd-wx.on.w2 .wx-r1, .lcd-wx.on.w3 .wx-r1 { opacity: 1; }
+.lcd-wx.on.w2 .wx-r2, .lcd-wx.on.w3 .wx-r2 { opacity: 1; }
+.lcd-wx.on.w2, .lcd-wx.on.w3 { background: rgba(10,20,50,.35); }
+@keyframes wx-fall { to { transform: translate(-16px, 24px); } }
+.lcd-wx .wx-bolt { position: absolute; left: 50%; top: 0; width: 34%; height: 100%; transform: translateX(-50%); fill: #fff6a8; filter: drop-shadow(0 0 10px #ffe94a) drop-shadow(0 0 22px #fff); opacity: 0; }
+.lcd-wx .wx-crack { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; stroke: #fff; stroke-width: 2; opacity: 0; filter: drop-shadow(0 0 4px #9df); }
+.lcd-wx.on.w3 .wx-bolt { animation: wx-bolt .9s steps(1) 2; }
+.lcd-wx.on.w3 .wx-crack { opacity: .9; animation: wx-crack .5s ease-out both; }
+.lcd-wx.on.w3 { animation: wx-flash .9s steps(1) 2; }
+@keyframes wx-bolt { 0%,40%,100% { opacity: 0; } 10%,30%,60% { opacity: 1; } }
+@keyframes wx-crack { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0); } }
+@keyframes wx-flash { 0%,50%,100% { background: rgba(10,20,50,.35); } 10%,30% { background: rgba(255,255,255,.8); } }

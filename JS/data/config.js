@@ -69,7 +69,7 @@ const DEFAULT_SETTINGS = {
   typeW1: 12,          // HEAVEN
   typeW2: 4            // DEATH
 };
-const APP_VERSION = '1.19.36';
+const APP_VERSION = '1.19.38';
 const SETTINGS_KEY = 'pekari-settings-v5';   // v5: モード (本気/極楽/遊) を追加。機械割は100〜130%
 
 // ==========================================
