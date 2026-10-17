@@ -180,40 +180,43 @@ function hideNavi() { delete document.body.dataset.navi; naviOrder = null; naviP
 function sameOrder(a, b) { return !!a && a.length === b.length && a.every((v, i) => v === b[i]); }
 
 /* ドンドンドン!: 画面が揺れた回数で期待度を示す。3回揺れたら発展 (ボーナス中は次のオーラ昇格のサイン) */
+/* ドンドンドン: 液晶の外の揺れではなく「停止ボタンごとに1回ドン」。第1停止から連続でドンが出て、
+   第3停止でもドンが出れば成功(発展)。途中で止まったらそこまで。ここでは予定(n回)を仕込むだけで、実際は停止のたびに donStop が鳴らす */
 function donShake(n, done) {
   if (window.TRO) TRO.seen('don' + Math.min(3, n));
-  let i = 0;
-  const gap = 380;
-  if (window.FX) FX.hold(n * gap + 700);
-  if (window.LCDX && !bonusRun) { LCDX.tag(['', 'ドン ボーナス示唆(弱)', 'ドンドン ボーナス示唆(中)', 'ドンドンドン 発展 → 強い示唆が確定'][Math.min(3, n)], 'f' + Math.min(3, n), n * gap + 1600); LCDX.don(n); }
-  const step = () => {
-    if (i >= n) {
-      if (n >= 3) {
-        showAtToast('発展');
-        triggerFlash();
-        if (soundEnabled) { initAudio(); [523, 659, 784, 1047].forEach((f, k) => tone(f, audioCtx.currentTime + k * 0.06, 0.25, 'square', 0.1)); }
-      }
-      setTimeout(done, n >= 3 ? 700 : 250);
-      return;
-    }
-    i++;
-    const d = document.createElement('div');
-    d.className = 'don-pop';
-    d.textContent = 'DON'.repeat(1);
-    d.style.setProperty('--i', i);
-    (document.getElementById('lcd-stage') || document.body).appendChild(d);
-    setTimeout(() => d.remove(), 600);
-    shakeMain(300);
-    if (soundEnabled) { initAudio(); thump(audioCtx.currentTime, 0.55 + i * 0.1); }
-    setTimeout(step, gap);
-  };
-  step();
+  window.donArm = { n, end: false, normal: !bonusRun };
+  setTimeout(done, 0);
+}
+const DON_STEP_TAG = ['', 'ドン 1/3', 'ドンドン 2/3', 'ドンドンドン 3/3  発展!'];
+function donStop(k, plan) {
+  const d = window.donArm;
+  if (!d) return;
+  if (k >= 3) window.donArm = null;
+  if (k > d.n) {
+    if (!d.end && d.n > 0) { d.end = true; if (window.LCDX) LCDX.tag('ドンが止まった… 発展せず', '', 2200); }
+    return;
+  }
+  const el = document.createElement('div');
+  el.className = 'don-pop';
+  el.textContent = 'DON';
+  el.style.setProperty('--i', k);
+  (document.getElementById('lcd-stage') || document.body).appendChild(el);
+  setTimeout(() => el.remove(), 600);
+  shakeMain(300);
+  if (soundEnabled) { initAudio(); thump(audioCtx.currentTime, 0.7 + k * 0.12); }
+  if (window.LCDX) LCDX.tag(DON_STEP_TAG[k], 'f' + k, 2400);
+  if (k === 3 && d.n >= 3) {
+    showAtToast('発展');
+    triggerFlash();
+    if (soundEnabled) { initAudio(); [523, 659, 784, 1047].forEach((f, q) => tone(f, audioCtx.currentTime + q * 0.06, 0.25, 'square', 0.1)); }
+    if (d.normal && window.LCDX && LCDX.donWin) LCDX.donWin(plan && plan.role);
+  }
 }
 function bonusGame() {
   const b = bonusRun;
   // ドンドンドン!: 昇格するゲームほど多く揺れる (ガセもある)
   const promo = !b.zone && b.promo.includes(b.played + 1);
-  const don = weightedPick(promo ? [0, 15, 30, 55] : [90, 6, 3, 1]);
+  const don = weightedPick(promo ? [0, 0, 0, 100] : [80, 12, 8, 0]);   // 昇格するゲームは必ず第3停止までドンが続く / 昇格しないゲームは1〜2回で止まる
   if (don > 0 && !b.debug) {
     spinBtn.disabled = true;
     donShake(don, () => { spinBtn.disabled = false; bonusGameMain(); });

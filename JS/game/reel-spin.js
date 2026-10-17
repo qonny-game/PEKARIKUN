@@ -168,6 +168,7 @@ function stopCol(c, auto) {
   col.T = T; col.t = t; col.state = 'slip';
   rs.order.push(c);
   playStopSound(c);   // 押した瞬間に「ドン」
+  if (typeof donStop === 'function') donStop(rs.order.length, rs.plan);
   if (window.LCDX && LCDX.hintStop) LCDX.hintStop(rs.plan, rs.order.length);
   refreshNavi();
 }
