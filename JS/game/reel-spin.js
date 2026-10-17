@@ -257,7 +257,6 @@ function omenThen(kind, go) {
     reelLocked = true;
     sideLampPair(OMEN_PAIR_COLOR[ord[0]], OMEN_PAIR_COLOR[ord[1]]);
     if (window.LCDX && LCDX.pair) LCDX.pair(ord[0], ord[1]);
-    if (window.FXBanner) window.FXBanner('どっち？', '', '', false, 1100);
     pekaLater(() => { reelLocked = false; go(); }, 850);
     return;
   }

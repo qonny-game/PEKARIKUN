@@ -98,7 +98,7 @@
   }
   function hintClear() { clearTimeout(hintTimer); hintPair = false; hintEl.classList.remove('on'); }
   const PAIR_SYM = { bell: 'bell', replay: 'replay', cherry: 'cherry', melon: 'melon', chance: '@CHANCE' };   // チャンス目はスイカ図柄にしない（揃ったように見えるため）
-  function pair(a, b) { if (pushPlan && !pushPlan.done) return; hintShow([PAIR_SYM[a] || a, PAIR_SYM[b] || b], 0); hintPair = true; }
+  function pair(a, b) { if (pushPlan && !pushPlan.done) return; hintShow([PAIR_SYM[a] || a, PAIR_SYM[b] || b], 0); hintEl.insertAdjacentHTML('beforeend', '<b class="lh-q">どっち？</b>'); hintPair = true; }
   /* 通常時のみ: 成立役に応じて、決まった停止順で図柄を出す (たまにガセ) */
   const HINT_AT = { replay: [1, 'replay'], cherryW: [1, 'cherry'], cherryS: [1, 'cherry'], melon: [2, 'melon'], melonW: [2, 'melon'], chanceW: [2, '@CHANCE'], chanceS: [2, '@CHANCE'], bell0: [2, 'bell'], bell1: [2, 'bell'], bell2: [2, 'bell'] };
   const HINT_RATE = { replay: 0.7, bell0: 0.7, bell1: 0.7, bell2: 0.7, cherryW: 0.9, cherryS: 1, melon: 0.9, melonW: 0.9, chanceW: 0.8, chanceS: 1 };
