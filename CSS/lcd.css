@@ -216,3 +216,8 @@
 
 /* 2択: 「どっち？」は図柄の上に重ならないよう配置 */
 .lcd-hint .lh-q { position: absolute; left: 0; right: 0; bottom: calc(50% + 34px); text-align: center; font-family: 'Orbitron', 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 20px; letter-spacing: .08em; color: #fff; -webkit-text-stroke: 0; text-shadow: 0 0 10px #22d3ee, 0 0 18px #f472b6, 0 2px 3px rgba(0, 0, 0, .9); }
+
+/* ボーナス/AT中: 上の残りG表示を小さくし、タグは重ならないよう下へ */
+.cab-lcd .at-status.on, .gogo-lamp .at-status.on { font-size: 10px; gap: 6px; line-height: 1.1; }
+.gogo-lamp:has(.at-status.on) .at-label { font-size: 9px; padding: 0 7px; }
+.gogo-lamp:has(.at-status.on) .lcd-tag { top: 40px; font-size: 10px; padding: 2px 10px; max-width: 94%; overflow: hidden; text-overflow: ellipsis; }

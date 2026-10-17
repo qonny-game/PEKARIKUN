@@ -393,7 +393,14 @@
           if (!st.rev && rnd() < 0.18 * freqMul()) st.saki = 'real';
           if (!st.rev && rnd() < 0.22 * freqMul()) st.rev = 'tease';
         } else if (kind === 'lose' && rnd() < 0.012 * freqMul()) st.saki = 'fake';
-        if (kind === 'lose' && !inAT) { const p = (hit ? 0.2 : 0.03) * freqMul(); if (rnd() < p) { st.pseudo = rnd() < 0.4 ? 2 : 1; st.pseudoN = st.pseudo; } }
+        if (kind === 'lose' && !inAT) {
+          const cz = !hit && window.czGameNow && (czLeft > 0 || window.czTimedOut);   // CZ中の外れゲーム
+          const p = (hit ? 0.2 : cz ? 0.12 : 0.03) * freqMul();
+          if (rnd() < p) {
+            st.pseudo = rnd() < 0.4 ? 2 : 1; st.pseudoN = st.pseudo;
+            if (cz) { czLeft = window.czTimedOut ? 1 : czLeft + 1; window.czTimedOut = false; window.czHoldNow = true; window.czRescued = Date.now(); if (window.onCzHold) window.onCzHold(); }   // 連続演出中はCZのゲーム数を消化しない(HOLD)
+          }
+        }
         if (!inAT && (hit ? rnd() < 0.25 : rnd() < 0.015) * 1) cab.classList.add('fx-glow');
       }
       _runRole(kind, res => {

@@ -390,6 +390,7 @@ function handleSpin() {
   if (inCherry) { cherryGames--; updateCherry(); }
   // AT中は当選しにくい / 次回モード中は当選しやすい / チェリー後は当選しやすい
   const inCZ = czLeft > 0 && !inAT && !bonusRun;
+  window.czGameNow = inCZ; window.czTimedOut = false; window.czHoldNow = false;   // CZ中のゲームか / 最終Gで時間切れか / 連続演出でHOLD中か
   if (inCZ) {
     czLeft--;
     if (czNew) { czNew = false; if (window.FXBanner) window.FXBanner('CHANCE ZONE', `${CZ_G}G`, 'red', true, 1700); }
@@ -413,8 +414,8 @@ function handleSpin() {
 
   if (zStep && typeof window.onZenchoStep === 'function') window.onZenchoStep(zStep);
 
-  if (inCZ && (isHit || zenchoLeft > 0)) czLeft = 0;     // 当選(前兆に入った場合も)でゾーン終了
-  else if (inCZ && czLeft === 0 && window.onCzEnd) window.onCzEnd(false);
+  if (inCZ && (isHit || zenchoLeft > 0)) { czLeft = 0; if (window.onCzSuccess) window.onCzSuccess(); }     // 当選(前兆に入った場合も)でゾーン終了=成功
+  else if (inCZ && czLeft === 0) { window.czTimedOut = true; if (window.onCzEnd) window.onCzEnd(false); }
 
   // 通常時のサンド目（リーチ目）: ボーナス確定。当選と同じ流れで、サンド目の形で止まる
   const reach = !inAT && !isHit && zenchoLeft === 0 && Math.random() < SAND_REACH_P;
