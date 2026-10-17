@@ -220,7 +220,8 @@
     const g = pl.group;
     if (pl.hit0) { say('PEKA!!', 'GOGOランプ 点灯濃厚', 2200, 'shock', 'jump'); tag('ボーナス濃厚', 'f3', 2600); burst(); swoosh(3); for (let i = 0; i < 6; i++) setTimeout(() => spawn('coin', 3), i * 90); }
     else if (pl.cz) { say('CHANCE ZONE', '突入！', 2400, 'shock', 'jump'); tag('CHANCE ZONE 突入', 'f3', 2600); burst(); swoosh(2); spawn('fire', 2); for (let i = 0; i < 4; i++) setTimeout(() => spawn('coin', 2), i * 90); }
-    else if (g) { hintShow([ROLE_SYM[g]], 1500, pl.rare); tag(`${ROLE_JP[g]} 成立`, 'role', 2200); swoosh(pl.rare ? 2 : 1); if (pl.rare) spawn('fire', 1); }
+    else if (g) { hintShow([ROLE_SYM[g]], 1500, pl.rare); swoosh(pl.rare ? 2 : 1);   // 図柄が出ているので文字説明は出さない
+    if (pl.rare) spawn('fire', 1); }
     else missMark();
   }
   function pushFire(auto) {
@@ -555,7 +556,6 @@
       if (sc === 'bonus' || sc === 'zone') act('jump');
       if (sc === 'bonus' && !isDebugRun) {   // PEKA CHANCE: RUSHに入る条件の説明
         setTimeout(() => tag('最終GのJUDGEMENTに勝てばPEKA RUSH', 'role', 3600), 1500);
-        setTimeout(() => { if (bonusRun && !bonusRun.zone) tag('ドンドンドンでオーラ昇格 虹で確定', 'f1', 3600); }, 5400);
       }
     }
     if (Date.now() < hold) return;

@@ -224,8 +224,23 @@ function bonusGame() {
   }
   bonusGameMain();
 }
+/* JUDGEMENT直前: 演出を順番に1つずつ見せる(約5秒)。この間はレバー・リールは動かない
+   0.0s JUDGEMENT文字 + 鼓動 / 1.8s 「勝てばRUSH」 / 3.4s 現在のオーラ / 5.0s リール回転 */
+function judgeIntro(b, cb) {
+  isSuspense = true;
+  hideNavi();
+  hideLastCount();
+  if (window.TRO) TRO.seen('judge');
+  startTension('JUDGEMENT');
+  if (chanceLogo) chanceLogo.classList.add('judge');
+  if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(110, t, 1.4, 'sawtooth', 0.14); tone(165, t + 0.1, 1.2, 'sawtooth', 0.08); }
+  setTimeout(() => { if (window.LCDX) LCDX.tag('最終ゲーム  勝てばPEKA RUSH', 'f2', 1500); playTick(2); }, 1800);
+  setTimeout(() => { if (window.LCDX) LCDX.tag(`現在 ${AURA_NAMES[Math.min(6, b.aura)]}オーラ`, b.aura >= 4 ? 'f3' : 'f1', 1500); playTick(3); shakeMain(200); }, 3400);
+  setTimeout(() => { isSuspense = false; cb(); }, 5000);
+}
 function bonusGameMain() {
   const b = bonusRun;
+  if (!b.zone && !b.debug && b.played + 1 >= b.games && !b.judgeDone) { b.judgeDone = true; judgeIntro(b, bonusGameMain); return; }
   playClickSound();
   setLedWin(0);
   const isFinal = !b.zone && b.played + 1 >= b.games;   // 最終ゲームはジャッジメント (ここでATの当否が決まる)
@@ -233,8 +248,8 @@ function bonusGameMain() {
   const partial = Math.random() < 0.3;                       // 1だけナビ (最初の1つだけ表示)
   showNavi(navi, '', partial);
   if (partial && window.TRO) TRO.seen('navi_partial');
-  if (!b.zone && b.games - b.played <= 3) showLastCount(b.games - b.played); else hideLastCount();
-  if (isFinal) { startTension('JUDGEMENT'); if (chanceLogo) chanceLogo.classList.add('judge'); }
+  if (!b.zone && b.games - b.played <= 3 && !isFinal) showLastCount(b.games - b.played); else hideLastCount();
+  if (isFinal && !judgeEl.classList.contains('tense')) { startTension('JUDGEMENT'); if (chanceLogo) chanceLogo.classList.add('judge'); }   // デバッグ時や押し順ミスのやり直し時(通常は judgeIntro で表示済み)
   updateAT();
   runRole('bell2', res => {
     hideNavi();
@@ -346,8 +361,25 @@ function finishBonus() {
   const b = bonusRun;
   if (b.zone) { finishZone(b); return; }
   isSuspense = true;
-  startHeartbeat(2400, 400);
+  /* 結果発表 (約6.4秒): 鼓動がだんだん速く → 揺れ → オーラが目まぐるしく点滅 → 一瞬の静寂 → 結果 */
+  const T = b.debug ? 900 : 6400;
+  startHeartbeat(T - 1200, 300);
+  const timers = [];
+  const at = (ms, f) => { if (!b.debug) timers.push(setTimeout(f, ms)); };
+  at(1800, () => { shakeMain(250); if (window.LCDX) LCDX.tag('JUDGEMENT...', 'f2', 1600); });
+  at(3000, () => shakeMain(350));
+  at(3600, () => {   // オーラ点滅
+    let n = 0;
+    const iv = setInterval(() => {
+      auraEl.className = `aura on lv${Math.floor(Math.random() * 7)}`;
+      if (soundEnabled && n % 2 === 0) { initAudio(); tone(500 + Math.random() * 900, audioCtx.currentTime, 0.06, 'square', 0.07); }
+      if (++n >= 14) { clearInterval(iv); }
+    }, 110);
+    timers.push(iv);
+  });
+  at(5200, () => { stopHeartbeat(); setAura(null); });   // 一瞬の静寂
   suspenseTimer = setTimeout(() => {
+    timers.forEach(clearTimeout); timers.forEach(clearInterval);
     stopHeartbeat();
     stopTension();
     isSuspense = false;
@@ -366,6 +398,6 @@ function finishBonus() {
       if (atRun && atRun.games === 0 && !b.debug) { atRun.bonusOnly = true; atEnding = true; }
       maybeShowAtResult();
     }
-  }, 2800);
+  }, T);
 }
 
