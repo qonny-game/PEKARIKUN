@@ -241,7 +241,7 @@
     return el;
   }
   /* 矛盾の色: 通常時の黄(ベル)のうち約4%だけ緑で止まる（緑=スイカの約束を破る矛盾。ボーナス確定のような不可解さ） */
-  function mismatchColor() { return pvColor === 'yellow' && rnd() < 0.04 ? 'green' : pvColor; }
+  function mismatchColor() { return pvColor; }
   function mujunSound() { snd([466, 392, 466, 311, 277], 0.11, 0.32, 'sawtooth', 0.08); flashMarquee('hot', 2200); }
   let pvColor = null;   // 通常時の予告の色 (結果から決まる)。AT中など結果が無いときは null
   const PV = {
@@ -251,8 +251,25 @@
       snd([392, 440, 494, 523], 0.2, 0.15, 'square', 0.06);
     },
     button(s, d) {
-      const el = pvRun('button', '<i class="pv-btn">PUSH</i>', 2000, 1100, s, s ? '' : '...', d);
-      wait(700, () => { el.classList.add('press'); snd([220], 0, 0.15, 'square', 0.12); });
+      // タップで押せる。押さなくても1.4秒で自動で押される
+      const T = 2800;
+      const el = put('fx-pv fx-pv-button', '<i class="pv-btn">PUSH</i><i class="pv-tap">TAP!</i><b class="pv-res"></b>', T + 300);
+      FX.hold(T + 150);
+      let phase = 0, fin = false;
+      const finish = () => { if (!fin) { fin = true; d(); } };
+      const reveal = () => {
+        if (phase > 1) return;
+        phase = 2;
+        el.classList.add(s ? 'ok' : 'ng');
+        el.querySelector('.pv-res').textContent = s ? '' : '...';
+        if (s) { triggerFlash(); sndUp(4); } else sndDown();
+        wait(900, finish);
+      };
+      const press = () => { if (phase) return; phase = 1; el.classList.add('press'); snd([220], 0, 0.15, 'square', 0.12); wait(380, reveal); };
+      const b = el.querySelector('.pv-btn');
+      b.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); press(); });
+      wait(1400, press);
+      wait(T, finish);
     },
     roulette(s, d) {
       // 通常時は結果の色で止まる。ごくまれに黄(ベル)の結果なのに緑で止まる（矛盾）
@@ -315,6 +332,7 @@
       wait(1300, () => { clearInterval(iv); const n = s ? 5 : 2 + Math.floor(rnd() * 2); ls.forEach((x, i) => x.classList.toggle('on', i < n)); });
     }
   };
+  delete PV.button;   // PUSHは液晶側の「PUSH」(第2停止から押せる)に統合
   const PV_KEYS = Object.keys(PV); FX.PV = PV;
 
   /* ---------- 予告を決めて実行 ---------- */
@@ -366,7 +384,7 @@
     const hit = cls === 'hit';
     st.rev = null; st.saki = null; st.pseudo = 0;
     if (!inBonus) cumGames();
-    const after = res => { gameAfter(kind, cls, inAT, inBonus); done(res); };
+    const after = res => { gameAfter(kind, cls, inAT, inBonus); if (st.pseudoN && kind === 'lose' && !hit && window.LCDX) { LCDX.miss(); } st.pseudoN = 0; done(res); };
     const go = () => {
       if (!inBonus) {
         // 先ペカ / 疑似連 / 消灯焦らし / 全回転風のグロー
@@ -374,17 +392,18 @@
           if (!st.rev && rnd() < 0.18 * freqMul()) st.saki = 'real';
           if (!st.rev && rnd() < 0.22 * freqMul()) st.rev = 'tease';
         } else if (kind === 'lose' && rnd() < 0.012 * freqMul()) st.saki = 'fake';
-        if (kind === 'lose' && !inAT) { const p = (hit ? 0.2 : 0.03) * freqMul(); if (rnd() < p) st.pseudo = rnd() < 0.4 ? 2 : 1; }
+        if (kind === 'lose' && !inAT) { const p = (hit ? 0.2 : 0.03) * freqMul(); if (rnd() < p) { st.pseudo = rnd() < 0.4 ? 2 : 1; st.pseudoN = st.pseudo; } }
         if (!inAT && (hit ? rnd() < 0.25 : rnd() < 0.015) * 1) cab.classList.add('fx-glow');
       }
       _runRole(kind, res => {
         cab.classList.remove('fx-glow');
         if (st.pseudo > 0 && kind === 'lose') {
           st.pseudo--;
-          showBanner(`連続演出`, '', 'blue');
-          FX.hold(1300);
-          snd([660, 880], 0.1, 0.2, 'square', 0.08);
-          wait(1100, () => { st.noOmen = true; reRun(kind, after, navi); });
+          showBanner(`連続演出 ${st.pseudoN - st.pseudo}/${st.pseudoN + 1}`, '', st.pseudoN - st.pseudo >= 2 ? 'red' : 'blue');
+          if (window.LCDX) LCDX.story(st.pseudoN - st.pseudo, st.pseudoN + 1, false);
+          FX.hold(1000);
+          snd([660, 880, 1175], 0.07, 0.18, 'square', 0.08);
+          wait(850, () => { st.noOmen = true; reRun(kind, after, navi); });
           return;
         }
         after(res);
@@ -392,8 +411,8 @@
     };
     const reRun = (k, d, n) => _runRole(k, res => {
       if (st.pseudo > 0 && k === 'lose') {
-        st.pseudo--; showBanner('連続演出', '', ''); FX.hold(1300);
-        wait(1100, () => { st.noOmen = true; reRun(k, d, n); });
+        st.pseudo--; showBanner(`連続演出 ${st.pseudoN - st.pseudo}/${st.pseudoN + 1}`, '', 'red'); if (window.LCDX) LCDX.story(st.pseudoN - st.pseudo, st.pseudoN + 1, false); FX.hold(1000);
+        wait(850, () => { st.noOmen = true; reRun(k, d, n); });
         return;
       }
       cab.classList.remove('fx-glow'); d(res);

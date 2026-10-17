@@ -303,7 +303,7 @@ function drawRole(inAT) {
 const AT_REVIVE_P = 0.3;            // AT最終ゲームで復活する確率
 /* CHANCE ZONE: 強レア等で突入する6G。ボーナス当選確率が大きく上がる（楽しむための設計。機械割は実機より高め） */
 let czLeft = 0, czNew = false;
-const CZ_MULT = 8, CZ_G = 6, CZ_ENTRY_STRONG = 0.5, CZ_ENTRY_WEAK = 0.08;
+const CZ_MULT = 8, CZ_G = 6, CZ_ENTRY_STRONG = 0.8, CZ_ENTRY_WEAK = 0.2;
 let zenchoTotal = 0, fakeTotal = 0;   // 前兆の長さ（連続演出の何話目かの表示用）
 let fakeZencho = 0;                 // ガセ前兆の残りG数（当選しない）
 const FAKE_ZENCHO_P = 1 / 160;      // 通常時1Gごとにガセ前兆へ入る確率

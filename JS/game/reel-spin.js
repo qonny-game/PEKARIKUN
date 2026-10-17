@@ -54,7 +54,8 @@ function drawOverlay(col) {
       col.cells[j].innerHTML = symbolHTML(colSym(col, idx), '');
       col.shown[j] = idx;
     }
-    col.cells[j].style.transform = `translate3d(0,${(1 - k + f) * CELL_H}px,0)`;
+    const sc = window.REEL_SC || 1;   // 描画ピクセルに揃えてにじみを防ぐ
+    col.cells[j].style.transform = `translate3d(0,${Math.round((1 - k + f) * CELL_H * sc) / sc}px,0)`;
   }
 }
 
@@ -93,6 +94,7 @@ function stopCol(c, auto) {
     if (rs.plan.navi[rs.order.length] !== c) rs.naviOk = false;
     if (rs.naviOk) auto = true;
   }
+  else if (rs.plan.kind === 'melon' || rs.plan.kind === 'cherry') auto = true;   // 通常時のチェリー・スイカは取りこぼさない（ランプや予告と矛盾させない）
   const col = rs.cols[c];
   if (!col || col.state !== 'spin') return;
   const s = Math.round(col.pos);
@@ -256,14 +258,14 @@ function omenThen(kind, go) {
     sideLampPair(OMEN_PAIR_COLOR[ord[0]], OMEN_PAIR_COLOR[ord[1]]);
     if (window.LCDX && LCDX.pair) LCDX.pair(ord[0], ord[1]);
     if (window.FXBanner) window.FXBanner('どっち？', '', '', false, 1100);
-    pekaLater(() => { reelLocked = false; go(); }, 1200);
+    pekaLater(() => { reelLocked = false; go(); }, 850);
     return;
   }
   omenThen2(kind, go);
 }
 function omenThen2(kind, go) {
   let shown = OMEN_OF[kind] === undefined ? kind : OMEN_OF[kind];
-  if (kind === 'lose' && Math.random() < FAKE_OMEN_RATE) shown = pendingBonusType && Math.random() < 0.7 ? 'cherry' : 'melon';
+  if (kind === 'lose' && (pendingBonusType || zenchoLeft > 0) && Math.random() < FAKE_OMEN_RATE * 3) shown = pendingBonusType && Math.random() < 0.7 ? 'cherry' : 'melon';
   if (!OMEN_LAMP[shown]) { go(); return; }
   const melon = shown === 'melon', chance = shown === 'chance';
   reelLocked = true;                       // 予告の間はレバー/タップを受けない
@@ -278,7 +280,7 @@ function omenThen2(kind, go) {
     notes.forEach((f, i) => tone(f, t + 0.08 + i * (melon ? 0.16 : 0.2), 0.2, 'triangle', 0.1));
     if (melon) tone(98, t, 1.2, 'sine', 0.18);
   }
-  pekaLater(() => { reelLocked = false; go(); }, melon ? 1500 : 1000);   // ランプはリールが止まるまで点灯したまま
+  pekaLater(() => { reelLocked = false; go(); }, melon ? 950 : 650);   // ランプはリールが止まるまで点灯したまま
 }
 
 /* 役の抽選結果を持って回転開始。止まったら done(結果) */

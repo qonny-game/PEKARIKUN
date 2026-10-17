@@ -183,8 +183,9 @@ function sameOrder(a, b) { return !!a && a.length === b.length && a.every((v, i)
 function donShake(n, done) {
   if (window.TRO) TRO.seen('don' + Math.min(3, n));
   let i = 0;
-  const gap = 520;
+  const gap = 380;
   if (window.FX) FX.hold(n * gap + 700);
+  if (window.LCDX && !bonusRun) { LCDX.tag(['', 'ドン ボーナス示唆(弱)', 'ドンドン ボーナス示唆(中)', 'ドンドンドン 発展 → 強い示唆が確定'][Math.min(3, n)], 'f' + Math.min(3, n), n * gap + 1600); LCDX.don(n); }
   const step = () => {
     if (i >= n) {
       if (n >= 3) {

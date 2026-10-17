@@ -1919,3 +1919,23 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 .lcd-hint.pair img { width: 108px; height: 54px; }
 .lcd-hint i { font-family: 'Orbitron', sans-serif; font-style: normal; font-weight: 900; font-size: 14px; color: #fff; text-shadow: 0 0 8px #38bdf8, 0 2px 3px rgba(0,0,0,.9); }
 @keyframes hint-pop { 0% { transform: translateY(-50%) scale(.2) rotate(-10deg); opacity: 0; } 60% { transform: translateY(-50%) scale(1.15) rotate(2deg); opacity: 1; } 100% { transform: translateY(-50%) scale(1); opacity: 1; } }
+
+/* 1.19.34 回転中のリールをぼかさない */
+.reel-ov .sym-img, .reel-ov .sym-emoji, .reel-ov .sym-bar, .reel-ov .sym-replay { filter: none; }
+.reel-ov .sym-img { image-rendering: auto; backface-visibility: hidden; }
+
+/* 通知(トロフィー等)は液晶の下端に出す。上段のAT表示・ロゴと重ならない */
+#lcd-stage > .tro-wrap { top: auto !important; bottom: 5px; }
+/* 押し順ナビ中は、ペカり君の名前と台詞を消して数字と重ならないようにする */
+.gogo-lamp:has(.navi.on) .sl-msg { opacity: 0; }
+.gogo-lamp:has(.navi.on) .sl-actor { opacity: .35; }
+
+/* 1.19.36 サイドランプは上半分。下半分に PEKA RUSH / PEKA CHANCE 専用ランプ（それぞれの最中だけ光る） */
+.side-lamp { position: relative; box-sizing: border-box; padding-bottom: var(--side-h2, 200px); }
+.side-lamp i { font-size: min(21px, calc(var(--side-h2, 200px) / 10.5)); }
+.side-lamp .rl-box { position: absolute; left: 0; right: 0; bottom: 2px; display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none; }
+.rl { display: block; writing-mode: vertical-rl; text-orientation: upright; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: clamp(7px, calc(var(--side-h2, 200px) / 24), 11px); line-height: 1.02; letter-spacing: 0; white-space: nowrap; color: #3a2d70; -webkit-text-stroke: .5px rgba(120, 100, 200, .45); padding: 4px 3px; border-radius: 8px; border: 1px solid rgba(120, 100, 200, .3); transition: color .2s; }
+.rl.rush.lit { color: #fff; -webkit-text-stroke: 0; border-color: #ff7a45; background: rgba(255, 90, 40, .22); text-shadow: 0 0 6px #ff3b30, 0 0 14px #ff9d00; animation: rl-rush .35s ease-in-out infinite alternate; }
+.rl.chance.lit { color: #fff; -webkit-text-stroke: 0; border-color: #67e8f9; background: rgba(56, 189, 248, .22); text-shadow: 0 0 6px #22d3ee, 0 0 14px #f472b6; animation: rl-chance .5s ease-in-out infinite alternate; }
+@keyframes rl-rush { from { box-shadow: 0 0 6px #ff3b30; filter: brightness(1); } to { box-shadow: 0 0 18px #ff9d00, 0 0 28px #ff3b30; filter: brightness(1.5); } }
+@keyframes rl-chance { from { box-shadow: 0 0 6px #22d3ee; filter: brightness(1); } to { box-shadow: 0 0 18px #f472b6, 0 0 26px #22d3ee; filter: brightness(1.45); } }

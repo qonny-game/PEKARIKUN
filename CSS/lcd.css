@@ -150,3 +150,46 @@
 /* ホタル (夜): ゆっくり漂う光 */
 .sp-firefly { left: var(--dx, 40%); top: calc(40px + var(--dy)); width: 9px; height: 9px; border-radius: 50%; background: #fef08a; box-shadow: 0 0 10px 3px #fde047, 0 0 22px 6px rgba(253, 224, 71, .5); opacity: 0; animation: sp-ff 4.2s ease-in-out forwards; }
 @keyframes sp-ff { 0% { opacity: 0; transform: translate(0, 0); } 15% { opacity: 1; } 35% { transform: translate(40px, -30px); opacity: .3; } 55% { transform: translate(10px, -60px); opacity: 1; } 80% { transform: translate(-40px, -40px); opacity: .4; } 100% { opacity: 0; transform: translate(-60px, -80px); } }
+
+/* ===== 1.19.35 スピーディに: 飛来物は短く速く、示唆タグ・ハズレマーク・バースト ===== */
+.sp-star { animation-duration: .45s; }
+.sp-ufo { animation-duration: 1.2s; }
+.sp-rocket { animation-duration: .8s; }
+.sp-balloon { animation-duration: 1.7s; }
+.sp-cloud { animation-duration: 2s; }
+.sp-bird { animation-duration: 1.6s; }
+.sp-whale { animation-duration: 2.4s; }
+.sp-fire { animation-duration: .8s; }
+.sp-rainbow { animation-duration: 1.5s; }
+.sp-eye { animation-duration: 1.2s; }
+.sp-coin { animation-duration: .8s; }
+.sp-ripple { animation-duration: .8s; }
+.sp[data-lv="2"], .sp[data-lv="3"] { filter: drop-shadow(0 0 10px var(--sc)); }
+.sp[data-lv="3"] { transform-origin: center; }
+/* 示唆タグ (液晶の上部。何の示唆かを文字で示す) */
+.lcd-tag { position: absolute; left: 50%; top: 26px; transform: translateX(-50%); z-index: 66; display: none; padding: 3px 12px; border-radius: 999px; white-space: nowrap; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 12px; letter-spacing: .04em; color: #fff; background: rgba(15, 23, 42, .78); border: 2px solid #94a3b8; pointer-events: none; }
+.lcd-tag.on { display: block; animation: tag-in .22s cubic-bezier(.2, 1.7, .4, 1) both; }
+.lcd-tag.role { border-color: #fde047; color: #fef9c3; box-shadow: 0 0 10px #fde047; }
+.lcd-tag.f1 { border-color: #38bdf8; box-shadow: 0 0 10px #38bdf8; }
+.lcd-tag.f2 { border-color: #fb923c; color: #ffedd5; box-shadow: 0 0 14px #f97316; }
+.lcd-tag.f3 { border-color: #fff; color: #fff; background: linear-gradient(100deg, #be123c, #f59e0b, #be123c); background-size: 200% 100%; box-shadow: 0 0 18px #ef4444, 0 0 30px #fde047; animation: tag-in .22s cubic-bezier(.2, 1.7, .4, 1) both, tag-hot .5s linear infinite; font-size: 13px; }
+@keyframes tag-in { from { transform: translateX(-50%) scale(2.2); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+@keyframes tag-hot { to { background-position: 200% 0; } }
+/* ハズレ: 灰色のペカり君マーク */
+.lcd-miss { position: absolute; left: 50%; top: 46%; z-index: 70; display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -50%); pointer-events: none; animation: miss-in 1.8s ease-out both; }
+.lcd-miss .lm-m { display: block; width: 92px; height: 92px; filter: grayscale(1) brightness(.78) contrast(.9); }
+.lcd-miss .lm-m svg { width: 100%; height: 100%; }
+.lcd-miss b { margin-top: 4px; padding: 1px 14px; border-radius: 6px; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 16px; letter-spacing: .2em; color: #cbd5e1; background: rgba(30, 41, 59, .85); border: 2px solid #64748b; }
+@keyframes miss-in { 0% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; } 14% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 78% { transform: translate(-50%, -44%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -30%) scale(.9); opacity: 0; } }
+/* 激アツ(★★★)のバースト: 液晶いっぱいに集中線 */
+.lcd-burst { position: absolute; inset: 0; z-index: 61; pointer-events: none; background: repeating-conic-gradient(from 0deg at 50% 52%, rgba(255, 255, 255, .0) 0 7deg, rgba(255, 240, 140, .55) 7deg 10deg); mix-blend-mode: screen; animation: burst .7s ease-out both; }
+@keyframes burst { 0% { transform: scale(.3) rotate(0); opacity: 0; } 30% { opacity: 1; } 100% { transform: scale(2.2) rotate(40deg); opacity: 0; } }
+
+/* PUSH (液晶の中。第2停止から押せる) */
+.lcd-push { position: absolute; left: 50%; bottom: 10px; z-index: 68; display: none; width: 62px; height: 62px; margin-left: -31px; border-radius: 50%; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 13px; letter-spacing: .04em; color: #fff; background: radial-gradient(circle at 35% 30%, #fca5a5, #ef4444 50%, #7f1d1d); border: 3px solid #fecaca; box-shadow: 0 0 14px #ef4444, 0 4px 0 #7f1d1d; pointer-events: none; padding: 0; }
+.lcd-push.on { display: block; animation: tag-in2 .25s cubic-bezier(.2, 1.7, .4, 1) both; }
+.lcd-push.wait { filter: grayscale(.85) brightness(.6); box-shadow: none; }
+.lcd-push.ready { pointer-events: auto; cursor: pointer; width: 78px; height: 78px; margin-left: -39px; font-size: 16px; animation: push-ready .32s ease-in-out infinite alternate; }
+.lcd-push.pressed { transform: translateY(5px); box-shadow: 0 0 20px #fde047, 0 0 0 #7f1d1d; }
+@keyframes tag-in2 { from { transform: scale(.2); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes push-ready { from { transform: scale(.94); box-shadow: 0 0 14px #ef4444, 0 5px 0 #7f1d1d; } to { transform: scale(1.08); box-shadow: 0 0 28px #fde047, 0 5px 0 #7f1d1d; } }

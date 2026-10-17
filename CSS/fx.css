@@ -204,3 +204,8 @@
 .pv-roul[data-c="yellow"], .pv-slots em[data-c="yellow"] { color: #fde047; }
 .pv-roul[data-c="rainbow"], .pv-slots em[data-c="rainbow"] { color: #e879f9; }
 .pv-roul[data-c="white"], .pv-slots em[data-c="white"] { color: #f1f5f9; }
+
+/* PUSH予告はタップで押せる */
+.fx-pv-button .pv-btn { pointer-events: auto; cursor: pointer; }
+.fx-pv-button .pv-tap { position: absolute; left: 0; right: 0; bottom: 14%; text-align: center; font-style: normal; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 15px; letter-spacing: .2em; color: #fff; text-shadow: 0 0 8px #ef4444, 0 2px 3px #000; animation: sl-flash .5s steps(2) infinite; pointer-events: none; }
+.fx-pv-button.press .pv-tap { display: none; }

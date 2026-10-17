@@ -84,7 +84,7 @@
   hintEl.id = 'lcd-hint'; hintEl.className = 'lcd-hint';
   if (stageEl) stageEl.appendChild(hintEl);
   let hintTimer = 0, hintPair = false;
-  const symSrc = k => (window.SYM_IMG && SYM_IMG[k]) || `assets/img/${k}.png`;
+  const symSrc = k => (typeof SYM_IMG !== 'undefined' && SYM_IMG[k]) || `assets/img/${k}.png`;
   function hintShow(keys, ms, big) {
     if (!stageEl) return;
     clearTimeout(hintTimer);
@@ -103,18 +103,19 @@
   const HINT_AT = { replay: [1, 'replay'], cherryW: [1, 'cherry'], cherryS: [1, 'cherry'], melon: [2, 'melon'], melonW: [2, 'melon'], chanceW: [2, 'melon'], chanceS: [2, 'melon'], bell0: [2, 'bell'], bell1: [2, 'bell'], bell2: [2, 'bell'] };
   const HINT_RATE = { replay: 0.7, bell0: 0.7, bell1: 0.7, bell2: 0.7, cherryW: 0.9, cherryS: 1, melon: 0.9, melonW: 0.9, chanceW: 0.8, chanceS: 1 };
   function hintStop(plan, n) {
+    if (n === 2) pushReady();
     if (!plan || hintPair) return;
     const normal = !(typeof bonusRun !== 'undefined' && bonusRun) && !(typeof atGames !== 'undefined' && atGames > 0) && !(typeof atEnding !== 'undefined' && atEnding);
     if (!normal) return;
     let d = HINT_AT[plan.role];
     if (d) {
       if (d[0] === n && rnd() < (HINT_RATE[plan.role] || 0.7)) hintShow([d[1]], 0, plan.role === 'cherryS' || plan.role === 'chanceS');
-    } else if (plan.role === 'lose' && rnd() < 0.04 * freq()) {   // ガセ
+    } else if (plan.role === 'lose' && typeof pendingBonusType !== 'undefined' && pendingBonusType && rnd() < 0.3) {   // ボーナス確定中だけ、ハズレ目でも図柄が出ることがある
       const f = pick([[1, 'replay'], [2, 'bell']]);
       if (f[0] === n) hintShow([f[1]], 0);
     }
   }
-  window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0), pair, hintStop, hintClear, hint: hintShow };
+  window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0), pair, hintStop, hintClear, hint: hintShow, tag, miss: () => missMark(), story: (i, n, l) => story(i, n, l), don: n => { if (n >= 3) forceLv = 2; } };
   let hold = 0;
   function say(a, b, ms, md, an) {
     m1.textContent = a || ''; m2.textContent = b || '';
@@ -135,7 +136,9 @@
     const lcdH = Math.max(150, Math.round(h - 4 - 2 - 102 * sc - 4));
     box.style.setProperty('--lcd-h', lcdH + 'px');
     reelsEl.style.transform = `scale(${sc.toFixed(3)})`;
+    window.REEL_SC = sc * (window.devicePixelRatio || 1);
     reelsEl.style.marginTop = (lcdH + 6) + 'px';
+    document.documentElement.style.setProperty('--side-h2', Math.floor(h / 2) + 'px');   // サイドランプは上半分。下半分はRUSH/CHANCEランプ
     document.documentElement.style.setProperty('--reel-w', (198 * sc).toFixed(1) + 'px');   // STOPボタンをリールの真下に合わせる
   }
   fitReels();
@@ -161,20 +164,152 @@
     if (base === 'coin') d.style.left = (8 + Math.round(rnd() * 82)) + '%';
     fg.appendChild(d);
     if (type === 'chest') setTimeout(() => { d.classList.add('open'); for (let i = 0; i < 4 + lv * 2; i++) setTimeout(() => spawn('coin', Math.min(3, lv)), i * 90); }, 900);
-    setTimeout(() => d.remove(), SPRITES[type] + 100);
+    setTimeout(() => d.remove(), SPRITES[type] * 0.7 + 100);
     if (window.TRO) TRO.seen('lcd:' + type);
     return d;
   }
   const NAMES = { firefly: 'ホタル', leaf: '葉', whale: 'クジラ', bird: '鳥', bat: 'コウモリ', flock: '鳥の群れ', coin: 'コイン', ripple: '波紋', star: '流れ星', ufo: 'UFO', rocket: 'ロケット', balloon: '気球', rainbow: '虹', cloud: '雲', thunder: '雷雲', fire: '花火', chest: '宝箱', eye: '目' };
-  const LVW = { hit: [18, 30, 32, 20], rare: [30, 36, 24, 10], mid: [50, 35, 12, 3], none: [72, 24, 4, 0] };
   const wpick = w => { let x = rnd() * w.reduce((a, b) => a + b, 0); for (let i = 0; i < w.length; i++) { x -= w[i]; if (x < 0) return i; } return 0; };
-  function preview(cls) {
-    const lv = wpick(LVW[cls]);
-    const type = pick(['star', 'star', 'ufo', 'rocket', 'balloon', 'rainbow', 'thunder', 'fire', 'chest', 'eye']);
+  /* ---------- 液晶の予告: 飛来物は「役・フラグの示唆」のときだけ出す ----------
+     役示唆      : クジラ=スイカ / 風船=ベル / 雲=リプレイ / 鳥=チェリー / UFO=チャンス目  (その役 or ハズレ)
+     ボーナス示唆: 流れ星=★ / ロケット・花火・雷=★★ / 目・宝箱・虹=★★★  (ボーナスかチャンスゾーン or ハズレ)
+     ハズレだったときは、灰色のペカり君マーク「ハズレ」が出る */
+  const ROLE_SPR = { melon: 'whale', bell: 'balloon', replay: 'cloud', cherry: 'bird', chance: 'ufo' };
+  const ROLE_JP = { melon: 'スイカ', bell: 'ベル', replay: 'リプレイ', cherry: 'チェリー', chance: 'チャンス目' };
+  const ROLE_COL = { melon: '#4ade80', bell: '#fde047', replay: '#60a5fa', cherry: '#f87171', chance: '#e879f9' };
+  const groupOf = k => /^melon/.test(k) ? 'melon' : /^cherry/.test(k) ? 'cherry' : /^chance/.test(k) ? 'chance' : /^bell/.test(k) ? 'bell' : k === 'replay' ? 'replay' : '';
+  const roleHintP = k => ({ cherryS: .55, cherryW: .3, melon: .6, melonW: .3, chanceS: .6, chanceW: .3 }[k] ?? (/^bell/.test(k) || k === 'replay' ? .1 : 0));
+  const FLAG_SPR = [null, ['star'], ['rocket', 'fire', 'thunder'], ['eye', 'chest', 'rainbow']];
+  const FLAG_TAG = ['', 'ボーナス示唆 ★', 'ボーナス示唆 ★★', 'ボーナス示唆 ★★★'];
+  const FLAG_W = { hit: [0, 26, 36, 38], zone: [0, 46, 38, 16], none: [0, 86, 13, 1] };
+  let forceLv = 0;   // ドン3回の「発展」: 次に強めのボーナス示唆が必ず出る
+  const tagEl = document.createElement('div');
+  tagEl.id = 'lcd-tag'; tagEl.className = 'lcd-tag';
+  if (stageEl) stageEl.appendChild(tagEl);
+  let tagT = 0;
+  function tag(text, cls, ms) {
+    if (!text) { tagEl.classList.remove('on'); return; }
+    clearTimeout(tagT);
+    tagEl.textContent = text; tagEl.className = 'lcd-tag on ' + (cls || '');
+    void tagEl.offsetWidth;
+    tagT = setTimeout(() => tagEl.classList.remove('on'), ms || 2400);
+  }
+  function missMark() {
+    if (!stageEl || missGame) return;
+    missGame = true;
+    const d = document.createElement('div');
+    d.className = 'lcd-miss';
+    d.innerHTML = `<span class="lm-m">${FX.mascotSVG('sad')}</span><b>ハズレ</b>`;
+    stageEl.appendChild(d);
+    setTimeout(() => d.remove(), 1800);
+    if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(247, t, 0.2, 'triangle', 0.08); tone(185, t + 0.14, 0.34, 'triangle', 0.08); }
+  }
+  /* ---------- PUSH: 第2停止から押せる。押すと対応役 / CHANCE ZONE / ボーナス濃厚 が出る(出ないときはハズレ) ---------- */
+  const pushEl = document.createElement('button');
+  pushEl.id = 'lcd-push'; pushEl.type = 'button'; pushEl.className = 'lcd-push'; pushEl.textContent = 'PUSH';
+  if (stageEl) stageEl.appendChild(pushEl);
+  let pushPlan = null, pushOff = 0, missGame = false;
+  function pushArm(plan) { clearTimeout(pushOff); pushPlan = plan; pushEl.className = 'lcd-push on wait'; }
+  function pushReady() {
+    if (!pushPlan || pushPlan.done) return;
+    pushEl.className = 'lcd-push on ready';
+    if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; [1047, 1568].forEach((f, i) => tone(f, t + i * 0.07, 0.14, 'triangle', 0.1)); }
+  }
+  function pushResult(pl) {
+    const g = pl.group;
+    if (pl.hit0) { say('PEKA!!', 'GOGOランプ 点灯濃厚', 2200, 'shock', 'jump'); tag('ボーナス濃厚', 'f3', 2600); burst(); swoosh(3); for (let i = 0; i < 6; i++) setTimeout(() => spawn('coin', 3), i * 90); }
+    else if (pl.cz) { say('CHANCE ZONE', '突入！', 2400, 'shock', 'jump'); tag('CHANCE ZONE 突入', 'f3', 2600); burst(); swoosh(2); spawn('fire', 2); for (let i = 0; i < 4; i++) setTimeout(() => spawn('coin', 2), i * 90); }
+    else if (g) { hintShow([ROLE_SYM[g]], 1500, pl.rare); tag(`${ROLE_JP[g]} 成立`, 'role', 2200); swoosh(pl.rare ? 2 : 1); if (pl.rare) spawn('fire', 1); }
+    else missMark();
+  }
+  function pushFire(auto) {
+    if (!pushPlan || pushPlan.done) return;
+    if (!auto && !pushEl.classList.contains('ready')) return;
+    const pl = pushPlan; pl.done = true;
+    pushEl.className = 'lcd-push on pressed';
+    if (soundEnabled) { initAudio(); tone(196, audioCtx.currentTime, 0.12, 'square', 0.14); }
+    pushOff = setTimeout(() => { pushEl.className = 'lcd-push'; }, 600);
+    setTimeout(() => pushResult(pl), auto ? 250 : 380);
+  }
+  pushEl.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); pushFire(false); });
+  const ROLE_SYM = { melon: 'melon', bell: 'bell', replay: 'replay', cherry: 'cherry', chance: 'melon' };
+  function planHint(kind) {
+    const hit = FX.outcomeClass(kind) === 'hit';
+    const zone = czLeft > 0 || czNew || zenchoLeft > 0 || fakeZencho > 0;
+    const pf = (hit ? .6 : zone ? .4 : .025) * freq();
+    if (forceLv || rnd() < pf) {
+      let lv = wpick(FLAG_W[hit ? 'hit' : zone ? 'zone' : 'none']);
+      if (forceLv) { lv = Math.max(lv, forceLv); forceLv = 0; }
+      lv = Math.max(1, lv);
+      return { t: 'flag', lv, type: pick(FLAG_SPR[lv]) };
+    }
+    const g = groupOf(kind);
+    if (g && rnd() < roleHintP(kind) * freq()) return { t: 'role', g };
+    if (kind === 'lose' && rnd() < (hit ? .15 : .03) * freq()) return { t: 'role', g: pick(Object.keys(ROLE_SPR)) };
+    return null;
+  }
+  function flagSprite(type, lv) {
     if (type === 'star') { for (let i = 0; i <= lv; i++) setTimeout(() => spawn('star', lv), i * 220); }
     else spawn(type, lv);
-    if (lv >= 2) { say(['', '', '', 'HOT!!'][lv], NAMES[type], 1600, 'shock', lv >= 3 ? 'jump' : 'shake'); }
-    return lv;
+  }
+  /* ぎゅわーん: 音程が一気に駆け上がる音 (lv が高いほど長く高く) */
+  function swoosh(lv) {
+    if (!soundEnabled) return;
+    initAudio();
+    const t = audioCtx.currentTime, o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(140, t);
+    o.frequency.exponentialRampToValueAtTime(900 + lv * 500, t + 0.18 + lv * 0.07);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.1, t + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28 + lv * 0.08);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(t); o.stop(t + 0.4 + lv * 0.08);
+    tone(70, t, 0.22, 'sine', 0.22);
+  }
+  function burst() {
+    if (!stageEl) return;
+    const b = document.createElement('div');
+    b.className = 'lcd-burst';
+    stageEl.appendChild(b);
+    setTimeout(() => b.remove(), 800);
+    el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1200);
+  }
+  function showHint(h) {
+    if (h.t === 'role') {
+      const d = spawn(ROLE_SPR[h.g], 1);
+      d.style.setProperty('--sc', ROLE_COL[h.g]);
+      tag(`${ROLE_JP[h.g]}示唆`, 'role', 2800);
+      swoosh(0);
+      if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; [660, 880].forEach((f, i) => tone(f, t + i * 0.1, 0.18, 'triangle', 0.08)); }
+    } else {
+      flagSprite(h.type, h.lv);
+      tag(FLAG_TAG[h.lv], 'f' + h.lv, 2800);
+      swoosh(h.lv);
+      if (h.lv >= 3) burst();
+      if (h.lv >= 2) say(h.lv >= 3 ? 'HOT!!' : '', FLAG_TAG[h.lv].replace('ボーナス示唆 ', ''), 1600, 'shock', h.lv >= 3 ? 'jump' : 'shake');
+      if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; for (let i = 0; i <= h.lv; i++) tone(523 * Math.pow(1.26, i), t + i * 0.08, 0.2, 'triangle', 0.09); }
+    }
+  }
+  function resolveHints(hints, kind, hit0) {
+    if (!hints.length || hit0 && hints.every(x => x.t === 'role')) return;
+    const flagOK = hit0 || czNew;
+    let missed = false;
+    hints.forEach(h => {
+      if (h.t === 'flag') { if (flagOK) say('CHANCE!', h.lv >= 3 ? 'ボーナス濃厚' : 'いい予感…', 1800, 'happy', 'jump'); else missed = true; }
+      else if (groupOf(kind) !== h.g && !hit0) missed = true;
+    });
+    if (missed && !(hit0 || czNew)) setTimeout(missMark, 450);
+  }
+  /* 連続演出(前兆・疑似連)の段階表示。i/n: 何話目か */
+  function story(i, n, last) {
+    const lv = Math.max(1, Math.min(3, Math.ceil(i * 3 / Math.max(1, n))));
+    tag(`連続演出 ${'●'.repeat(Math.min(i, n))}${'○'.repeat(Math.max(0, n - i))}`, 'f' + lv, 3000);
+    flagSprite(pick(FLAG_SPR[lv]), lv);
+    swoosh(lv);
+    if (lv >= 3) burst();
+    if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; for (let k = 0; k < 2 + i; k++) tone(392 * Math.pow(1.19, k + i), t + k * 0.07, 0.16, 'triangle', 0.09); tone(80, t, 0.3, 'sine', 0.2 + 0.05 * i); }
+    if (lv >= 3 || last) { act('jump'); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1500); }
   }
   /* 今日のラッキー役: 日付で決まる。成立すると一言と演出が出る（出玉には影響しない） */
   const LUCKY_LIST = [['cherry', 'チェリー'], ['melon', 'スイカ'], ['chance', 'チャンス目'], ['bell', 'ベル'], ['replay', 'リプレイ']];
@@ -185,13 +320,25 @@
 
   /* ---------- 小役の成立とペカり ---------- */
   const _rr = runRole;
+  let hints = [];
   runRole = function (kind, done, navi) {
-    if (!isDebugRun && !bonusRun && !FX.don) {
-      const cls = FX.outcomeClass(kind);
-      const p = ({ hit: 0.5, rare: 0.38, mid: 0.2, none: 0.09 }[cls] || 0) * freq();
-      if (rnd() < p) preview(cls);
+    let hit0 = false;
+    const normalNow = !isDebugRun && !bonusRun && atGames === 0 && !atEnding;
+    if (normalNow) {
+      const second = FX.don;   // ドン演出のあとの再突入
+      if (!second) { hints = []; missGame = false; }
+      hit0 = FX.outcomeClass(kind) === 'hit';
+      if (!second || forceLv) { const h = planHint(kind); if (h) { hints.push(h); showHint(h); } }
+      if (!second) {
+        const rare = /^(cherryS|melon$|chanceS)/.test(kind);
+        const pp = hit0 ? .5 : czNew ? .6 : ({ cherryS: .5, cherryW: .25, melon: .5, melonW: .25, chanceS: .5, chanceW: .25 }[kind] ?? (/^bell/.test(kind) || kind === 'replay' ? .05 : kind === 'lose' ? .03 : 0));
+        if (rnd() < pp * freq()) pushArm({ hit0, cz: !!czNew, group: groupOf(kind), rare });
+      }
+      if (!second && czLeft > 0) { spawn('star', 1); say('CHANCE ZONE', `残り ${czLeft}G`, 1600, 'happy', 'hop'); }
     }
     return _rr(kind, res => {
+      const hintsNow = hints; hints = [];
+      if (pushPlan && !pushPlan.done) pushFire(true);
       const WIN_LAMP = LAMP_TABLE.win;
       const aimedRole = kind === 'cherryW' || kind === 'cherryS' || kind === 'melon';   // 狙う役だけ成否がある（ベル・リプレイ・弱スイカは success が付かない）
       if (!isDebugRun && !bonusRun && luckyOf(kind) === LUCKY[0] && (!aimedRole || (res && res.success) || kind === 'chanceW' || kind === 'chanceS')) {
@@ -203,6 +350,10 @@
         if (r) { const strong = kind === 'cherryS' || kind === 'melon' || kind === 'chanceS'; say(r[1], r[0], 1700, strong ? 'shock' : 'happy', strong ? 'jump' : null); }
         else if (kind === 'replay') say('REPLAY', '', 900);
         normalPlay(kind);
+        if (normalNow) {
+          resolveHints(hintsNow, kind, hit0);
+          if (czNew) setTimeout(() => { say('CHANCE ZONE', '次のゲームから突入！', 2600, 'shock', 'jump'); spawn('fire', 2); tag('CHANCE ZONE 突入', 'f3', 2800); }, 900);
+        }
       }
       done(res);
     }, navi);
@@ -281,9 +432,10 @@
   const ZSTEPS = ['ようすが…', 'ざわざわ…', '何かが近づいてる', 'チャンス！', '来るか…！'];
   window.onZenchoStep = function (z) {
     if (isDebugRun) return;
-    if (z.end && !z.real) { say('', 'あれ…？', 2800, 'sad', 'sad'); return; }
+    if (z.end && !z.real) { say('', 'あれ…？', 2800, 'sad', 'sad'); missMark(); return; }
     const t = ZSTEPS[z.i >= z.n ? 4 : Math.min(3, z.i - 1)];
     say(`STORY ${z.i}/${z.n}`, t, 2000, z.i >= 3 ? 'shock' : 'happy');
+    story(z.i, z.n, z.i >= z.n);
   };
   window.onCzEnd = function () { if (!isDebugRun) say('', 'ゾーン終了…', 2800, 'sad', 'sad'); };
   /* ハマり中のひとこと: ペカり君が励ます。250G超えで救済(当選率UP)が始まる */
@@ -299,6 +451,14 @@
       }
     });
   }, 500);
+  /* サイドの PEKA RUSH / PEKA CHANCE ランプ: AT中 / ボーナス中だけ光る */
+  const rlRush = [...document.querySelectorAll('.rl.rush')], rlChance = [...document.querySelectorAll('.rl.chance')];
+  setInterval(() => {
+    const rush = atGames > 0 || atEnding || (bonusRun && bonusRun.zone);
+    const chance = !!bonusRun && !bonusRun.zone;
+    rlRush.forEach(e => e.classList.toggle('lit', !!rush));
+    rlChance.forEach(e => e.classList.toggle('lit', chance));
+  }, 200);
   let last = '';
   setInterval(() => {
     const sc = scene();
@@ -352,15 +512,7 @@
     if (isDebugRun || bonusRun || atGames > 0 || Date.now() < hold || FX.busy) return;
     if (rnd() < 0.55) { const sc = scene(); say('', pick(IDLE[sc] || IDLE.day), 2600); }
   }, 7000);
-  setInterval(() => {
-    if (isDebugRun || bonusRun || FX.busy) return;
-    const sc = scene();
-    if (sc === 'day') { spawn(pick(['cloud', 'cloud', 'balloon', 'bird', 'flock', 'leaf']), 0); if (rnd() < 0.5) setTimeout(() => spawn('leaf', 0), 500); }
-    else if (sc === 'death') spawn(rnd() < 0.6 ? 'bat' : 'cloud', 2);
-    else if (sc === 'night') { spawn(rnd() < 0.25 ? 'whale' : 'star', 0); for (let i = 0; i < 4; i++) setTimeout(() => spawn('firefly', 0), i * 500); }
-    else if (sc === 'dusk') spawn(rnd() < 0.12 ? 'whale' : pick(['cloud', 'leaf']), 0);
-    else if (atGames > 0 && rnd() < 0.5) spawn(pick(['star', 'fire', 'rocket']), sc === 'death' ? 2 : 1);
-  }, 6500);
+  /* 飛来物は予告(役・フラグの示唆)のときだけ。背景として勝手には出さない */
   /* ---------- デモ画面: 45秒操作がないと、ランプと液晶が客寄せ表示になる。触れたら戻る ---------- */
   let lastInput = Date.now(), demoOn = false, demoStep = 0;
   ['pointerdown', 'keydown', 'touchstart'].forEach(ev => window.addEventListener(ev, () => {
