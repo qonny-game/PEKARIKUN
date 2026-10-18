@@ -582,9 +582,9 @@
       b.intro = true;
       const fz = st.fromFreeze; st.fromFreeze = false;
       const base = Math.max(0, (st.zoneIntroEnd || 0) - Date.now()) + 200;   // 開始演出(どどーん)が終わってからカウントダウン
-      FX.hold(base + 3 * 750 + 200);
-      [3, 2, 1].forEach((n, i) => wait(base + i * 750, () => { put('fx-count warn', String(n), 800); snd([440 + n * 110], 0, 0.2, 'square', 0.12); }));
-      wait(base + 3 * 750 + 100, () => { _bonusGame(); });
+      FX.hold(base + 3 * 520 + 200);
+      [3, 2, 1].forEach((n, i) => wait(base + i * 520, () => { put('fx-count warn', String(n), 560); snd([440 + n * 110], 0, 0.2, 'square', 0.12); }));
+      wait(base + 3 * 520 + 100, () => { _bonusGame(); });
       return;
     }
     _bonusGame();
@@ -604,7 +604,7 @@
     const b = bonusRun;
     _finishBonus();
     if (b && !b.zone && !b.debug) {
-      [3, 2, 1].forEach((n, i) => wait(300 + i * 750, () => { put('fx-count warn', String(n), 800); snd([330 + n * 80], 0, 0.15, 'square', 0.1); }));
+      [3, 2, 1].forEach((n, i) => wait(300 + i * 520, () => { put('fx-count warn', String(n), 560); snd([330 + n * 80], 0, 0.15, 'square', 0.1); }));
     }
   };
   /* ボーナス終了と思いきや…の逆転 (AT突入の前にひと芝居) */
@@ -654,7 +654,7 @@
         pushOverlay.className = 'push-overlay show revealed';
         playPayoutSound(2);
         triggerFlash();
-        wait(850, () => {
+        wait(600, () => {
           // 急上昇
           pushResult.textContent = text;
           pushOverlay.className = 'push-overlay show revealed premium';
@@ -662,7 +662,7 @@
           showBanner('UP!!', '', 'red', true, 1500);
           unlock('gyakuten'); count('rev', 1, 5, 'gyakuten5');
         });
-        wait(850 + 1900, () => { pushOverlay.className = 'push-overlay'; isPushing = false; if (onDone) onDone(); });
+        wait(600 + 1300, () => { pushOverlay.className = 'push-overlay'; isPushing = false; if (onDone) onDone(); });
       };
       pushBtn.addEventListener('click', handler);
       return;

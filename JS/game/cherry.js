@@ -112,7 +112,7 @@ function playRole(role, inAT) {
     stopTension();
     if (!aimed || res.success) {
       roleEffects(role, inAT);
-      showRoleBadge(R.label, R.coins(), R.notes);
+      showRoleBadge(R.label, R.coins(), R.notes, role);
       if (inAT && /^(melon|cherry)/.test(role)) sandLeft = 1 + Math.floor(Math.random() * 3);
     } else {
       missEffect();
@@ -121,7 +121,32 @@ function playRole(role, inAT) {
     maybeShowAtResult();
   }, navi);
 }
-function showRoleBadge(label, coins, notes) {
+/* 揃ったときの音: スイカ・チェリーは「期待」系 / チャンス目は「警告 + チャンス」系 */
+function playRoleSound(role) {
+  initAudio();
+  const t = audioCtx.currentTime;
+  const strong = role === 'cherryS' || role === 'melon' || role === 'chanceS';
+  if (role === 'cherryW' || role === 'cherryS') {
+    // きらきら駆け上がる期待音: 高音のアルペジオ + 鈴の倍音
+    const up = strong ? [1047, 1319, 1568, 2093, 2637, 3136, 3951] : [1319, 1568, 2093, 2637];
+    up.forEach((f, i) => { tone(f, t + i * 0.045, 0.22, 'triangle', 0.12); tone(f * 2.01, t + i * 0.045 + 0.01, 0.12, 'sine', 0.05); });
+    tone(up[up.length - 1], t + up.length * 0.045 + 0.05, 0.5, 'sine', 0.1);
+  } else if (role === 'melonW' || role === 'melon') {
+    // じわっと膨らむ期待音: ゆっくり上がるグリッサンド + 和音のクレッシェンド
+    const n = strong ? 16 : 10;
+    for (let i = 0; i < n; i++) tone(392 * Math.pow(2, (i / n) * (strong ? 1.6 : 1.1)), t + i * 0.03, 0.09, 'triangle', 0.05 + i * 0.004);
+    const c0 = t + n * 0.03;
+    (strong ? [784, 988, 1175, 1568] : [784, 988, 1175]).forEach(f => { tone(f, c0, 0.55, 'triangle', 0.1); tone(f / 2, c0, 0.55, 'sine', 0.06); });
+  } else if (role === 'chanceW' || role === 'chanceS') {
+    // 警告のサイレン(2音を交互) → 不穏な低音 → チャンスを思わせる上昇音
+    const rep = strong ? 4 : 2;
+    for (let i = 0; i < rep * 2; i++) tone(i % 2 ? 622 : 880, t + i * 0.1, 0.1, 'square', 0.1);
+    tone(65, t, 0.08 + rep * 0.2, 'sawtooth', 0.14);
+    const c0 = t + rep * 0.2 + 0.05;
+    (strong ? [523, 659, 784, 1047, 1319] : [523, 659, 784]).forEach((f, i) => tone(f, c0 + i * 0.08, 0.3, 'triangle', 0.12));
+  }
+}
+function showRoleBadge(label, coins, notes, role) {
   bellBadge.textContent = label + (coins > 0 ? ` +${coins}` : '');
   bellBadge.classList.remove('show');
   void bellBadge.offsetWidth;
@@ -129,7 +154,8 @@ function showRoleBadge(label, coins, notes) {
   if (soundEnabled) {
     initAudio();
     const t = audioCtx.currentTime;
-    notes.forEach((f, i) => tone(f, t + i * 0.06, 0.25, 'triangle', 0.14));
+    if (role && /^(cherry|melon|chance)/.test(role)) playRoleSound(role);
+    else notes.forEach((f, i) => tone(f, t + i * 0.06, 0.25, 'triangle', 0.14));
   }
 }
 const CHERRY_NOTES = [1319, 1760, 2349];

@@ -299,7 +299,7 @@
     const g = pl.group;
     if (pl.hit0) { say('PEKA!!', 'GOGOランプ 点灯濃厚', 2200, 'shock', 'jump'); tag('ボーナス濃厚', 'f3', 2600); burst(); swoosh(3); for (let i = 0; i < 6; i++) setTimeout(() => spawn('coin', 3), i * 90); }
     else if (pl.cz) { say('CHANCE ZONE', '突入！', 2400, 'shock', 'jump'); tag('CHANCE ZONE 突入', 'f3', 2600); burst(); swoosh(2); spawn('fire', 2); for (let i = 0; i < 4; i++) setTimeout(() => spawn('coin', 2), i * 90); }
-    else if (g) { hintShow([ROLE_SYM[g]], 1500, pl.rare); swoosh(pl.rare ? 2 : 1);   // 図柄が出ているので文字説明は出さない
+    else if (g) { hintShow([ROLE_SYM[g]], 1100, pl.rare); swoosh(pl.rare ? 2 : 1);   // 図柄が出ているので文字説明は出さない
     if (pl.rare) spawn('fire', 1); }
     else missMark();
   }
@@ -309,8 +309,8 @@
     const pl = pushPlan; pl.done = true;
     pushEl.className = 'lcd-push on pressed';
     if (soundEnabled) { initAudio(); tone(196, audioCtx.currentTime, 0.12, 'square', 0.14); }
-    pushOff = setTimeout(() => { pushEl.className = 'lcd-push'; }, 600);
-    setTimeout(() => pushResult(pl), auto ? 250 : 380);
+    pushOff = setTimeout(() => { pushEl.className = 'lcd-push'; }, 450);
+    setTimeout(() => pushResult(pl), auto ? 150 : 240);
   }
   pushEl.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); pushFire(false); });
   const ROLE_SYM = { melon: 'melon', bell: 'bell', replay: 'replay', cherry: 'cherry', chance: '@CHANCE' };
@@ -337,9 +337,9 @@
     const L = wxPlan.L;
     if (n <= L) {
       wxEl.className = 'lcd-wx on w' + n;
-      clearTimeout(wxT); wxT = setTimeout(() => { wxPlan = null; wxClear(); }, 4500);   // 念のため自動で消す
+      clearTimeout(wxT); wxT = setTimeout(() => { wxPlan = null; wxClear(); }, 3200);   // 念のため自動で消す
       void wxEl.offsetWidth;
-      tag(['', '雨 1/3', '豪雨 2/3', '雷! 3/3  ボーナスかCHANCE ZONE確定'][n], n >= 3 ? 'f3' : 'f' + n, 2600);
+      tag(['', '雨 1/3', '豪雨 2/3', '雷! 3/3  ボーナスかCHANCE ZONE確定'][n], n >= 3 ? 'f3' : 'f' + n, 1500);
       if (n === 1) noiseBurst(0.7, 0.07, 'highpass', 3500);
       if (n === 2) { noiseBurst(1, 0.14, 'highpass', 2500); noiseBurst(0.8, 0.12, 'lowpass', 300); }
       if (n === 3) {

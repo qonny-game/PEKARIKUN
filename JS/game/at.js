@@ -75,7 +75,7 @@ function pushReveal(text, premium, onDone) {
       pushOverlay.className = 'push-overlay';
       isPushing = false;
       if (onDone) onDone();
-    }, premium ? 1900 : 1400);
+    }, premium ? 1300 : 900);
   };
   pushBtn.addEventListener('click', handler);
 }
@@ -118,7 +118,7 @@ function startAT(games, typeId) {
     burstParticles('gold', 70);
   }
 
-  const ms = premium ? 3000 : 2200;
+  const ms = premium ? 2200 : 1500;
   setTimeout(() => {
     rushOverlay.classList.remove('show', 'premium', 't-heaven', 't-death');
     stopParticles();

@@ -232,9 +232,9 @@ function judgeIntro(b, cb) {
   startTension('JUDGEMENT');
   if (chanceLogo) chanceLogo.classList.add('judge');
   if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(110, t, 1.4, 'sawtooth', 0.14); tone(165, t + 0.1, 1.2, 'sawtooth', 0.08); }
-  setTimeout(() => playTick(2), 1800);
-  setTimeout(() => { if (window.LCDX) LCDX.tag(`現在 ${AURA_NAMES[Math.min(6, b.aura)]}オーラ`, b.aura >= 4 ? 'f3' : 'f1', 1500); playTick(3); shakeMain(200); }, 3400);
-  setTimeout(() => { isSuspense = false; cb(); }, 5000);
+  setTimeout(() => playTick(2), 1200);
+  setTimeout(() => { if (window.LCDX) LCDX.tag(`現在 ${AURA_NAMES[Math.min(6, b.aura)]}オーラ`, b.aura >= 4 ? 'f3' : 'f1', 1500); playTick(3); shakeMain(200); }, 2300);
+  setTimeout(() => { isSuspense = false; cb(); }, 3500);
 }
 function bonusGameMain() {
   const b = bonusRun;
