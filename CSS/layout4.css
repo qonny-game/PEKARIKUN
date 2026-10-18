@@ -153,3 +153,10 @@
 .lcd-czwin .cw-imgs img { width: 34px; height: 34px; object-fit: contain; filter: drop-shadow(0 0 6px #fde047); }
 @keyframes cw-blink { 50% { opacity: .45; } }
 @keyframes cw-in { 0% { opacity: 0; } 100% { opacity: 1; } }
+
+/* 1.25.0 実機寄せ: ストップは小さめの丸（32px）、レバーは黒い玉をリールの左横へ */
+.cabinet > .stop-row .stop-btn { width: 32px; height: 32px; border-width: 2px; box-shadow: 0 2px 0 #4a0505; }
+.cabinet > .stop-row .stop-btn.ready { box-shadow: 0 2px 0 #06244f, 0 0 8px rgba(56, 189, 248, .7); }
+.cabinet > .stop-row .lever-btn { left: calc(50% - var(--reel-w, 198px) / 2 - 40px); width: 34px; padding: 0; border: 0; border-radius: 0; background: none; gap: 2px; }
+.cabinet > .stop-row .lever-btn i { width: 28px; height: 28px; background: radial-gradient(circle at 35% 30%, #6b6b7a, #1d1d28 55%, #040406); box-shadow: 0 3px 0 #000, 0 0 6px rgba(0, 0, 0, .7); }
+.cabinet > .stop-row .lever-btn:active i { transform: translateY(3px); box-shadow: 0 0 0 #000; }
