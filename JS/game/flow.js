@@ -176,7 +176,7 @@ function pickAtType() { return weightedPick(AT_TYPE_W); }
 /* ---------- フリーズ → PEKA! PEKA! MOUNTAIN! 直撃 ---------- */
 const FREEZE_RATE = 1 / 1500;   // 通常時1ゲームあたりのフリーズ確率
 function freezeToZone(debug) {
-  zenchoLeft = 0; zenchoToCz = false;
+  zenchoLeft = 0; zenchoToCz = false; latentLeft = 0;
   if (window.TRO && !debug) TRO.seen('freeze');
   isSuspense = true;                       // フリーズ中はレバーが効かない
   startTension('FREEZE');
@@ -326,6 +326,25 @@ function directAT() {
 }
 /* 前兆: スイカ・チェリー・チャンス目が契機。前兆のあとCHANCE ZONEへ（通常→前兆→CZ→BIG→AT→MOUNTAIN）。まれに前兆なしの直CZ */
 let zenchoToCz = false;
+/* 潜伏: 前兆に行かずボーナスフラグが立ったとき、すぐにはランプを光らせず、数ゲームの間「通常時には出ない矛盾した目」を出す。
+   (2択なのに2択以外が揃う / 白7・スイカ・白7 / サンド目 / 色違いの7)。最後のゲームでGOGO!ランプ(BONUS確定) */
+let latentLeft = 0;
+const LATENT_MIN = 8, LATENT_MAX = 12;
+function contraRole() {
+  sandReachNow = false; window.contraMixed = false; window.contraPair = null;
+  if (window.pushSpoilArm && Math.random() < 0.5) window.pushSpoilArm('bonus');
+  const r = Math.random();
+  if (r < 0.22) { window.wmNext = true; return 'lose'; }              // 白7・スイカ・白7
+  if (r < 0.38) { sandReachNow = true; return 'lose'; }               // サンド目
+  if (r < 0.50) { window.contraMixed = true; return 'lose'; }         // 色違いの7が揃う
+  const role = ['bell', 'replay', 'cherryW', 'melonW', 'chanceW', 'lose'][Math.floor(Math.random() * 6)];
+  if (Math.random() < 0.7) {   // 2択を出すが、結果はその2つのどちらでもない
+    const grp = { bell: 'bell', replay: 'replay', cherryW: 'cherry', melonW: 'melon', chanceW: 'chance' }[role];
+    const cands = OMEN_PAIRS.filter(p => !p.includes(grp));
+    window.contraPair = cands[Math.floor(Math.random() * cands.length)].slice().sort(() => Math.random() - 0.5);
+  }
+  return role;
+}
 const ZEN_TO_CZ = { strong: 0.7, weak: 0.17 }, CZ_DIRECT = { strong: 0.1, weak: 0.03 };
 const SEVEN_HINT_MISS = 3;   // 7を何回外したら液晶に777を出すか
 /* ペカっている間のレバーON: 7を狙って揃える (取りこぼしたら、もう一度) */
@@ -476,7 +495,7 @@ function handleSpin() {
   if (!inAT) sandLeft = 0;
   else if (sandLeft > 0 && !atEnding && --sandLeft === 0) { playSand(); return; }
   // 通常時の直AT: いきなりPEKA RUSH
-  if (!inAT && !bonusRun && czLeft === 0 && zenchoLeft === 0 && pendingBonusType === null && Math.random() < DIRECT_AT_P) { directAT(); return; }
+  if (!inAT && !bonusRun && czLeft === 0 && zenchoLeft === 0 && pendingBonusType === null && latentLeft === 0 && Math.random() < DIRECT_AT_P) { directAT(); return; }
   // 通常時のフリーズ: そのまま PEKA! PEKA! MOUNTAIN! へ直撃
   if (!inAT && Math.random() < FREEZE_RATE) { freezeToZone(); return; }
 
@@ -495,10 +514,15 @@ function handleSpin() {
   let isHit = false;
   // ガセ前兆: 前兆ステージに入るが当選はしない（本前兆と同じ3〜5G。ハズレの期待感を作る）
   let zStep = null;   // 前兆の連続演出（本物・ガセ共通の見た目。最後だけ結果が分かれる）
-  if (inAT || bonusRun) fakeZencho = 0;
+  if (inAT || bonusRun || latentLeft > 0) fakeZencho = 0;
   else if (fakeZencho > 0) { fakeZencho--; zStep = { real: false, i: fakeTotal - fakeZencho + 1, n: fakeTotal, end: fakeTotal - fakeZencho + 1 >= fakeTotal }; if (fakeZencho === 0) zStep = null; }
   else if (zenchoLeft === 0 && Math.random() < FAKE_ZENCHO_P) { fakeZencho = fakeTotal = 3 + Math.floor(Math.random() * 3); zStep = { real: false, i: 1, n: fakeTotal, end: false }; }
-  if (zenchoLeft > 0 && zenchoToCz) {   // 前兆のあとはCHANCE ZONEへ（ボーナスには直接ならない）
+  let contraGame = false;   // 潜伏中: 矛盾した目を出すゲーム
+  if (latentLeft > 0 && !inAT && !bonusRun) {
+    latentLeft--;
+    if (latentLeft === 0) isHit = true;   // 最後のゲーム: ここでボーナス当選(ランプ点灯)
+    else contraGame = true;
+  } else if (zenchoLeft > 0 && zenchoToCz) {   // 前兆のあとはCHANCE ZONEへ（ボーナスには直接ならない）
     zenchoLeft--;
     if (zenchoLeft > 0) zStep = { real: true, i: zenchoTotal - zenchoLeft + 1, n: zenchoTotal, end: false };
     else { zenchoToCz = false; czLeft = CZ_G; czNew = true; czLoop = Math.random() < CZ_LOOP_P; zStep = { real: true, i: zenchoTotal, n: zenchoTotal, end: true }; }
@@ -509,7 +533,8 @@ function handleSpin() {
   } else {
     isHit = Math.random() < Math.min(1, HIT_RATE * hitMult);
     // 当選が決まっても、すぐには光らせず3〜5G遅らせることがある (その間のハズレ矛盾は確定のサイン)
-    if (isHit && !inAT && Math.random() < ZENCHO_P) { zenchoLeft = zenchoTotal = 3 + Math.floor(Math.random() * 3); isHit = false; fakeZencho = 0; zStep = { real: true, i: 1, n: zenchoTotal, end: false }; }
+    if (isHit && !inAT && !inCZ && !isDebugRun && Math.random() >= ZENCHO_P) { latentLeft = LATENT_MIN + Math.floor(Math.random() * (LATENT_MAX - LATENT_MIN + 1)); isHit = false; contraGame = true; }   // 前兆なしのボーナスフラグ: 潜伏
+    else if (isHit && !inAT && Math.random() < ZENCHO_P) { zenchoLeft = zenchoTotal = 3 + Math.floor(Math.random() * 3); isHit = false; fakeZencho = 0; zStep = { real: true, i: 1, n: zenchoTotal, end: false }; }
   }
 
   // CHANCE ZONE中に当選が決まったら、前兆(連続演出)は省略して、そのまま当選画面へ
@@ -536,9 +561,9 @@ function handleSpin() {
   else if (inCZ && czLeft === 0) { window.czTimedOut = true; if (window.onCzEnd) window.onCzEnd(false); }
 
   // 小役は1回の乱数で決める（実機と同じ。確率は従来の順番抽選と同じ配分）
-  const role = isHit ? 'hit' : drawRole(inAT);
+  const role = isHit ? 'hit' : (contraGame ? contraRole() : drawRole(inAT));
   // CHANCE ZONE の突入抽選: 強レアは入りやすい。突入は次ゲームから
-  if (!inAT && !bonusRun && !isHit && czLeft === 0 && zenchoLeft === 0 && fakeZencho === 0) {
+  if (!inAT && !bonusRun && !isHit && !contraGame && czLeft === 0 && zenchoLeft === 0 && fakeZencho === 0) {
     const strong = ['cherryS', 'melonS', 'chanceS'].includes(role);
     const weak = ['cherryW', 'melonW', 'chanceW'].includes(role);
     const kindR = strong ? 'strong' : weak ? 'weak' : null;
@@ -637,6 +662,7 @@ function handleSpin() {
     playRole('chanceW', false);     // 弱チャンス目
   } else {
     runRole('lose', () => {
+      sandReachNow = false; window.contraMixed = false;
       stopTension();
       updateUI();
       maybeShowAtResult();

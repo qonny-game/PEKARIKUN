@@ -71,6 +71,7 @@
     direct('左右ペカ(32G内)', () => sideLampShow('early')), direct('左右ペカ(天国)', () => sideLampShow('heaven')), direct('左右ペカ消灯', () => sideLampOff())
   ]);
   grp('CHANCE ZONE・BONUS確定', [
+    pre('BONUSフラグ潜伏(矛盾が続く)', () => { latentLeft = 6; }),
     pre('前兆→CZ', () => { zenchoLeft = zenchoTotal = 4; zenchoToCz = true; fakeZencho = 0; }),
     direct('直AT', () => { if (idle() && !isPekared) directAT(); }),
     direct('直BIG (7/BELL 2択)', () => { if (idle() && !isPekared) { resetPekaState(); pendingBonusType = 'BIG'; pendingReg = false; pendingDisplayIndex = pendingTierIndex = 3; initAudio(); playDirectBig(); } }),

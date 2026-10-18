@@ -272,6 +272,14 @@ const PAIR_OMEN_P = 0.1;
 function omenThen(kind, go) {
   const pre = window.LCDX && LCDX.preHint ? LCDX.preHint() : 0;   // 図柄示唆(回転前パターン): 図柄を見せてから回転
   if (pre > 0) { reelLocked = true; pekaLater(() => { reelLocked = false; go(); }, pre); return; }
+  if (window.contraPair) {   // 矛盾演出: 2択を出すが、結果はその2つのどちらでもない
+    const cp = window.contraPair; window.contraPair = null;
+    reelLocked = true;
+    sideLampPair(OMEN_PAIR_COLOR[cp[0]], OMEN_PAIR_COLOR[cp[1]]);
+    if (window.LCDX && LCDX.pair) LCDX.pair(cp[0], cp[1]);
+    pekaLater(() => { reelLocked = false; go(); }, 600);
+    return;
+  }
   const grp = OMEN_GROUP[kind];
   if (grp && Math.random() < PAIR_OMEN_P * (window.FXO_FREQ ? window.FXO_FREQ() : 1)) {
     const cands = OMEN_PAIRS.filter(p => p.includes(grp));

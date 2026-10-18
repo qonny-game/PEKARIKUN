@@ -22,7 +22,7 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `side-l` | `JS/game/flow.js` |  |
 | `gogo-box` | `JS/core/state.js`, `JS/ext/lcd.js` |  |
 | `sub-lcd` | `JS/game/flow.js`, `JS/ext/lcd.js` |  |
-| `lcd-stage` | `JS/game/bonus.js`, `JS/game/at-result.js`, `JS/ext/fx.js`, `JS/ext/lcd.js`, `JS/ext/trophy.js` |  |
+| `lcd-stage` | `JS/game/bonus.js`, `JS/game/at-result.js`, `JS/ext/fx.js`, `JS/ext/lcd.js`, `JS/ext/trophy.js`, `JS/ext/atpoint.js` |  |
 | `gogo-text-container` | `JS/core/state.js` |  |
 | `gogo-text` | （HTMLのみ） |  |
 | `gogo-subtext` | `JS/core/state.js` |  |

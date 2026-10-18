@@ -256,3 +256,31 @@
 .lcd-crackfx.break .cf-svg { animation: cf-fall 1s ease-in forwards; }
 @keyframes cf-black { 0% { opacity: 0; } 100% { opacity: .92; } }
 @keyframes cf-fall { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(40px) scale(1.15) rotate(2deg); opacity: .4; } }
+
+/* AT中のポイントメーター / 上乗せバトル (液晶下部) */
+.atp { position: absolute; left: 50%; right: 4px; top: 6px; z-index: 3; display: none; pointer-events: none; font-family: sans-serif; }
+.atp.on { display: block; }
+.atp-row { display: flex; flex-direction: column; align-items: stretch; gap: 2px; }
+.atp-l { text-align: right; font-size: 9px; font-weight: 800; letter-spacing: .08em; color: #ffd24a; text-shadow: 0 0 4px #000; white-space: nowrap; }
+.atp-c { display: flex; gap: 2px; flex: 1; }
+.atp-c b { flex: 1; height: 9px; border-radius: 2px; background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.35); }
+.atp-c b.lit { background: linear-gradient(#ffe27a, #ff9a1a); box-shadow: 0 0 6px #ffb22e; }
+.atp.battle .atp-c b.lit { background: linear-gradient(#ff8a8a, #e01818); box-shadow: 0 0 6px #ff4040; }
+.atp-hp { display: none; height: 5px; margin-top: 3px; border-radius: 3px; background: rgba(0,0,0,.6); overflow: hidden; }
+.atp.battle .atp-hp { display: block; }
+.atp-hp i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #35d46a, #b6f23a); transition: width .3s; }
+
+/* 上乗せバトル開始: 敵の登場演出 (背景色 = 期待度) */
+.atp-intro { position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; animation: atpIn .35s ease-out; transition: opacity .4s; }
+.atp-intro.out { opacity: 0; }
+.atp-intro.bg-blue { background: radial-gradient(#2a6fe0, #07204f); }
+.atp-intro.bg-yellow { background: radial-gradient(#ffe45a, #8a6a00); }
+.atp-intro.bg-green { background: radial-gradient(#3fe07a, #05461f); }
+.atp-intro.bg-red { background: radial-gradient(#ff5a5a, #5a0505); }
+.atp-intro.bg-purple { background: radial-gradient(#d65aff, #3a0558); box-shadow: inset 0 0 30px #f6f; }
+.ai-t { font-size: 12px; font-weight: 800; letter-spacing: .2em; text-shadow: 0 0 6px #000; }
+.ai-g { width: 84px; height: 84px; filter: drop-shadow(0 0 8px rgba(0,0,0,.7)); animation: atpBob 1s ease-in-out infinite alternate; }
+.ai-n { font-size: 22px; font-weight: 900; letter-spacing: .1em; text-shadow: 0 0 8px #000; }
+.ai-s { font-size: 15px; font-weight: 800; color: #ffe27a; text-shadow: 0 0 6px #000; }
+@keyframes atpIn { from { transform: scale(1.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes atpBob { from { transform: translateY(0); } to { transform: translateY(-6px); } }
