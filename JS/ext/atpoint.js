@@ -10,8 +10,8 @@
   const WIN_G = [20, 30, 30, 50, 50, 100];
   /* 敵は5種類。期待度(★)が高いほど倒しやすい */
   const ENEMIES = [
-    { n: 'DRAGON', s: 1, hp: 12, w: 30 }, { n: 'GOLEM', s: 2, hp: 10, w: 28 }, { n: 'WOLF', s: 3, hp: 8, w: 22 },
-    { n: 'GOBLIN', s: 4, hp: 6, w: 13 }, { n: 'SLIME', s: 5, hp: 4, w: 7 }
+    { n: 'DRAGON', s: 1, hp: 9, w: 30 }, { n: 'GOLEM', s: 2, hp: 8, w: 28 }, { n: 'WOLF', s: 3, hp: 7, w: 22 },
+    { n: 'GOBLIN', s: 4, hp: 5, w: 13 }, { n: 'SLIME', s: 5, hp: 3, w: 7 }
   ];
   const stars = k => '\u2605'.repeat(k) + '\u2606'.repeat(5 - k);
   /* 敵のグラフィック (簡易SVG) */
@@ -143,8 +143,9 @@
   window.atpIntro = (i, bg) => intro(ENEMIES[i], bg);   // ガイド用スクリーンショット・確認用
   /* 役の結果: AT中のゲーム終了時 */
   const rr = runRole;
-  runRole = function (kind, done, navi) {
-    return rr(kind, function (res) {
+  runRole = function (kind0, done, navi) {
+    const kind = /^bell/.test(kind0) ? 'bell' : kind0;   // 実際の種類は bell0/bell1/bell2 (直線・斜め)。ダメージは「ベル」としてまとめる
+    return rr(kind0, function (res) {
       const wasAT = inAT();
       done(res);
       if (!wasAT) return;
