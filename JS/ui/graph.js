@@ -123,7 +123,7 @@ function drawGraphs() {
   const best = bonusLog.reduce((m, b) => Math.max(m, b.coins), 0);
   const pr = n => n > 0 ? `1/${(cumulativeGames / n).toFixed(1)}` : '-';
   graphSummary.style.whiteSpace = 'pre-line';
-  graphSummary.textContent = `BIG ${bigCount}  AT ${atCount}  最高 ${best}枚  差枚数 ${diffCoins >= 0 ? '+' : ''}${diffCoins}  総G ${cumulativeGames}\n` +
+  graphSummary.textContent = `BIG ${bigCount}  REG ${regCount}  AT ${atCount}  最高 ${best}枚  差枚数 ${diffCoins >= 0 ? '+' : ''}${diffCoins}  総G ${cumulativeGames}\n` +
     `ベル ${pr(roleStat.bell)}  リプレイ ${pr(roleStat.replay)}  スイカ ${pr(roleStat.melon)}  チェリー ${pr(roleStat.cherry)}  チャンス目 ${pr(roleStat.chance)}`;
   drawDiffGraph();
   drawBonusBars();

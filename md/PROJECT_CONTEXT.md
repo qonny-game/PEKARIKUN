@@ -32,6 +32,10 @@ md/               このフォルダ
 - 画像・音声のパスは `config.js` の `ASSET_DIR` を通す（フォルダを動かすときはここだけ直す）。
 - ext/（fx・lcd・trophy）は本体の関数を後から包む。本体側の関数名を変えると ext 側が効かなくなるので注意。
 - 設定7（デバッグ用・すぐ当たる）は画面にボタンが無い。設定ボタンを 6 5 6 6 4 5 6 の順に押すと入る（`SECRET_SEQ`）。
+- デバッグモード: 設定ボタンを 3 2 3 3 1 2 3 の順に押すとON/OFF（`DEBUG_SEQ`, JS/ext/debug.js）。下パネル下のDEBUGから演出を選ぶと、次のレバーONでその演出になる。
+- BIGは200枚・REGは100枚固定（`bigCoins()` / `regCoins()`）。AT突入率・オーラ・SUPER率は当選ランク(tier)で決まる（makeBonusPlan の opts.tier）。SUPER: `atSuper`（startAT 第3引数）。CHANCE ZONE の むげんLOOP: `czLoop` / `CZ_LOOP_P`。BIG中のレア役・サンド目は bonus.js の bonusRare / bonusSand。
+- ゲームフロー: 通常→前兆(`zenchoToCz`)→CHANCE ZONE→BIG(PEKA CHANCE)→AT→MOUNTAIN。前兆の契機はスイカ・チェリー・チャンス目（`ZEN_TO_CZ`）。まれな直行: 直CZ(`CZ_DIRECT`) / 直BIG(7との2択, `playDirectBig`) / 直AT(`directAT`) / 直MOUNTAIN(`freezeToZone`)。JUDGEMENT最終Gは bonus.js の judgeColor / LCDX.leverCall / LCDX.judgeReveal。停止ボタン右の常設PUSHは JS/ext/pushspoil.js。
+- REG: 7・7・BAR揃い（`pendingReg`, kind:'reg'）。REG後 `regBoostG` ゲームはBIGが当たりやすい。REG中に `REG_UP_P` でBIG昇格（plan.upgrade → finishBonus後に startUpgradeBig）。AT非当選が続くと `atThrough` でAT突入率UP（THROUGH_MULT）。
 - 外部: Tailwind CDN と Google Fonts を読む。オフラインだと見た目が一部崩れる。
 
 ## 3. 保存するもの（localStorage）

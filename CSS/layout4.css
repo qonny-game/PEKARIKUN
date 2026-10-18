@@ -190,3 +190,69 @@
 @keyframes sand-glow { 0%, 100% { opacity: 0; } 20%, 60% { opacity: .85; } }
 .reels.sand-flash { animation: sand-bika .17s steps(1) 10, sand-edge .34s linear 5; }
 .reels.sand-flash::after { content: ''; position: absolute; inset: 0; z-index: 6; pointer-events: none; background: radial-gradient(circle, rgba(255, 255, 255, .95), rgba(255, 214, 90, .45) 60%, transparent 85%); mix-blend-mode: screen; animation: sand-glow .17s steps(1) 10; }
+
+/* 7を何度も外したとき: 狙う色の777を液晶に出す */
+.lcd-sevhint { position: absolute; inset: 0; z-index: 76; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; transition: opacity .4s; }
+.lcd-sevhint.out { opacity: 0; }
+.lcd-sevhint .sh-bg { position: absolute; inset: 0; background: radial-gradient(circle at 50% 70%, rgba(255, 240, 150, .35), rgba(11, 4, 32, .78) 70%); }
+.lcd-sevhint .sh-box { position: relative; margin-bottom: 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; animation: cw-don .3s ease-out both; }
+.lcd-sevhint .sh-box em { font-style: normal; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 15px; color: #fff; letter-spacing: .08em; text-shadow: 0 0 8px #000, 0 0 14px #fde047; animation: cw-blink .5s steps(2) infinite; }
+.lcd-sevhint .sh-imgs { display: flex; gap: 6px; }
+.lcd-sevhint .sh-imgs img { width: 46px; height: 46px; object-fit: contain; filter: drop-shadow(0 0 8px #fde047); }
+
+/* 左上のBONUS/AT/ZONE表記は出さない */
+.at-status .at-label, .gogo-lamp .at-status .at-label { display: none !important; }
+
+/* PEKA CHANCE突入: BIG BONUS / REG BONUS をどどーんと */
+.lcd-bigintro { position: absolute; inset: 0; z-index: 78; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; pointer-events: none; font-family: 'Orbitron', sans-serif; font-weight: 900; font-style: italic; transition: opacity .5s; }
+.lcd-bigintro.out { opacity: 0; }
+.lcd-bigintro .bi-bg { position: absolute; inset: 0; background: radial-gradient(circle, #fff7b0, #ff4fa8 55%, #1a0540); animation: cw-bgp .15s steps(2) infinite; }
+.lcd-bigintro.reg .bi-bg { background: radial-gradient(circle, #d8f4ff, #3b82f6 55%, #0b1440); }
+.lcd-bigintro .bi-ray { position: absolute; inset: -60%; background: repeating-conic-gradient(rgba(255, 255, 255, .5) 0 6deg, transparent 6deg 18deg); animation: bi-spin 3s linear infinite; mix-blend-mode: screen; opacity: .7; }
+.lcd-bigintro .bi-a { position: relative; font-size: 96px; line-height: .95; color: #fff; -webkit-text-stroke: 5px #9a3412; paint-order: stroke fill; text-shadow: 0 0 24px #fde047, 0 0 50px #ff6a00; animation: bi-slam .5s cubic-bezier(.16, 1.3, .3, 1) both, bi-bounce .5s ease-in-out .5s infinite alternate; }
+.lcd-bigintro .bi-b { position: relative; font-size: 54px; line-height: 1; color: #fde047; -webkit-text-stroke: 4px #7f1d1d; paint-order: stroke fill; text-shadow: 0 0 22px #fff, 0 0 44px #f97316; animation: bi-slam .5s cubic-bezier(.16, 1.3, .3, 1) .2s both, bi-bounce .5s ease-in-out .6s infinite alternate; }
+.lcd-bigintro.reg .bi-a { -webkit-text-stroke-color: #1e3a8a; text-shadow: 0 0 24px #7dd3fc, 0 0 50px #2563eb; }
+.lcd-bigintro.reg .bi-b { color: #e0f2fe; -webkit-text-stroke-color: #1e3a8a; text-shadow: 0 0 22px #fff, 0 0 44px #3b82f6; }
+.lcd-bigintro .bi-glint { position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .9) 50%, transparent 65%); background-size: 300% 100%; mix-blend-mode: screen; animation: bi-glint 1s linear .5s infinite; }
+@keyframes bi-slam { 0% { transform: scale(2.6); opacity: 0; filter: brightness(3); } 100% { transform: scale(1); opacity: 1; filter: none; } }
+@keyframes bi-bounce { from { transform: scale(1); } to { transform: scale(1.07); } }
+@keyframes bi-spin { to { transform: rotate(360deg); } }
+@keyframes bi-glint { from { background-position: 150% 0; } to { background-position: -150% 0; } }
+
+/* 「BELL +N」などの枚数バッジは出さない */
+#bell-badge, .bell-badge { display: none !important; }
+
+/* SUPER中の押し順ナビ: 第1停止は7の画像 */
+.navi b .navi-7 { width: 100%; height: 100%; object-fit: contain; pointer-events: none; filter: drop-shadow(0 0 4px #fff); }
+.navi b:has(.navi-7) { background: #14102a; padding: 2px; }
+
+/* 停止ボタンの右: 常設のPUSHボタン (先ばれ用。長方形の中にPUSHの文字) */
+.cabinet > .stop-row .hw-push { position: absolute; right: calc(50% - 128px); top: 50%; transform: translateY(-50%); width: 44px; height: 24px; padding: 0; border: 2px solid #fde68a; border-radius: 4px; background: linear-gradient(#fbbf24, #b45309); color: #3b1d03; font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: .04em; line-height: 1; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #451a03, 0 0 8px rgba(245, 158, 11, .55); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.cabinet > .stop-row .hw-push:active, .cabinet > .stop-row .hw-push.hit { transform: translateY(calc(-50% + 3px)); box-shadow: 0 0 0 #451a03, 0 0 10px rgba(245, 158, 11, .8); }
+
+/* JUDGEMENT最終G: レバーを叩け！！！ (文字色で期待度) */
+.lcd-levercall { position: absolute; inset: 0; z-index: 79; display: flex; align-items: center; justify-content: center; pointer-events: none; transition: opacity .3s; --lc: #ffffff; --lg: #7dd3fc; }
+.lcd-levercall.out { opacity: 0; }
+.lcd-levercall .lc-bg { position: absolute; inset: 0; background: radial-gradient(circle, rgba(10, 8, 40, .55), rgba(2, 2, 12, .88)); }
+.lcd-levercall .lc-t { position: relative; display: flex; flex-direction: column; align-items: center; font-family: 'Orbitron', 'Noto Sans JP', sans-serif; font-weight: 900; font-style: italic; line-height: 1.05; animation: lc-beat .38s ease-in-out infinite alternate; }
+.lcd-levercall .lc-t span { color: var(--lc); font-size: 44px; -webkit-text-stroke: 4px rgba(0, 0, 0, .75); paint-order: stroke fill; text-shadow: 0 0 18px var(--lg), 0 0 36px var(--lg); }
+.lcd-levercall .lc-t span:first-child { font-size: 34px; }
+.lcd-levercall.lc-red { --lc: #ff3b30; --lg: #ff7a70; }
+.lcd-levercall.lc-gold { --lc: #fde047; --lg: #f59e0b; }
+.lcd-levercall.lc-rainbow .lc-t span { color: #ff4fa8; animation: lc-rb 1s linear infinite; }
+.lcd-levercall.lc-rainbow { --lg: #fff; }
+@keyframes lc-beat { from { transform: scale(1); } to { transform: scale(1.09); } }
+@keyframes lc-rb { 0% { filter: hue-rotate(0deg) brightness(1.3); } 100% { filter: hue-rotate(360deg) brightness(1.3); } }
+/* JUDGEMENT非当選: 液晶が割れる */
+.lcd-crackfx { position: absolute; inset: 0; z-index: 80; pointer-events: none; overflow: hidden; transition: opacity .4s; }
+.lcd-crackfx.out { opacity: 0; }
+.lcd-crackfx .cf-flash { position: absolute; inset: 0; background: #fff; animation: cf-fl .35s ease-out forwards; }
+@keyframes cf-fl { 0% { opacity: .95; } 100% { opacity: 0; } }
+.lcd-crackfx .cf-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.lcd-crackfx .cf-svg path { fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 2px #7dd3fc); stroke-dasharray: 400; stroke-dashoffset: 400; animation: cf-draw .5s ease-out .05s forwards; }
+@keyframes cf-draw { to { stroke-dashoffset: 0; } }
+.lcd-crackfx .cf-dark { position: absolute; inset: 0; background: #000; opacity: 0; }
+.lcd-crackfx.break .cf-dark { animation: cf-black 1s ease-in forwards; }
+.lcd-crackfx.break .cf-svg { animation: cf-fall 1s ease-in forwards; }
+@keyframes cf-black { 0% { opacity: 0; } 100% { opacity: .92; } }
+@keyframes cf-fall { 0% { transform: translateY(0) scale(1); } 100% { transform: translateY(40px) scale(1.15) rotate(2deg); opacity: .4; } }

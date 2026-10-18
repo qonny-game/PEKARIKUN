@@ -86,21 +86,23 @@ const rushSub = document.getElementById('rush-sub');
 const rushLines = rushOverlay.querySelectorAll('.rush-line');
 
 /* AT突入 (PEKA RUSH!!!): 演出のあとPUSHボタン → 獲得G数をでかでかと表示 */
-function startAT(games, typeId) {
+function startAT(games, typeId, superFlag) {
   atType = typeId !== undefined ? typeId : pickAtType();
+  atSuper = !!superFlag;   // SUPER: 純増が多い
   if (window.TRO && atType > 0) TRO.seen(atType === 1 ? 'heaven' : 'death');
   const T = AT_TYPES[atType];
   const base = Math.max(games || pickAtGames(), T.minG);
   const n = games ? base : scaleG(base);
-  const premium = n >= 100 || atType > 0;   // +100G以上・HEAVEN/DEATH はプレミア演出
+  const premium = n >= 100 || atType > 0 || atSuper;   // +100G以上・HEAVEN/DEATH はプレミア演出
   atEnding = false;
   sinceEnd = null;
   if (!atRun) atRun = { startDiff: diffCoins, games: 0, bells: 0, bonuses: 0 };
   atRun.type = atType;
+  atRun.super = atSuper;
   isRushing = true;
   rushSub.textContent = '';
-  rushLines[0].textContent = T.line1;
-  rushLines[1].textContent = T.line2;
+  rushLines[0].textContent = atSuper ? 'PEKA RUSH' : T.line1;
+  rushLines[1].textContent = atSuper ? (atType === 1 ? 'HEAVEN SUPER' : atType === 2 ? 'DEATH SUPER' : 'SUPER') : T.line2;
   rushOverlay.classList.remove('show', 'held', 'premium', 't-heaven', 't-death');
   if (atType > 0) rushOverlay.classList.add('t-' + T.id);
   void rushOverlay.offsetWidth;

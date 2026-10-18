@@ -11,13 +11,15 @@ const AURA_WIN_W = [0, 8, 16, 22, 24, 20, 10];   // AT当選時の最終オー�
 const AURA_LOSE_W = [2, 40, 28, 17, 9, 4, 0];    // AT非当選時の最終オーラ (虹は当選確定)
 const auraEl = document.getElementById('aura');
 
-function atEntryRateFor(coins) {
+function atEntryRateFor(coins, tier) {
   const lo = BIG_TIERS[0].coins, hi = BIG_TIERS[BIG_TIERS.length - 1].coins;
-  const t = Math.min(1, Math.max(0, (coins - lo) / (hi - lo)));
+  // BIGは200枚固定。AT突入率は枚数ではなく「当選ランク(tier)」で決まる（高ランクほど虹オーラ・白7・SUPERが出やすい）
+  const t = tier !== undefined ? Math.min(1, Math.max(0, tier / (BIG_TIERS.length - 1))) : Math.min(1, Math.max(0, (coins - lo) / (hi - lo)));
   return AT_ENTRY_MIN + (AT_ENTRY_MAX - AT_ENTRY_MIN) * t;
 }
-function pickAuraLevel(atWin) {
-  if (atWin) return Math.random() < AURA_WHITE ? 0 : weightedPick(AURA_WIN_W);
+function pickAuraLevel(atWin, tier) {
+  const k = tier || 0;   // 高ランクほど 白7(激アツ)・金・虹が出やすい
+  if (atWin) return Math.random() < Math.min(0.5, AURA_WHITE * (1 + k * 0.6)) ? 0 : weightedPick(AURA_WIN_W.map((v, i) => i >= 5 ? v * (1 + k * 0.5) : v));
   return weightedPick(AURA_LOSE_W);
 }
 /* opts: {atWin, level, debug} (デバッグ用に結果を指定できる) */
@@ -26,8 +28,11 @@ const ZONE_G_CHOICES = [5, 10, 20, 30, 50, 100];
 const ZONE_G_WEIGHTS = [[50, 30, 15, 5, 0, 0], [30, 30, 25, 12, 3, 0], [10, 20, 30, 25, 13, 2], [0, 5, 20, 30, 35, 10]];
 function makeBonusPlan(coins, opts = {}) {
   const games = opts.zone ? 5 + Math.floor(Math.random() * 6) : Math.ceil(coins / BONUS_BELL_PAY);
-  const atWin = opts.atWin !== undefined ? opts.atWin : Math.random() < atEntryRateFor(coins);
-  const level = Math.min(games, opts.level !== undefined ? opts.level : pickAuraLevel(atWin));
+  const up = opts.upgrade !== undefined ? opts.upgrade : (!!opts.reg && !opts.zone && !opts.debug && Math.random() < REG_UP_P);   // REG中にまれにBIGへ昇格（BONUS確定）
+  const baseRate = atEntryRateFor(coins, opts.tier);
+  const rate = baseRate >= 0.98 ? baseRate : Math.min(0.98, baseRate * THROUGH_MULT[Math.min(atThrough, THROUGH_MULT.length - 1)]);   // スルーするほどAT突入率UP（3スルーで3倍）
+  const atWin = up ? false : (opts.atWin !== undefined ? opts.atWin : Math.random() < rate);   // 昇格する場合、このREG自体はAT非当選（BIGのほうでAT抽選）
+  const level = Math.min(games, opts.level !== undefined ? opts.level : pickAuraLevel(atWin, opts.tier));
   // 昇格するゲームをランダムに決める (最終オーラ = 昇格した回数)
   const pool = Array.from({ length: games }, (_, i) => i + 1);
   for (let i = pool.length - 1; i > 0; i--) {
@@ -35,7 +40,7 @@ function makeBonusPlan(coins, opts = {}) {
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
   const promo = pool.slice(0, level).sort((a, b) => a - b);
-  return { total: coins, paid: 0, games, played: 0, atWin, level, promo, aura: 0, debug: !!opts.debug, zone: !!opts.zone, zoneG: 0,
+  return { total: coins, paid: 0, games, played: 0, atWin, level, promo, aura: 0, debug: !!opts.debug, zone: !!opts.zone, reg: !!opts.reg, upgrade: up, superP: opts.superP !== undefined ? opts.superP : Math.min(0.5, 0.06 + 0.07 * (opts.tier || 0)), upAt: 1 + Math.floor(Math.random() * Math.max(1, games - 1)), zoneG: 0,
     zlv: opts.zlv !== undefined ? opts.zlv : weightedPick(AT_TYPES[atType].zlv), zonePay: Math.ceil(coins / games) };
 }
 function setAura(level, pop) {
@@ -164,8 +169,11 @@ function showNavi(order, style = '', partial = false) {
   naviOrder = order;
   naviPartial = !!partial;
   naviEl.className = 'navi on ' + style + (partial ? ' partial' : '');     // red: チェリー / purple: スイカ (上乗せ確定)
+  const sevenNavi = atSuper && atGames > 0 && !bonusRun;   // SUPER中: 第1停止の「1」を7の画像に（色もいろいろ）
+  const sevenImg = () => { const k = SEVENS[Math.floor(Math.random() * SEVENS.length)]; return `<img class="navi-7" src="${SYM_IMG[k] || ASSET_DIR.img + k + '.png'}" alt="1">`; };
   [...naviEl.children].forEach((el, c) => {
     el.textContent = partial ? (c === order[0] ? '1' : '') : (order.indexOf(c) + 1) + (style === 'purple' ? '!' : '');
+    if (sevenNavi && c === order[0]) el.innerHTML = sevenImg();
     el.className = '';
   });
   refreshNavi();
@@ -213,8 +221,50 @@ function donStop(k, plan) {
     if (d.normal && window.LCDX && LCDX.donWin) LCDX.donWin(plan && plan.role);
   }
 }
+/* BIG(PEKA CHANCE)中のレア役: 弱=オーラ1段UP / 強=2段UP。AT当選の期待も上がる */
+function bonusRare(b) {
+  const strong = Math.random() < 0.3, n = strong ? 2 : 1;
+  const name = strong ? ['強チェリー', '強スイカ'][Math.floor(Math.random() * 2)] : ['弱チェリー', '弱スイカ'][Math.floor(Math.random() * 2)];
+  b.aura = Math.min(6, b.aura + n);
+  setAura(b.aura, true);
+  playAuraUp(b.aura);
+  if (!b.atWin && Math.random() < 0.15 * n) b.atWin = true;
+  if (window.LCDX) { LCDX.say(name, strong ? 'LEVEL UP x2!!' : 'LEVEL UP!', 1800, 'happy', 'jump'); LCDX.tag(strong ? 'オーラ 2段階UP' : 'オーラ UP', strong ? 'f3' : 'f2', 1800); }
+  if (strong) triggerFlash();
+}
+/* BIG中のサンド目: 揃えたら一発でPEKA RUSH確定。SUPERも優遇 */
+function bonusSand(b) {
+  if (window.FXBanner) window.FXBanner('サンド目をそろえろ！！！', '', 'red', true, 1700);
+  reelsEl.classList.add('focus-mid');
+  runRole('sand', res => {
+    reelsEl.classList.remove('focus-mid');
+    stopTension();
+    if (res.success) {
+      b.atWin = true; b.superP = 0.7; b.aura = 6;
+      setAura(6, true); playAuraUp(6);
+      markWin([1, 4, 7], '');
+      showAtToast('PEKA RUSH 確定');
+      triggerFlash();
+      sideLampFlash('heaven', 2000);
+      if (window.LCDX) { LCDX.say('RUSH確定!!', 'SUPER優遇', 2600, 'happy', 'jump'); LCDX.tag('PEKA RUSH 確定', 'f3', 2600); }
+    } else missEffect();
+    updateAT(); updateUI();
+  }, naviFor('', 1));
+}
+const BONUS_RARE_P = 0.12, BONUS_SAND_P = 0.05;
+/* JUDGEMENT最終G: 「レバーを叩け！！！」の文字色で期待度が分かる（白=通常 / 赤=80%以上 / 金=96%以上でAT性能が良い / 虹=AT確定で性能最高） */
+function judgeColor(b) {
+  b.superRoll = Math.random() < (b.superP || 0);
+  b.atTypeRoll = pickAtType();
+  if (b.atWin && b.superRoll && b.aura >= 5) { b.atTypeRoll = Math.max(1, b.atTypeRoll); return 'rainbow'; }
+  if (b.atWin && (b.superRoll || b.atTypeRoll > 0)) return 'gold';
+  if (!b.atWin) return Math.random() < 0.06 ? 'red' : 'white';
+  return b.aura >= 3 ? 'red' : 'white';
+}
 function bonusGame() {
   const b = bonusRun;
+  if (b.leverWait) { b.leverWait = false; if (window.LCDX && LCDX.leverCallOff) LCDX.leverCallOff(); bonusGameMain(); return; }   // 叩かれた: 最終Gのリール回転へ
+  if (!b.zone && !b.debug && !b.sandDone && b.played + 1 < b.games && Math.random() < BONUS_SAND_P) { b.sandDone = true; bonusSand(b); return; }
   if (!b.zone && !b.debug && b.atWin && !b.panelDone && Math.random() < PANEL_P_CHANCE) { window.panelPlan = 'chance'; b.panelDone = true; }   // 1回のボーナスで最大1回(レア演出)
   //   // 下パネル消灯 = RUSH突入(JUDGEMENT勝利)確定
   // ドンドンドン!: 昇格するゲームほど多く揺れる (ガセもある)
@@ -241,9 +291,23 @@ function judgeIntro(b, cb) {
   setTimeout(() => { if (window.LCDX) LCDX.tag(`現在 ${AURA_NAMES[Math.min(6, b.aura)]}オーラ`, b.aura >= 4 ? 'f3' : 'f1', 1500); playTick(3); shakeMain(200); }, 2300);
   setTimeout(() => { isSuspense = false; cb(); }, 3500);
 }
+/* REG中のBIG昇格: BONUS確定画面を出す（ボーナス終了後にGOGO!ランプ→7揃え） */
+function regUpgradeShow() {
+  if (window.onCzSuccess) { window.onCzSuccess(); setTimeout(() => { if (window.czKeepClear) czKeepClear(); }, 4200); }
+  else showAtToast('BONUS確定');
+  triggerFlash();
+}
+function startUpgradeBig() {
+  pendingBonusType = 'BIG'; pendingReg = false; pendingZone = false;
+  pendingDisplayIndex = pickTierIndex(); pendingTierIndex = pendingDisplayIndex; pendingPlan = null; replayPending = false; pekaSpecial = null;
+  window.pekaAt = 'end'; window.pekaLit = false; window.sideAt = null; window.sideGogo = false;
+  isPekared = false; isBonusAligned = false; alignStage = 0;
+  triggerPekari();
+  if (window.onSevenHint) setTimeout(() => { if (!window.czKeep && isPekared && !isBonusAligned) window.onSevenHint(); }, 1800);   // 揃えるまで、狙う7を液晶に出しておく
+}
 function bonusGameMain() {
   const b = bonusRun;
-  if (!b.zone && !b.debug && b.played + 1 >= b.games && !b.judgeDone) { b.judgeDone = true; judgeIntro(b, bonusGameMain); return; }
+  if (!b.zone && !b.debug && b.played + 1 >= b.games && !b.judgeDone) { b.judgeDone = true; judgeIntro(b, () => { b.leverWait = true; spinBtn.disabled = false; if (window.LCDX && LCDX.leverCall) LCDX.leverCall(judgeColor(b)); else { b.leverWait = false; bonusGameMain(); } }); return; }
   playClickSound();
   setLedWin(0);
   const isFinal = !b.zone && b.played + 1 >= b.games;   // 最終ゲームはジャッジメント (ここでATの当否が決まる)
@@ -254,6 +318,7 @@ function bonusGameMain() {
   if (!b.zone && b.games - b.played <= 3 && !isFinal) showLastCount(b.games - b.played); else hideLastCount();
   if (isFinal && !judgeEl.classList.contains('tense')) { startTension('JUDGEMENT'); if (chanceLogo) chanceLogo.classList.add('judge'); }   // デバッグ時や押し順ミスのやり直し時(通常は judgeIntro で表示済み)
   updateAT();
+  if (!b.zone && !b.debug && !b.wmDone && ((b.atWin && !b.reg) || (b.reg && b.upgrade && b.played + 1 >= b.upAt)) && Math.random() < 0.12) { window.wmNext = true; b.wmDone = true; }   // 白7・スイカ・白7: AT当選確定 / REG中はBIG昇格確定
   runRole('bell2', res => {
     hideNavi();
     // 押し順を間違えた: ベルこぼし (1枚だけ。ゲーム数は消化されない)
@@ -269,6 +334,8 @@ function bonusGameMain() {
       return;
     }
     b.played++;
+    if (!b.zone && !b.debug && b.played < b.games && Math.random() < BONUS_RARE_P) bonusRare(b);
+    if (b.upgrade && !b.upShown && b.played >= b.upAt && !b.debug) { b.upShown = true; regUpgradeShow(); }
     // ゾーンは5〜10Gで枚数を均等に払い出し、最終ゲームで残りを払う
     const pay = b.zone
       ? (b.played >= b.games ? b.total - b.paid : Math.min(b.zonePay, b.total - b.paid))
@@ -279,7 +346,7 @@ function bonusGameMain() {
       recordPoint();
     }
     setLedWin(pay);
-    if (pay > 0 || !b.zone) showBellResult(pay, true);
+    if ((pay > 0 || !b.zone) && !(!b.zone && b.played >= b.games)) showBellResult(pay, true);   // 最終G(ジャッジメント)は「枚 GET」を出さない（PAYOUTだけ）
     if (b.promo.includes(b.played)) {
       b.aura++;
       setAura(b.aura, true);
@@ -381,7 +448,11 @@ function finishBonus() {
     timers.push(iv);
   });
   at(5200, () => { stopHeartbeat(); setAura(null); });   // 一瞬の静寂
-  suspenseTimer = setTimeout(() => {
+  const revealThen = fn => {   // 結果: AT当選=BONUS確定の画像 / 非当選=液晶が割れる
+    if (b.debug || isDebugRun || !window.LCDX || !LCDX.judgeReveal) { fn(); return; }
+    LCDX.judgeReveal(b.atWin, fn);
+  };
+  suspenseTimer = setTimeout(() => { stopHeartbeat(); stopTension(); revealThen(() => {
     timers.forEach(clearTimeout); timers.forEach(clearInterval);
     stopHeartbeat();
     stopTension();
@@ -389,18 +460,23 @@ function finishBonus() {
     bonusRun = null;
     hideChance();
     updateAT();
+    if (!b.debug) { atThrough = b.atWin ? 0 : atThrough + 1; if (b.reg) regBoostG = REG_BOOST_G; }
     if (b.atWin) {
       setAura(b.aura, true);
       setTimeout(() => setAura(null), 1500);
       if (!b.debug) atCount++;
       updateUI();
-      startAT();
+      startAT(undefined, b.atTypeRoll, b.superRoll !== undefined ? b.superRoll : Math.random() < (b.superP || 0));   // SUPERは高ランク・サンド目で出やすい
+    } else if (b.upgrade && !b.debug) {
+      setAura(null);
+      showAtToast('BONUS END');
+      setTimeout(startUpgradeBig, 900);
     } else {
       setAura(null);
       showAtToast('BONUS END');
       if (atRun && atRun.games === 0 && !b.debug) { atRun.bonusOnly = true; atEnding = true; }
       maybeShowAtResult();
     }
-  }, T);
+  }); }, T);
 }
 

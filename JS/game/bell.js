@@ -6,9 +6,10 @@
 const BELL_TYPES = [
   { name: '直線', coins: 6 },          // 横一列 (3段のどれか)
   { name: '斜め左上から', coins: 1 },   // 左上 → 右下
-  { name: '斜め左下から', coins: 15 }   // 左下 → 右上
+  { name: '斜め左下から', get coins() { return atSuper && atGames > 0 ? 15 : 11; } }   // 左下 → 右上 (通常11枚。SUPER中のATだけ15枚)
 ];
 function pickBellType(inAT) {
+  if (inAT && atSuper && Math.random() < 0.8) return 2;   // SUPER中は左下からが出やすい（純増UP）
   return weightedPick(inAT ? AT_BELL_WEIGHTS : BELL_WEIGHTS);
 }
 const bellBadge = document.getElementById('bell-badge');
@@ -85,6 +86,8 @@ function getRumble(coins, ctx) {
   o2.connect(g2); g2.connect(ac.destination); o2.start(t0); o2.stop(t0 + len + 0.35);
 }
 function showGet(coins) {
+  // 演出を優先する場面では「枚 GET」を出さない（PAYOUTの数字だけ）
+  if (isSuspense || (window.FX && FX.busy > 0) || document.querySelector('.lcd-czwin,.lcd-crackfx,.lcd-levercall,.lcd-bigintro,.lcd-zoneintro,.lcd-sandwin,.lcd-sevhint')) { cancelAnimationFrame(getRAF); getPop.classList.remove('show'); return; }
   playVoice('get');   // GET の声
   getRumble(coins);
   if (coins >= 15) playJaraJara(getRumbleLen(coins));   // ドゴドゴと同じ長さに合わせる

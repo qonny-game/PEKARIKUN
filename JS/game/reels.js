@@ -17,10 +17,10 @@ const lineOf = (g, l) => g[l[0]] === g[l[1]] && g[l[1]] === g[l[2]];
 
 /* ---------- リール配列 (各21コマ) ----------
    回転は下向き。windowOf(c, t) = [上段, 中段, 下段] = [t+1, t, t-1] 番目の図柄。
-   7は各色1個ずつ。第1リールのBARの上下は必ずチェリーとスイカ。 */
+   7は各色1個ずつ（第1リールだけ 白7・スイカ・白7 の並びがあり、白7が2個）。第1リールのBARの上下は必ずチェリーとスイカ。 */
 const STRIP_LEN = 21;
 const STRIPS = [
-  ['7red', 'replay', 'bell', 'cherry', 'bar', 'melon', 'replay', 'bell', '7blue', 'replay', 'bell', 'melon', 'cherry', 'replay', 'bell', '7white', 'replay', 'bell', 'melon', 'replay', 'bell'],
+  ['7red', 'replay', 'bell', 'cherry', 'bar', 'melon', 'replay', 'bell', '7blue', 'replay', 'bell', 'melon', 'cherry', 'replay', 'bell', '7white', 'melon', '7white', 'melon', 'replay', 'bell'],
   ['replay', 'bell', '7blue', 'replay', 'melon', 'bell', 'bar', 'cherry', 'bar', 'bell', '7white', 'replay', 'bell', 'melon', 'replay', '7red', 'bell', 'replay', 'cherry', 'bell', 'replay'],
   ['bell', '7white', 'replay', 'melon', 'bell', 'replay', 'bar', 'bell', 'melon', 'replay', '7red', 'bell', 'melon', 'replay', 'cherry', 'bell', 'melon', 'replay', '7blue', 'bell', 'replay']
 ];

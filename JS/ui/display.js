@@ -96,7 +96,7 @@ document.querySelectorAll('.stop-btn').forEach(b => {
     const c = +b.dataset.stop;
     const rs = reelSpin;
     // 第一停止が左以外: 左から押すことを推奨 (ボーナス中は押し順ナビが優先)
-    if (rs && rs.order.length === 0 && c !== 0 && !naviOrder && rs.plan.kind !== 'seven') {
+    if (rs && rs.order.length === 0 && c !== 0 && !naviOrder && rs.plan.kind !== 'seven' && rs.plan.kind !== 'reg') {
       showAtToast('左リールから停止を推奨');
       atToast.classList.add('advice');
     }
@@ -122,6 +122,7 @@ function resetData() {
     totalGames = 0;
     cumulativeGames = 0;
     bigCount = 0;
+    regCount = 0;
     atCount = 0;
     diffCoins = 0;
     Object.keys(roleStat).forEach(k => { roleStat[k] = 0; });

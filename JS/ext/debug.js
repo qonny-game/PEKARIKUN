@@ -71,7 +71,11 @@
     direct('左右ペカ(32G内)', () => sideLampShow('early')), direct('左右ペカ(天国)', () => sideLampShow('heaven')), direct('左右ペカ消灯', () => sideLampOff())
   ]);
   grp('CHANCE ZONE・BONUS確定', [
+    pre('前兆→CZ', () => { zenchoLeft = zenchoTotal = 4; zenchoToCz = true; fakeZencho = 0; }),
+    direct('直AT', () => { if (idle() && !isPekared) directAT(); }),
+    direct('直BIG (7/BELL 2択)', () => { if (idle() && !isPekared) { resetPekaState(); pendingBonusType = 'BIG'; pendingReg = false; pendingDisplayIndex = pendingTierIndex = 3; initAudio(); playDirectBig(); } }),
     direct('CZ突入(6G)', () => { czLeft = 6; czNew = true; }),
+    direct('CZ突入 むげんLOOP', () => { czLeft = 6; czNew = true; czLoop = true; }),
     direct('CZ HOLD表示', () => { czLeft = 5; window.czHoldNow = true; }),
     direct('BONUS確定(画像)', () => { isDebugRun = false; if (window.onCzSuccess) window.onCzSuccess(); }),
     direct('CZ失敗(ゾーン終了)', () => { isDebugRun = false; if (window.onCzEnd) window.onCzEnd(false); })
@@ -80,7 +84,13 @@
     direct('RUSH突入 +100G', () => { if (idle()) startAT(100, 0); }),
     direct('RUSH突入 HEAVEN', () => { if (idle()) startAT(100, 1); }),
     direct('RUSH突入 DEATH', () => { if (idle()) startAT(100, 2); }),
+    direct('RUSH突入 SUPER', () => { if (idle()) startAT(100, 0, true); }),
+    direct('RUSH突入 HEAVEN SUPER', () => { if (idle()) startAT(100, 1, true); }),
+    direct('RUSH突入 DEATH SUPER', () => { if (idle()) startAT(100, 2, true); }),
     ...['青', '緑', '金', '虹'].map((n, lv) => direct('MOUNTAIN ' + n, () => { if (idle()) { initAudio(); beginBonus(makeBonusPlan(300, { zone: true, zlv: lv, atWin: false, level: 0, debug: true })); } })),
+    direct('BIG BONUS 突入', () => { if (idle()) { initAudio(); beginBonus(makeBonusPlan(250, { atWin: false, level: 0, debug: true })); } }),
+    direct('REG BONUS 突入', () => { if (idle()) { initAudio(); beginBonus(makeBonusPlan(regCoins(), { reg: true, atWin: false, level: 0, debug: true })); } }),
+    direct('777ヒント(7を外し続けた時)', () => { if (idle() && window.onSevenHint) { window.czSevenColor = null; window.onSevenHint(); } }),
     direct('フリーズ→MOUNTAIN', () => { if (idle() && !isPekared) { initAudio(); freezeToZone(true); } })
   ]);
   grp('サンド目', [

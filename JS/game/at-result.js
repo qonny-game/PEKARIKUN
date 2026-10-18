@@ -94,7 +94,7 @@ function showAtResult(run) {
   let gain = run.gain !== undefined ? run.gain : diffCoins - run.startDiff;
   const hint = only ? 0 : (run.hint !== undefined ? run.hint : decideNextMode());
   const resType = run.type || 0;
-  document.getElementById('at-result-title').textContent = only ? 'BONUS RESULT' : (resType ? `${AT_TYPES[resType].name} RESULT` : 'AT RESULT');
+  document.getElementById('at-result-title').textContent = only ? 'BONUS RESULT' : (resType ? `${AT_TYPES[resType].name}${atRun && atRun.super ? ' SUPER' : ''} RESULT` : 'AT RESULT');
   atResultEl.classList.toggle('t-heaven', !only && resType === 1);
   atResultEl.classList.toggle('t-death', !only && resType === 2);
   atType = 0;
@@ -219,26 +219,28 @@ function showPayout() {
   initAudio();
 
   const tier = BIG_TIERS[pendingTierIndex];
-  const coins = tier.coins;
+  const reg = pendingReg && !pendingZone;
+  const coins = reg ? regCoins() : bigCoins();   // REG=100枚 / BIG=200枚（固定）
+  const styleCoins = reg ? coins : tier.coins;   // 表示の派手さは当選ランクで決める
   if (!isDebugRun) {
-    bigCount++;
-    pendingPlan = makeBonusPlan(pendingZone ? 0 : coins, pendingZone ? { zone: true, atWin: false, level: 0 } : {});   // ラッシュ中の7揃いはG数上乗せのみ (枚数なし)
-    bonusLog.push({ g: cumulativeGames, type: 'BIG', coins: pendingZone ? 0 : coins });
+    if (reg) regCount++; else bigCount++;
+    pendingPlan = makeBonusPlan(pendingZone ? 0 : coins, pendingZone ? { zone: true, atWin: false, level: 0 } : Object.assign({ reg, tier: reg ? 0 : pendingTierIndex }, pendingWhiteDiag ? { atWin: true, superP: 0.6 } : {}));   // ラッシュ中の7揃いはG数上乗せのみ (枚数なし)
+    bonusLog.push({ g: cumulativeGames, type: reg ? 'REG' : 'BIG', coins: pendingZone ? 0 : coins });
     recordPoint();
   }
 
   currentShownCoins = pendingZone ? 0 : coins;
   fxOverlay.className = `fx-t${pendingTierIndex + 1}`;   // 枚数表示で背景が豪華に
-  const level = payLevel(coins);
-  payoutLabel.textContent = pendingZone ? 'PEKA! PEKA! MOUNTAIN!' : 'BIG BONUS';
-  applyPayoutStyle(coins, level);
+  const level = payLevel(styleCoins);
+  payoutLabel.textContent = pendingZone ? 'PEKA! PEKA! MOUNTAIN!' : reg ? 'REG BONUS' : 'BIG BONUS';
+  applyPayoutStyle(styleCoins, level);
 
   // 図柄を消して枚数を表示 (アニメーションを最初から再生)
   alignDisplay.classList.remove('show-align');
   restartPayAnim();
 
   const rank = pendingTierIndex + 1;
-  if (coins >= VVV_MIN_COINS) playGakoSound('vvv'); // 大きい枚数のときだけ枚数表示で vvv.mp3
+  if (styleCoins >= VVV_MIN_COINS) playGakoSound('vvv'); // 大きい枚数のときだけ枚数表示で vvv.mp3
   // 0 から高速カウントアップ → 数字が決まった瞬間にドドーン+ファンファーレ
   const onCounted = () => {
     playPayoutSound(level);
@@ -326,6 +328,8 @@ function resetPekaState() {
   isPekared = false;
   isBonusAligned = false;
   pendingBonusType = null;
+  pendingReg = false;
+  pendingWhiteDiag = null;
   pendingTierIndex = -1;
   pendingDisplayIndex = -1;
   pendingPlan = null;

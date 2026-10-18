@@ -102,7 +102,7 @@
     clearTimeout(hintTimer); hintPair = false; hintEl.classList.remove('on');
   }
   const PAIR_SYM = { bell: 'bell', replay: 'replay', cherry: 'cherry', melon: 'melon', chance: '@CHANCE' };   // チャンス目はスイカ図柄にしない（揃ったように見えるため）
-  function pair(a, b) { if (pushPlan && !pushPlan.done) return; hintShow([PAIR_SYM[a] || a, PAIR_SYM[b] || b], 0); hintPair = true; }
+  function pair(a, b) { if (pushPlan && !pushPlan.done) return; const sv = SEVENS[Math.floor(Math.random() * SEVENS.length)]; hintShow([a === 'seven' ? sv : (PAIR_SYM[a] || a), b === 'seven' ? sv : (PAIR_SYM[b] || b)], 0); hintPair = true; }
   /* 通常時のみ: 成立役に応じて、決まった停止順で図柄を出す (たまにガセ) */
   const HINT_AT = { replay: [1, 'replay'], cherryW: [1, 'cherry'], cherryS: [1, 'cherry'], melon: [2, 'melon'], melonW: [2, 'melon'], chanceW: [2, '@CHANCE'], chanceS: [2, '@CHANCE'], bell0: [2, 'bell'], bell1: [2, 'bell'], bell2: [2, 'bell'] };
   const HINT_RATE = { replay: 0.7, bell0: 0.7, bell1: 0.7, bell2: 0.7, cherryW: 0.9, cherryS: 1, melon: 0.9, melonW: 0.9, chanceW: 0.8, chanceS: 1 };
@@ -147,7 +147,7 @@
     panelDark();   // 回転中・第1停止の前
     if (!symHint || symHint.T !== 1) return;
     const h = symHint;
-    setTimeout(() => { if (symHint === h && !hintPair && !pushPlan && typeof reelSpin !== 'undefined' && reelSpin.order && reelSpin.order.length === 0) { symHint = null; symShow(h); } }, 650);
+    setTimeout(() => { if (symHint === h && !hintPair && !pushPlan && typeof reelSpin !== 'undefined' && reelSpin && reelSpin.order && reelSpin.order.length === 0) { symHint = null; symShow(h); } }, 650);
   }
   function hintStop(plan, n) {
     if (n === 2) pushReady();
@@ -176,6 +176,81 @@
     for (let i = 0; i < 18; i++) at(1300 + i * 80, () => spawn('coin', 3));
     if (soundEnabled) { initAudio(); const t0 = audioCtx.currentTime + 1.25; [523, 659, 784, 1047, 1319, 1568, 2093, 2637].forEach((f, i) => tone(f, t0 + i * 0.07, 0.4, 'triangle', 0.12)); }
   }
+  /* PEKA CHANCE(ボーナス)突入: BIG BONUS / REG BONUS をどどーんと大きく (約3.2秒) */
+  function bigIntro(reg) {
+    if (isDebugRun || !stageEl) return;
+    const E = document.createElement('div');
+    E.className = 'lcd-bigintro' + (reg ? ' reg' : '');
+    E.innerHTML = `<i class="bi-bg"></i><i class="bi-ray"></i><div class="bi-a">${reg ? 'REG' : 'BIG'}</div><div class="bi-b">BONUS</div><i class="bi-glint"></i>`;
+    stageEl.appendChild(E);
+    setTimeout(() => E.classList.add('out'), 2800);
+    setTimeout(() => E.remove(), 3300);
+    const at = (ms, f) => setTimeout(f, ms);
+    const don = (lv) => { if (window.shakeMain) shakeMain(240 + lv * 120); burst(); if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(70 - lv * 8, t, 0.5, 'sine', 0.35); tone(140 + lv * 40, t, 0.12, 'square', 0.1); } };
+    at(150, () => don(0)); at(600, () => don(1)); at(1100, () => { don(2); swoosh(3); act('jump'); });
+    [1100, 1500, 1900].forEach((t, i) => at(t, () => spawn(i % 2 ? 'star' : 'fire', 3)));
+    for (let i = 0; i < 12; i++) at(1200 + i * 80, () => spawn('coin', 3));
+    if (soundEnabled) { initAudio(); const t0 = audioCtx.currentTime + 1.1; [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => tone(f, t0 + i * 0.07, 0.4, 'triangle', 0.12)); }
+  }
+  /* JUDGEMENT最終G: 「レバーを叩け！！！」をでかでかと。文字色で期待度（白=通常 / 赤=80%以上 / 金=96%以上でAT性能良好 / 虹=AT確定・性能最高） */
+  let leverCallEl = null;
+  function leverCall(color) {
+    if (!stageEl) return;
+    leverCallOff(true);
+    const E = document.createElement('div');
+    E.className = 'lcd-levercall lc-' + (color || 'white');
+    E.innerHTML = '<i class="lc-bg"></i><div class="lc-t"><span>レバーを</span><span>叩け！！！</span></div>';
+    stageEl.appendChild(E);
+    leverCallEl = E;
+    if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(82, t, 0.5, 'sine', 0.32); tone(165, t + 0.02, 0.1, 'square', 0.1); if (color === 'gold' || color === 'rainbow') [784, 988, 1319, 1568].forEach((f, i) => tone(f, t + 0.15 + i * 0.07, 0.3, 'triangle', 0.12)); }
+    if (window.shakeMain) shakeMain(260);
+    if (color === 'rainbow' || color === 'gold') { burst(); if (window.triggerFlash) triggerFlash(); }
+  }
+  function leverCallOff(quick) {
+    const E = leverCallEl; leverCallEl = null;
+    if (!E) return;
+    if (quick) { E.remove(); return; }
+    E.classList.add('out'); setTimeout(() => E.remove(), 300);
+  }
+  /* JUDGEMENT結果: AT当選=BONUS確定の画像をドーン / 非当選=液晶が割れる */
+  function judgeReveal(win, cb) {
+    if (!stageEl) { cb(); return; }
+    const E = document.createElement('div');
+    if (win) {
+      E.className = 'lcd-czwin';
+      E.innerHTML = '<i class="cw-bg"></i><i class="cw-pic"></i>';
+      stageEl.appendChild(E);
+      act('jump'); swoosh(3);
+      for (let i = 0; i < 7; i++) setTimeout(() => { if (window.shakeMain) shakeMain(140); burst(); if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(72 + (i % 3) * 10, t, 0.3, 'sine', 0.3); tone(160 + i * 18, t, 0.08, 'square', 0.1); } }, 100 + i * 150);
+      for (let i = 0; i < 10; i++) setTimeout(() => spawn('coin', 3), 700 + i * 90);
+      if (soundEnabled) { initAudio(); const t0 = audioCtx.currentTime + 1.0; [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => tone(f, t0 + i * 0.07, 0.4, 'triangle', 0.12)); }
+      setTimeout(() => { E.classList.add('out'); }, 2300);
+      setTimeout(() => { E.remove(); cb(); }, 2700);
+    } else {
+      E.className = 'lcd-crackfx';
+      E.innerHTML = '<i class="cf-flash"></i><svg viewBox="0 0 100 100" preserveAspectRatio="none" class="cf-svg"><path d="M50 0L46 18 58 34 42 52 56 68 47 100M46 18L24 26 12 24M58 34L80 30 96 38M42 52L20 60 4 58M56 68L78 76 92 74M24 26L18 40M80 30L84 46"/></svg><i class="cf-dark"></i>';
+      stageEl.appendChild(E);
+      if (window.shakeMain) shakeMain(300);
+      if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(130, t, 0.15, 'sawtooth', 0.2); tone(95, t + 0.08, 0.3, 'sawtooth', 0.18); for (let i = 0; i < 6; i++) tone(2400 - i * 260, t + 0.12 + i * 0.05, 0.1, 'square', 0.06); }
+      setTimeout(() => { E.classList.add('break'); if (window.shakeMain) shakeMain(420); if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; for (let i = 0; i < 8; i++) tone(3000 - i * 300, t + i * 0.03, 0.08, 'square', 0.07); tone(70, t, 0.5, 'sine', 0.3); } }, 700);
+      setTimeout(() => { E.classList.add('out'); }, 1700);
+      setTimeout(() => { E.remove(); cb(); }, 2100);
+    }
+  }
+  /* 白7・スイカ・白7 が第1リールに止まった: 当選確定（通常=ボーナス / CZ=成功 / AT=MOUNTAIN / BIG中=AT / REG中=BIG昇格） */
+  function wmWin() {
+    if (isDebugRun || !stageEl) return;
+    let t = 'BONUS当選確定';
+    if (typeof bonusRun !== 'undefined' && bonusRun && !bonusRun.zone) t = bonusRun.reg ? 'BIG昇格確定' : 'AT当選確定';
+    else if (atGames > 0) t = 'MOUNTAIN当選確定';
+    else if (window.czGameNow) t = 'BONUS確定';
+    say('白7 スイカ 白7', t, 3000, 'happy', 'jump');
+    tag(t, 'f3', 3000); burst(); swoosh(3); act('jump');
+    spawn('fire', 3); spawn('star', 3);
+    for (let i = 0; i < 8; i++) setTimeout(() => spawn('coin', 3), 200 + i * 90);
+    if (typeof sideLampFlash === 'function') sideLampFlash('heaven', 2400);
+    if (window.triggerFlash) triggerFlash();
+  }
   /* サンド目が揃った: BARの次にすごい役。スイカ・チェリーより豪華に */
   function sandWin(n) {
     if (isDebugRun || !stageEl) return;
@@ -202,7 +277,7 @@
     hold = 0; m1.textContent = ''; m2.textContent = ''; msg.classList.remove('pop');
     if (!(pushPlan && !pushPlan.done)) pushEl.className = 'lcd-push';
   }
-  window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0), pair, hintStop, clearAll, sandWin, zoneIntro, preHint, spinStart, hintClear, hint: hintShow, tag, miss: () => missMark(), story: (i, n, l) => story(i, n, l), don: n => { if (n >= 3) forceLv = 2; }, donWin: role => { forceLv = 2; const h = planHint(role || 'lose'); if (h) { hints.push(h); showHint(h); } } };
+  window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0), pair, hintStop, clearAll, sandWin, zoneIntro, bigIntro, wmWin, leverCall, leverCallOff, judgeReveal, preHint, spinStart, hintClear, hint: hintShow, tag, miss: () => missMark(), story: (i, n, l) => story(i, n, l), don: n => { if (n >= 3) forceLv = 2; }, donWin: role => { forceLv = 2; const h = planHint(role || 'lose'); if (h) { hints.push(h); showHint(h); } } };
   let hold = 0;
   function say(a, b, ms, md, an) {
     ms = ms ? Math.round(ms * 0.72) : ms;   // 全体にテンポ良く
@@ -470,7 +545,7 @@ function fitReels() {
   let hints = [];
   runRole = function (kind, done, navi) {
     let hit0 = false;
-    const normalNow = !isDebugRun && !bonusRun && atGames === 0 && !atEnding;
+    const normalNow = !isDebugRun && !bonusRun && atGames === 0 && !atEnding && !window.pekaLit;   // GOGO!ランプが光ったあとは、液晶の予告・示唆を出さない
     if (normalNow) {
       const second = FX.don;   // ドン演出のあとの再突入
       if (!second) { hints = []; missGame = false; wxPlan = null; wxClear(); symHint = null; hintHoldUntil = 0; hintClear(true); }
@@ -532,7 +607,7 @@ function fitReels() {
   }
   const _tp = triggerPekari;
   triggerPekari = function (...a) {
-    if (!isDebugRun) {
+    if (!isDebugRun && !window.pekaLit) {   // ランプが先に光っていたら、液晶のGOGO演出は出さない
       if (window.vibrate) window.vibrate([80, 40, 80, 40, 200]);
       el.classList.add('flash', 'rainbow');
       say('PEKA!!', 'GOGO LAMP', 2400, 'happy', 'jump');
@@ -613,6 +688,18 @@ window.onCzSuccess = function () {
       for (let i = 0; i < 10; i++) setTimeout(() => spawn('coin', 3), 900 + i * 90);
       if (soundEnabled) { initAudio(); const t0 = audioCtx.currentTime + 1.4; [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => tone(f, t0 + i * 0.07, 0.4, 'triangle', 0.12)); }
     }, 400);
+  };
+  /* 7が何度も揃えられないとき: 狙う色の777を液晶に出し続ける（揃うまで）。色は以降の7揃えにも使う */
+  window.onSevenHint = function () {
+    if (isDebugRun || !stageEl || window.czKeep) return;
+    if (!window.czSevenColor) window.czSevenColor = SEVENS[Math.floor(Math.random() * SEVENS.length)];
+    const im = SYM_IMG[window.czSevenColor] || ASSET_DIR.img + window.czSevenColor + '.png';
+    const E = document.createElement('div');
+    E.className = 'lcd-sevhint';
+    E.innerHTML = `<i class="sh-bg"></i><div class="sh-box"><em>7を狙え</em><div class="sh-imgs"><img src="${im}"><img src="${im}"><img src="${im}"></div></div>`;
+    stageEl.appendChild(E);
+    window.czKeep = E;   // 揃ったら czKeepClear で消える
+    if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; [784, 1047, 1319].forEach((f, i) => tone(f, t + i * 0.08, 0.3, 'triangle', 0.1)); }
   };
   /* ハマり中のひとこと: ペカり君が励ます。250G超えで救済(当選率UP)が始まる */
   const HAMARI = [[150, 'ちょっとハマり気味…', 'sad'], [250, '救済スタート！', 'jump'], [400, 'がんばれ！', 'jump'], [600, '絶対くるよ！', 'cross'], [800, 'もう少し…！', 'jump']];

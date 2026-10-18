@@ -21,6 +21,7 @@ function reelsPrepareDOM() {
 const colSym = (col, idx) => (col.ov[idx] !== undefined ? col.ov[idx] : stripSym(col.c, idx));
 
 function startReels(plan, onDone) {
+  if (window.wmNext) { plan.wm = true; window.wmNext = false; }   // 白7・スイカ・白7 を第1リールに止める（当選確定のゲームだけ）
   if (!naviOrder) delete spinBtn.dataset.navi;
   reelsPrepareDOM();
   bellBadge.classList.remove('show');
@@ -82,6 +83,11 @@ function landCol(col) {
   col.el.remove();
   const cells = reelsEl.querySelectorAll(':scope > .reel');
   col.final.forEach((k, r) => { cells[r * 3 + col.c].innerHTML = symbolHTML(k, ''); });
+  // 白7・スイカ・白7 が第1リールに止まった直後: 当選確定。サンド目のように派手に
+  if (col.c === 0 && reelSpin && reelSpin.plan.wm && col.final.join() === '7white,melon,7white') {
+    if (typeof sandFlash === 'function') sandFlash();
+    if (window.LCDX && LCDX.wmWin) LCDX.wmWin();
+  }
   // サンド目(中リールのバー・チェリー・バー)が止まった直後にビカビカ。上乗せなどは第3停止後
   const rs = reelSpin;
   if (col.c === 1 && rs && (rs.plan.kind === 'sand' || sandReachNow) && col.final.join() === 'bar,cherry,bar' && typeof sandFlash === 'function') sandFlash();
@@ -142,6 +148,18 @@ function stopCol(c, auto) {
       }
       T = pool[0]; t = mod(T);
     }
+  } else if (p.kind === 'reg') {   // REG: 左・中は同じ色の7、右はBAR (7・7・BAR)
+    const want = rs.color;
+    const a = cands.find(x => { const k = stripSym(c, x); return c === 2 ? k === 'bar' : (isSeven(k) && (!want || k === want)); });
+    if (a !== undefined) { T = a; t = mod(a); if (c !== 2 && !rs.color) rs.color = stripSym(c, a); }
+    else {
+      tele = true;
+      if (c === 2) t = STRIPS[2].indexOf('bar');
+      else { const color = want || SEVENS[Math.floor(Math.random() * 3)]; t = STRIPS[c].indexOf(color); rs.color = color; }
+    }
+  } else if (p.diag) {   // 白7の斜め揃い (BIG+AT確定): 各リールの指定の段に白7
+    const idx = STRIPS[c].indexOf('7white'), row = p.diag[c];
+    tele = true; t = mod(row === 0 ? idx - 1 : row === 2 ? idx + 1 : idx); rs.color = '7white';
   } else {   // seven: 同じ色の7を3つ揃える
     const want = rs.color;
     const a = cands.find(x => { const k = stripSym(c, x); return isSeven(k) && (!want || k === want); });
@@ -163,6 +181,7 @@ function stopCol(c, auto) {
       T = pool[0]; t = mod(T);
     }
   }
+  if (p.wm && c === 0) { tele = true; t = 16; }   // 白7(15)・スイカ(16)・白7(17)
   if (tele) {
     // 配列どおりの図柄(3コマ)が、4コマ先に流れてきて止まる
     T = Math.floor(col.pos) + SLIP_MAX;
@@ -199,7 +218,9 @@ function finishReels() {
   const f = rs.cols.map(col => col.final);
   const grid = [f[0][0], f[1][0], f[2][0], f[0][1], f[1][1], f[2][1], f[0][2], f[1][2], f[2][2]];
   let success = false;
-  if (rs.plan.kind === 'seven') success = isSeven(f[0][1]) && f[1][1] === f[0][1] && f[2][1] === f[0][1];
+  if (rs.plan.kind === 'reg') success = isSeven(f[0][1]) && f[1][1] === f[0][1] && f[2][1] === 'bar';
+  else if (rs.plan.kind === 'seven' && rs.plan.diag) success = rs.plan.diag.every((r, c) => f[c][r] === '7white');
+  else if (rs.plan.kind === 'seven') success = isSeven(f[0][1]) && f[1][1] === f[0][1] && f[2][1] === f[0][1];
   else if (rs.plan.kind === 'cherry') success = f[0].includes('cherry');
   else if (rs.plan.kind === 'melon') success = f[0][0] === 'melon' && f[1][0] === 'melon' && f[2][0] === 'melon';
   else if (rs.plan.kind === 'sand') success = f[1][0] === 'bar' && f[1][1] === 'cherry' && f[1][2] === 'bar';
@@ -245,8 +266,8 @@ const OMEN_OF = { cherryW: 'cherry', cherryS: 'cherry', melonW: 'melon', chanceW
 const OMEN_LAMP = LAMP_TABLE.omen;   // 予告の色（赤=チェリー / 緑=スイカ / 紫ピンク=チャンス目）
 /* 2択予告: 左右のランプが別の色で光り、その2つの役のどちらかが成立している（外れ・ガセなし） */
 const OMEN_GROUP = { bell0: 'bell', bell1: 'bell', bell2: 'bell', replay: 'replay', cherryW: 'cherry', cherryS: 'cherry', melon: 'melon', melonW: 'melon', chanceW: 'chance', chanceS: 'chance' };
-const OMEN_PAIRS = [['bell', 'replay'], ['bell', 'cherry'], ['melon', 'cherry'], ['cherry', 'chance']];
-const OMEN_PAIR_COLOR = { bell: 'yellow', replay: 'blue', cherry: 'red', melon: 'green', chance: 'pink' };
+const OMEN_PAIRS = [['bell', 'replay'], ['bell', 'cherry'], ['melon', 'cherry'], ['cherry', 'chance'], ['seven', 'bell'], ['seven', 'replay'], ['seven', 'cherry']];   // 7との2択: 7が成立していたら直BIG（普段はもう一方の役）
+const OMEN_PAIR_COLOR = { bell: 'yellow', replay: 'blue', cherry: 'red', melon: 'green', chance: 'pink', seven: 'red' };
 const PAIR_OMEN_P = 0.1;
 function omenThen(kind, go) {
   const pre = window.LCDX && LCDX.preHint ? LCDX.preHint() : 0;   // 図柄示唆(回転前パターン): 図柄を見せてから回転

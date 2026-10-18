@@ -48,7 +48,7 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `judge-text` | `JS/game/flow.js` |  |
 | `rush-overlay` | `JS/game/at.js`, `JS/ext/debug.js` |  |
 | `rush-sub` | `JS/game/at.js` |  |
-| `push-overlay` | `JS/game/at.js`, `JS/ui/display.js`, `JS/ext/fx.js` |  |
+| `push-overlay` | `JS/game/at.js`, `JS/ui/display.js`, `JS/ext/fx.js`, `JS/ext/pushspoil.js` |  |
 | `push-btn` | `JS/game/at.js` |  |
 | `push-result` | `JS/game/at.js` |  |
 | `at-status` | `JS/game/at.js` |  |
@@ -72,6 +72,7 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `align-display` | `JS/core/state.js`, `JS/ext/lcd.js` |  |
 | `reels` | `JS/core/state.js`, `JS/ext/lcd.js` |  |
 | `lever-btn` | `JS/ui/display.js` |  |
+| `hw-push` | `JS/ext/pushspoil.js` |  |
 | `pl-insert` | （HTMLのみ） |  |
 | `pl-start` | （HTMLのみ） |  |
 | `pl-bet` | （HTMLのみ） |  |

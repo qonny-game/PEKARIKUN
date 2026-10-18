@@ -354,6 +354,63 @@
       let k = 0;
       const iv = setInterval(() => { ls.forEach((x, i) => x.classList.toggle('on', i === k % 5)); k++; snd([500 + (k % 5) * 90], 0, 0.04, 'square', 0.05); }, Math.round(110 * TEMPO));
       pwait(1300, () => { clearInterval(iv); const n = s ? 5 : 2 + Math.floor(rnd() * 2); ls.forEach((x, i) => x.classList.toggle('on', i < n)); });
+    },
+    /* ---- 追加の予告 (1.28.0): ミニスロット / サイコロ / カーテン / カード / 宝箱 / 爆弾 / 風船 / 流れ星 / ルーレット盤 / ゲージ ---- */
+    slot(s, d) {
+      const SY = ['7', 'BAR', 'BELL', 'REP', '7', 'BAR'];
+      const el = pvRun('slot', '<span class="pv-sl"><i></i><i></i><i></i></span>', 2300, 1500, s, s ? '7 7 7' : '', d);
+      const cs = [...el.querySelectorAll('.pv-sl i')];
+      let k = 0;
+      const iv = setInterval(() => { cs.forEach((c, i) => { if (!c.dataset.stop) c.textContent = SY[(k + i * 2) % SY.length]; }); k++; snd([300 + (k % 6) * 40], 0, 0.04, 'square', 0.04); }, Math.round(90 * TEMPO));
+      const fin = s ? ['7', '7', '7'] : [pick(['7', 'BAR']), pick(['BELL', 'REP']), pick(['BAR', 'BELL'])];
+      cs.forEach((c, i) => pwait(700 + i * 260, () => { c.dataset.stop = 1; c.textContent = fin[i]; snd([196 + i * 40], 0, 0.1, 'square', 0.1); }));
+      pwait(1450, () => clearInterval(iv));
+    },
+    dice(s, d) {
+      const el = pvRun('dice', '<i class="pv-dc">1</i>', 2000, 1400, s, s ? '6' : '', d);
+      const n = el.querySelector('.pv-dc');
+      const iv = setInterval(() => { n.textContent = 1 + Math.floor(rnd() * 6); snd([260 + Math.floor(rnd() * 200)], 0, 0.03, 'square', 0.04); }, Math.round(80 * TEMPO));
+      pwait(1250, () => { clearInterval(iv); n.textContent = s ? 6 : 1 + Math.floor(rnd() * 3); snd([392], 0, 0.15, 'triangle', 0.12); });
+    },
+    curtain(s, d) {
+      const el = pvRun('curtain', '<i class="pv-cl"></i><i class="pv-cr2"></i><b class="pv-q">?</b>', 2200, 1200, s, s ? 'OPEN!' : '', d);
+      pwait(900, () => { el.classList.add('open'); snd([330, 440, 554], 0.1, 0.16, 'triangle', 0.1); });
+    },
+    card(s, d) {
+      const el = pvRun('card', '<i class="pv-cd"><b>?</b></i><i class="pv-cd"><b>?</b></i>', 2200, 1500, s, s ? 'ACE' : '', d);
+      const cs = [...el.querySelectorAll('.pv-cd')];
+      pwait(600, () => { cs[0].classList.add('flip'); cs[0].firstChild.textContent = 'K'; snd([330], 0, 0.1, 'triangle', 0.1); });
+      pwait(1200, () => { cs[1].classList.add('flip'); cs[1].firstChild.textContent = s ? 'A' : '2'; snd([s ? 660 : 220], 0, 0.15, 'triangle', 0.12); });
+    },
+    chest(s, d) {
+      const el = pvRun('chest', '<span class="pv-ch"><i class="lid"></i><i class="bx"></i><i class="gl"></i></span>', 2300, 1500, s, s ? 'GET!' : '', d);
+      snd([110, 98, 110, 98], 0.18, 0.1, 'square', 0.08);
+      pwait(1300, () => { el.classList.add('open'); snd(s ? [523, 659, 784, 1047] : [196, 147], 0.07, 0.2, 'triangle', 0.1); });
+    },
+    bomb(s, d) {
+      const el = pvRun('bomb', '<span class="pv-bm"><i class="fz"></i></span><b class="pv-q">3</b>', 2300, 1500, s, s ? 'BOOM' : 'DUD', d);
+      const q = el.querySelector('.pv-q');
+      [2, 1].forEach((v, i) => pwait(450 * (i + 1), () => { q.textContent = v; snd([440 + (2 - v) * 110], 0, 0.1, 'square', 0.08); }));
+      pwait(1350, () => { q.textContent = ''; if (s) { el.classList.add('boom'); snd([90, 60], 0.05, 0.4, 'sawtooth', 0.16); } });
+    },
+    balloon(s, d) {
+      const el = pvRun('balloon', '<i class="pv-bl"></i>', 2200, 1500, s, s ? 'POP!' : '', d);
+      snd([300, 340, 380, 420], 0.3, 0.1, 'sine', 0.05);
+      pwait(1350, () => { el.classList.add(s ? 'pop' : 'leak'); snd(s ? [1200, 800] : [400, 200], 0.04, 0.2, 'sawtooth', 0.1); });
+    },
+    meteor(s, d) {
+      pvRun('meteor', '<i class="pv-mt1"></i><i class="pv-mt2"></i>', 2000, 1200, s, s ? 'WISH' : '', d);
+      snd([1568, 1319, 1047, 784], 0.1, 0.18, 'sine', 0.06);
+    },
+    wheel(s, d) {
+      const el = pvRun('wheel', '<span class="pv-wh"><i></i></span><b class="pv-pt"></b>', 2400, 1700, s, s ? 'JACKPOT' : '', d);
+      el.style.setProperty('--ang', (1080 + (s ? 20 : 200)) + 'deg');
+      snd([440, 440, 440, 440, 440, 440], 0.16, 0.04, 'square', 0.05);
+    },
+    gauge(s, d) {
+      const el = pvRun('gauge', '<span class="pv-gg"><i></i></span>', 2200, 1500, s, s ? 'MAX' : '', d);
+      el.style.setProperty('--to', (s ? 78 : -30 + Math.floor(rnd() * 40)) + 'deg');
+      snd([262, 330, 392, 523], 0.2, 0.2, 'triangle', 0.06);
     }
   };
   delete PV.rain; delete PV.crack;   // 雨・ひび割れは液晶の「天候ステップアップ」に統合
@@ -588,6 +645,7 @@
     st.combo = 0; hideCombo();
     if (!plan.zone) unlock('first_peka');
     _beginBonus(plan);
+    if (!plan.zone && !isDebugRun && window.LCDX && LCDX.bigIntro) LCDX.bigIntro(!!plan.reg);   // PEKA CHANCE突入: BIG BONUS(REGはREG BONUS)をドドーンと表示
     if (plan.zone && !plan.debug && !isDebugRun && window.LCDX && LCDX.zoneIntro) { st.zoneIntroEnd = Date.now() + 3400; LCDX.zoneIntro(); }
   };
   /* PEKA! PEKA! MOUNTAIN! の最初のゲームの前に、カウントダウン (レバー1回目をここで受ける) */
@@ -625,7 +683,7 @@
   };
   /* ボーナス終了と思いきや…の逆転 (AT突入の前にひと芝居) */
   const _startAT = startAT;
-  startAT = function (games, typeId) {
+  startAT = function (games, typeId, superFlag) {
     if (!isDebugRun && games === undefined && rnd() < 0.28 * freqMul() && !st.fakeRush) {
       st.fakeRush = true;
       isRushing = true;
@@ -644,12 +702,12 @@
         unlock('fake_rush'); unlock('gyakuten'); count('rev', 1, 5, 'gyakuten5');
         st.fakeRush = false;
         isRushing = false;
-        _startAT(games, typeId);
+        _startAT(games, typeId, superFlag);
       });
       return;
     }
     unlock('first_at');
-    _startAT(games, typeId);
+    _startAT(games, typeId, superFlag);
     if (atType === 1) unlock('heaven');
     if (atType === 2) unlock('death');
   };

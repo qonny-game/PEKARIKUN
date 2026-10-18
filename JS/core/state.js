@@ -14,6 +14,9 @@ const roleStat = { bell: 0, replay: 0, melon: 0, cherry: 0, chance: 0 };   // �
 let totalGames = 0;       // 表示用G数 (ボーナス当選でリセット)
 let cumulativeGames = 0;  // 合算確率計算用の累計G数
 let bigCount = 0;
+let atSuper = false;            // 今のATはSUPERか（ベルが15枚中心・押し順ナビの1が7画像）
+let czLoop = false;             // 今のCHANCE ZONEは むげんLOOP か
+let regCount = 0;               // REG(7・7・BAR)の回数
 let atCount = 0;          // AT突入回数
 let diffCoins = 0;
 
