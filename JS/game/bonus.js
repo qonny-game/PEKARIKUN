@@ -187,13 +187,11 @@ function donShake(n, done) {
   window.donArm = { n, end: false, normal: !bonusRun };
   setTimeout(done, 0);
 }
-const DON_STEP_TAG = ['', 'ドン 1/3', 'ドンドン 2/3', 'ドンドンドン 3/3  発展!'];
 function donStop(k, plan) {
   const d = window.donArm;
   if (!d) return;
   if (k >= 3) window.donArm = null;
   if (k > d.n) {
-    if (!d.end && d.n > 0) { d.end = true; if (window.LCDX) LCDX.tag('ドンが止まった… 発展せず', '', 2200); }
     return;
   }
   const el = document.createElement('div');
@@ -204,7 +202,6 @@ function donStop(k, plan) {
   setTimeout(() => el.remove(), 600);
   shakeMain(300);
   if (soundEnabled) { initAudio(); thump(audioCtx.currentTime, 0.7 + k * 0.12); }
-  if (window.LCDX) LCDX.tag(DON_STEP_TAG[k], 'f' + k, 2400);
   if (k === 3 && d.n >= 3) {
     showAtToast('発展');
     triggerFlash();
@@ -234,7 +231,7 @@ function judgeIntro(b, cb) {
   startTension('JUDGEMENT');
   if (chanceLogo) chanceLogo.classList.add('judge');
   if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(110, t, 1.4, 'sawtooth', 0.14); tone(165, t + 0.1, 1.2, 'sawtooth', 0.08); }
-  setTimeout(() => { if (window.LCDX) LCDX.tag('最終ゲーム  勝てばPEKA RUSH', 'f2', 1500); playTick(2); }, 1800);
+  setTimeout(() => playTick(2), 1800);
   setTimeout(() => { if (window.LCDX) LCDX.tag(`現在 ${AURA_NAMES[Math.min(6, b.aura)]}オーラ`, b.aura >= 4 ? 'f3' : 'f1', 1500); playTick(3); shakeMain(200); }, 3400);
   setTimeout(() => { isSuspense = false; cb(); }, 5000);
 }

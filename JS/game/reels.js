@@ -114,7 +114,8 @@ function planFor(kind) {
 }
 function winIdxOf(kind, g) {
   if (kind === 'cherry' || kind === 'cherryW' || kind === 'cherryS') { const i = [0, 3, 6].find(k => g[k] === 'cherry'); return i === undefined ? null : [i]; }
-  if (kind === 'chanceW' || kind === 'chanceS') return null;
+  if (kind === 'chanceW') return [3, 4, 5];   // 弱チャンス目: 中段のリプレイ・リプレイ・ベルが点滅（他の役と同じ）
+  if (kind === 'chanceS') return null;        // 強チャンス目は揃っていない形なので点滅させない
   const L = alignedLines(g);
   return L.length ? REEL_LINES[L[0].i] : null;
 }

@@ -51,7 +51,7 @@
   wrap.className = 'tro-wrap';
   (document.getElementById('lcd-stage') || document.body).appendChild(wrap);   // 液晶の中に出す
   const q = []; let showing = false;
-  function toast(head, body, color, kind) { q.push({ head, body, color, kind }); if (!showing) next(); }
+  function toast(head, body, color, kind) { /* 液晶にはトロフィー等の通知を出さない(記録はトロフィー画面で確認する) */ }
   function next() {
     const t = q.shift();
     if (!t) { showing = false; return; }

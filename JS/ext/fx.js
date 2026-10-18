@@ -121,8 +121,7 @@
     if (!a) return;
     ach.got[id] = Date.now();
     saveAch();
-    put('fx-ach', `<b>称号獲得</b><span>${a[1]}</span>`, 2900);
-    snd([784, 988, 1319], 0.09, 0.25, 'triangle', 0.1);
+    // 称号の通知は液晶に出さない(称号・トロフィー画面で確認)
   }
   function count(id, n, target, unlockId) {
     ach.cnt[id] = (ach.cnt[id] || 0) + n;
@@ -499,7 +498,7 @@
       wait(2200, () => {
         cab.classList.remove('fx-rumble');
         put('fx-flash', '', 520);
-        showBanner('まさか!!', 'PEKA!!', 'red', true, 1700);
+        showBanner('PEKA!!', '', 'red', true, 1700);
         tripleFlash(); shakeMain(600); burstParticles('mega', 90); sndBig();
         _triggerPekari(forceFx || (rnd() < 0.5 ? 'rainbow' : undefined));
       });

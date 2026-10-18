@@ -96,27 +96,48 @@
     if (ms) hintTimer = setTimeout(hintClear, ms);
     if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; (keys.length > 1 ? [784, 988] : [988, 1319]).forEach((f, i) => tone(f, t + i * 0.09, 0.18, 'triangle', 0.09)); }
   }
-  function hintClear() { clearTimeout(hintTimer); hintPair = false; hintEl.classList.remove('on'); }
+  let symHint = null, hintHoldUntil = 0;   // 今ゲームの図柄示唆の予定 {sym, big, T} / 第3停止後の示唆を残す期限
+  function hintClear(force) {
+    if (!force && Date.now() < hintHoldUntil) { setTimeout(hintClear, hintHoldUntil - Date.now() + 30); return; }
+    clearTimeout(hintTimer); hintPair = false; hintEl.classList.remove('on');
+  }
   const PAIR_SYM = { bell: 'bell', replay: 'replay', cherry: 'cherry', melon: 'melon', chance: '@CHANCE' };   // チャンス目はスイカ図柄にしない（揃ったように見えるため）
-  function pair(a, b) { if (pushPlan && !pushPlan.done) return; hintShow([PAIR_SYM[a] || a, PAIR_SYM[b] || b], 0); hintEl.insertAdjacentHTML('beforeend', '<b class="lh-q">どっち？</b>'); hintPair = true; }
+  function pair(a, b) { if (pushPlan && !pushPlan.done) return; hintShow([PAIR_SYM[a] || a, PAIR_SYM[b] || b], 0); hintPair = true; }
   /* 通常時のみ: 成立役に応じて、決まった停止順で図柄を出す (たまにガセ) */
   const HINT_AT = { replay: [1, 'replay'], cherryW: [1, 'cherry'], cherryS: [1, 'cherry'], melon: [2, 'melon'], melonW: [2, 'melon'], chanceW: [2, '@CHANCE'], chanceS: [2, '@CHANCE'], bell0: [2, 'bell'], bell1: [2, 'bell'], bell2: [2, 'bell'] };
   const HINT_RATE = { replay: 0.7, bell0: 0.7, bell1: 0.7, bell2: 0.7, cherryW: 0.9, cherryS: 1, melon: 0.9, melonW: 0.9, chanceW: 0.8, chanceS: 1 };
+  /* 図柄示唆の出るタイミング(5パターン): T=0 回転前(演出のあと回転) / 1 回転中・停止前 / 2 第1停止時 / 3 第2停止時 / 4 第3停止後 */
+  function planSymHint(kind) {
+    let sym = null, rate = 0, big = false;
+    const d = HINT_AT[kind];
+    if (d) { sym = d[1]; rate = HINT_RATE[kind] || 0.7; big = kind === 'cherryS' || kind === 'chanceS'; }
+    else if (kind === 'lose' && typeof pendingBonusType !== 'undefined' && pendingBonusType) { sym = pick(['replay', 'bell']); rate = 0.3; }   // ボーナス確定中だけ、ハズレ目でも図柄が出ることがある
+    if (!sym || rnd() >= rate) return null;
+    return { sym, big, T: Math.floor(rnd() * 5) };
+  }
+  const symShow = h => hintShow([h.sym], 0, h.big);
+  function preHint() {   // 回転前: 図柄を見せてから回転を始める(待ち時間を返す)
+    if (symHint && symHint.T === 0 && !hintPair && !(pushPlan && !pushPlan.done)) { const h = symHint; symHint = null; symShow(h); return 1100; }
+    return 0;
+  }
+  function spinStart() {   // 回転中・第1停止の前
+    if (!symHint || symHint.T !== 1) return;
+    const h = symHint;
+    setTimeout(() => { if (symHint === h && !hintPair && !pushPlan && typeof reelSpin !== 'undefined' && reelSpin.order && reelSpin.order.length === 0) { symHint = null; symShow(h); } }, 650);
+  }
   function hintStop(plan, n) {
     if (n === 2) pushReady();
     if (wxPlan) { wxStep(n); return; }
-    if (!plan || hintPair || pushPlan) return;   // PUSH中は押すまで図柄を出さない
+    if (!symHint || hintPair || pushPlan) return;   // PUSH中は押すまで図柄を出さない
     const normal = !(typeof bonusRun !== 'undefined' && bonusRun) && !(typeof atGames !== 'undefined' && atGames > 0) && !(typeof atEnding !== 'undefined' && atEnding);
     if (!normal) return;
-    let d = HINT_AT[plan.role];
-    if (d) {
-      if (d[0] === n && rnd() < (HINT_RATE[plan.role] || 0.7)) hintShow([d[1]], 0, plan.role === 'cherryS' || plan.role === 'chanceS');
-    } else if (plan.role === 'lose' && typeof pendingBonusType !== 'undefined' && pendingBonusType && rnd() < 0.3) {   // ボーナス確定中だけ、ハズレ目でも図柄が出ることがある
-      const f = pick([[1, 'replay'], [2, 'bell']]);
-      if (f[0] === n) hintShow([f[1]], 0);
+    if (symHint.T >= 2 && symHint.T - 1 === n) {
+      const h = symHint; symHint = null;
+      if (n === 3) { hintHoldUntil = Date.now() + 1800; setTimeout(() => symShow(h), 250); }   // 第3停止後は少し間を置いて出し、結果表示のあとも残す
+      else symShow(h);
     }
   }
-  window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0), pair, hintStop, hintClear, hint: hintShow, tag, miss: () => missMark(), story: (i, n, l) => story(i, n, l), don: n => { if (n >= 3) forceLv = 2; }, donWin: role => { forceLv = 2; const h = planHint(role || 'lose'); if (h) { hints.push(h); showHint(h); } } };
+  window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0), pair, hintStop, preHint, spinStart, hintClear, hint: hintShow, tag, miss: () => missMark(), story: (i, n, l) => story(i, n, l), don: n => { if (n >= 3) forceLv = 2; }, donWin: role => { forceLv = 2; const h = planHint(role || 'lose'); if (h) { hints.push(h); showHint(h); } } };
   let hold = 0;
   function say(a, b, ms, md, an) {
     m1.textContent = a || ''; m2.textContent = b || '';
@@ -200,7 +221,7 @@
     missGame = true;
     const d = document.createElement('div');
     d.className = 'lcd-miss';
-    d.innerHTML = `<span class="lm-m">${FX.mascotSVG('sad')}</span><b>ハズレ</b>`;
+    d.innerHTML = `<span class="lm-m">${FX.mascotSVG('sad')}</span>`;
     stageEl.appendChild(d);
     setTimeout(() => d.remove(), 1800);
     if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(247, t, 0.2, 'triangle', 0.08); tone(185, t + 0.14, 0.34, 'triangle', 0.08); }
@@ -272,7 +293,6 @@
       }
     } else if (n === L + 1) {
       wxClear();
-      tag('ステップアップ終了', '', 1500);
       if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(330, t, 0.2, 'triangle', 0.07); tone(262, t + 0.12, 0.3, 'triangle', 0.07); }
     }
   }
@@ -334,7 +354,7 @@
     if (h.t === 'role') {
       const d = spawn(ROLE_SPR[h.g], 1);
       d.style.setProperty('--sc', ROLE_COL[h.g]);
-      tag(`${ROLE_JP[h.g]}示唆`, 'role', 2800);
+      if (h.g !== 'replay' && h.g !== 'bell') tag(`${ROLE_JP[h.g]}示唆`, 'role', 2800);   // リプレイ・ベルは文字なし
       swoosh(0);
       if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; [660, 880].forEach((f, i) => tone(f, t + i * 0.1, 0.18, 'triangle', 0.08)); }
     } else {
@@ -381,7 +401,7 @@
     const normalNow = !isDebugRun && !bonusRun && atGames === 0 && !atEnding;
     if (normalNow) {
       const second = FX.don;   // ドン演出のあとの再突入
-      if (!second) { hints = []; missGame = false; wxPlan = null; wxClear(); }
+      if (!second) { hints = []; missGame = false; wxPlan = null; wxClear(); symHint = null; hintHoldUntil = 0; hintClear(true); }
       hit0 = FX.outcomeClass(kind) === 'hit';
       // PUSHが出るゲームは、押す前に図柄や示唆は出さない（押したときに結果を見せる）
       let armed = false;
@@ -393,6 +413,7 @@
         if (!forceLv && rnd() < pp * freq()) { pushArm({ hit0, cz: !!czNew, group: groupOf(kind), rare }); armed = true; }
       } else armed = !!pushPlan && !pushPlan.done;
       if (!armed && !second && !forceLv) wxPlan = planWeather(kind, hit0);
+      if (!second) symHint = (!armed && !wxPlan) ? planSymHint(kind) : null;
       if (!armed && !wxPlan && (!second || forceLv)) { const h = planHint(kind); if (h) { hints.push(h); showHint(h); } }
       if (!second && czLeft > 0) { spawn('star', 1); say('CHANCE ZONE', `残り ${czLeft}G`, 1600, 'happy', 'hop'); if (!czTipShown) { czTipShown = true; tag('ボーナス当選か前兆で成功', 'role', 3000); } }
     }
@@ -530,8 +551,12 @@
     const r = _setAura.apply(this, arguments);
     if (pop && level > 0 && !isDebugRun && bonusRun && !bonusRun.zone) {
       const lv = Math.min(level, 6);
-      say('LEVEL UP!', `${AURA_NAME[lv]}オーラ  当たりやすさUP`, 2200, 'shock', 'jump');
-      tag(`LEVEL UP!  ${AURA_NAME[lv]}`, lv >= 4 ? 'f3' : lv >= 2 ? 'f2' : 'f1', 2600);
+      const L = document.createElement('div');   // 液晶の中央に大きく表示。表示中に色が変わる
+      L.className = 'lcd-lvup';
+      L.innerHTML = '<span>LEVEL UP</span><b>!!</b>';
+      stageEl.appendChild(L);
+      setTimeout(() => L.remove(), 2400);
+      act('jump');
       burst(); swoosh(lv >= 4 ? 3 : lv >= 2 ? 2 : 1);
       for (let i = 0; i < 2 + lv; i++) setTimeout(() => spawn('coin', 2), i * 80);
       if (lv >= 3) spawn('star', 2);
@@ -540,6 +565,23 @@
     return r;
   };
   setInterval(() => { if (bonusRun || atGames > 0 || atEnding || isAtResult) { wxPlan = null; if (wxEl.classList.contains('on')) wxClear(); } }, 200);   // ボーナス/AT中は天候演出を残さない
+  /* CHANCE ZONE 残りゲーム数: 液晶の左上に常時表示。連続演出中は HOLD (消化ストップ) */
+  const czEl = document.createElement('div');
+  czEl.className = 'lcd-cz';
+  czEl.innerHTML = '<span class="cz-l">CZ</span><b class="cz-n">0</b><span class="cz-g">G</span><em class="cz-h">HOLD</em>';
+  if (stageEl) stageEl.appendChild(czEl);
+  const czN = czEl.querySelector('.cz-n');
+  setInterval(() => {
+    const on = czLeft > 0 && !(typeof bonusRun !== 'undefined' && bonusRun) && !(atGames > 0);
+    czEl.classList.toggle('on', on);
+    if (on) { czN.textContent = czLeft; czEl.classList.toggle('hold', !!window.czHoldNow); }
+  }, 100);
+  /* PEKA CHANCE中は、RUSHに入る条件を常時表示 */
+  const capEl = document.createElement('div');
+  capEl.className = 'lcd-cap';
+  capEl.textContent = '最終GのJUDGEMENTに勝てばPEKA RUSH';
+  if (stageEl) stageEl.appendChild(capEl);
+  setInterval(() => capEl.classList.toggle('on', !!(typeof bonusRun !== 'undefined' && bonusRun && !bonusRun.zone && !isDebugRun)), 200);
   let last = '';
   setInterval(() => {
     const sc = scene();
@@ -554,9 +596,7 @@
       if (sc === 'at' || sc === 'heaven') say('', '', 1, 'happy', 'cross');
       if (sc === 'death') say('DEATH', '', 1500, 'angry', 'angry');
       if (sc === 'bonus' || sc === 'zone') act('jump');
-      if (sc === 'bonus' && !isDebugRun) {   // PEKA CHANCE: RUSHに入る条件の説明
-        setTimeout(() => tag('最終GのJUDGEMENTに勝てばPEKA RUSH', 'role', 3600), 1500);
-      }
+
     }
     if (Date.now() < hold) return;
     if (bonusRun) {

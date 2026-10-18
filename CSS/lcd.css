@@ -221,3 +221,33 @@
 .cab-lcd .at-status.on, .gogo-lamp .at-status.on { font-size: 10px; gap: 6px; line-height: 1.1; }
 .gogo-lamp:has(.at-status.on) .at-label { font-size: 9px; padding: 0 7px; }
 .gogo-lamp:has(.at-status.on) .lcd-tag { top: 40px; font-size: 10px; padding: 2px 10px; max-width: 94%; overflow: hidden; text-overflow: ellipsis; }
+.at-status.on { white-space: nowrap; }
+.at-status.on > * { white-space: nowrap; }
+
+/* CHANCE ZONE 残りG (左上に常時) */
+.lcd-cz { position: absolute; left: 6px; top: 6px; z-index: 67; display: none; align-items: baseline; gap: 3px; padding: 2px 8px; border-radius: 8px; font-family: 'Orbitron', sans-serif; font-weight: 900; color: #fff; background: rgba(15, 10, 40, .72); border: 1.5px solid #f472b6; box-shadow: 0 0 10px rgba(244, 114, 182, .7); pointer-events: none; white-space: nowrap; }
+.lcd-cz.on { display: flex; }
+.lcd-cz .cz-l { font-size: 10px; color: #f9a8d4; letter-spacing: .08em; }
+.lcd-cz .cz-n { font-size: 20px; line-height: 1; color: #fde047; text-shadow: 0 0 8px #f59e0b; }
+.lcd-cz .cz-g { font-size: 10px; }
+.lcd-cz .cz-h { display: none; margin-left: 4px; padding: 0 5px; border-radius: 4px; font-style: normal; font-size: 10px; color: #0f172a; background: #67e8f9; animation: cz-hold .4s ease-in-out infinite alternate; }
+.lcd-cz.hold .cz-h { display: inline; }
+.lcd-cz.hold { border-color: #67e8f9; box-shadow: 0 0 12px #22d3ee; }
+@keyframes cz-hold { from { opacity: 1; } to { opacity: .45; } }
+
+/* LAST 3/2/1: でかでか表示したあと、うっすらフェードアウト */
+#lcd-stage .chance-count.on { animation: cc-in .55s cubic-bezier(.2, 1.5, .4, 1) both, cc-fade 1.4s ease-in .9s forwards; }
+@keyframes cc-fade { from { opacity: 1; } to { opacity: .16; } }
+
+/* LEVEL UP: 液晶中央に大きく、色が変わり続ける */
+.lcd-lvup { position: absolute; inset: 0; z-index: 72; display: flex; align-items: center; justify-content: center; gap: 4px; pointer-events: none; font-family: 'Orbitron', sans-serif; font-weight: 900; font-style: italic; animation: lv-pop 2.4s cubic-bezier(.2, 1.4, .4, 1) both; }
+.lcd-lvup { white-space: nowrap; }
+.lcd-lvup span { font-size: 36px; letter-spacing: .02em; -webkit-text-stroke: 3px #fff; paint-order: stroke fill; animation: lv-col 2.4s linear both; }
+.lcd-lvup b { font-size: 46px; -webkit-text-stroke: 3px #fff; paint-order: stroke fill; animation: lv-col 2.4s linear both; }
+@keyframes lv-col { 0% { color: #ef4444; filter: drop-shadow(0 0 12px #ef4444); } 20% { color: #f59e0b; filter: drop-shadow(0 0 14px #f59e0b); } 40% { color: #fde047; filter: drop-shadow(0 0 16px #fde047); } 60% { color: #4ade80; filter: drop-shadow(0 0 16px #4ade80); } 80% { color: #38bdf8; filter: drop-shadow(0 0 16px #38bdf8); } 100% { color: #f472b6; filter: drop-shadow(0 0 16px #f472b6); } }
+@keyframes lv-pop { 0% { transform: scale(.2) rotate(-8deg); opacity: 0; } 12% { transform: scale(1.3) rotate(3deg); opacity: 1; } 22% { transform: scale(1) rotate(0); } 85% { opacity: 1; transform: scale(1.04); } 100% { transform: scale(1.1); opacity: 0; } }
+
+/* PEKA CHANCE中の常時説明 */
+.lcd-cap { position: absolute; left: 0; right: 0; top: 24px; z-index: 66; display: none; text-align: center; font-size: 10px; font-weight: 800; color: #fef9c3; text-shadow: 0 1px 3px rgba(0, 0, 0, .95), 0 0 6px rgba(0, 0, 0, .8); white-space: nowrap; pointer-events: none; }
+.lcd-cap.on { display: block; }
+.gogo-lamp:has(.lcd-cap.on) .lcd-tag { top: 50px; }

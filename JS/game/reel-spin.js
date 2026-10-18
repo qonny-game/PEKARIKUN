@@ -250,6 +250,8 @@ const OMEN_PAIRS = [['bell', 'replay'], ['bell', 'cherry'], ['melon', 'cherry'],
 const OMEN_PAIR_COLOR = { bell: 'yellow', replay: 'blue', cherry: 'red', melon: 'green', chance: 'pink' };
 const PAIR_OMEN_P = 0.1;
 function omenThen(kind, go) {
+  const pre = window.LCDX && LCDX.preHint ? LCDX.preHint() : 0;   // 図柄示唆(回転前パターン): 図柄を見せてから回転
+  if (pre > 0) { reelLocked = true; pekaLater(() => { reelLocked = false; go(); }, pre); return; }
   const grp = OMEN_GROUP[kind];
   if (grp && Math.random() < PAIR_OMEN_P * (window.FXO_FREQ ? window.FXO_FREQ() : 1)) {
     const cands = OMEN_PAIRS.filter(p => p.includes(grp));
@@ -290,6 +292,7 @@ function runRole(kind, done, navi) {
     const plan = planFor(kind);
     plan.role = kind;
     if (navi) { plan.navi = navi.order; showNavi(navi.order, navi.style); }
+    if (window.LCDX && LCDX.spinStart) setTimeout(LCDX.spinStart, 0);
     startReels(plan, res => {
       omenOff();
       if (navi) {

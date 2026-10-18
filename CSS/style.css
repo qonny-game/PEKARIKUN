@@ -1939,3 +1939,7 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 .rl.chance.lit { color: #fff; -webkit-text-stroke: 0; border-color: #67e8f9; background: rgba(56, 189, 248, .22); text-shadow: 0 0 6px #22d3ee, 0 0 14px #f472b6; animation: rl-chance .5s ease-in-out infinite alternate; }
 @keyframes rl-rush { from { box-shadow: 0 0 6px #ff3b30; filter: brightness(1); } to { box-shadow: 0 0 18px #ff9d00, 0 0 28px #ff3b30; filter: brightness(1.5); } }
 @keyframes rl-chance { from { box-shadow: 0 0 6px #22d3ee; filter: brightness(1); } to { box-shadow: 0 0 18px #f472b6, 0 0 26px #22d3ee; filter: brightness(1.45); } }
+
+/* サイドの PEKA CHANCE / PEKA RUSH ランプを大きく */
+.rl { font-size: clamp(10px, calc(var(--side-h2, 200px) / 15), 16px); padding: 6px 4px; border-width: 1.5px; border-radius: 10px; }
+.side-lamp .rl-box { bottom: 3px; }
