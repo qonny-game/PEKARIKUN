@@ -211,6 +211,7 @@ function donStop(k, plan) {
 }
 function bonusGame() {
   const b = bonusRun;
+  if (!b.zone && !b.debug && b.atWin && Math.random() < PANEL_P_CHANCE) window.panelPlan = 'chance';   // 下パネル消灯 = RUSH突入(JUDGEMENT勝利)確定
   // ドンドンドン!: 昇格するゲームほど多く揺れる (ガセもある)
   const promo = !b.zone && b.promo.includes(b.played + 1);
   const don = weightedPick(promo ? [0, 0, 0, 100] : [80, 12, 8, 0]);   // 昇格するゲームは必ず第3停止までドンが続く / 昇格しないゲームは1〜2回で止まる

@@ -64,3 +64,22 @@
 .cl-sub i { width: 4px; height: 4px; transform: rotate(45deg); background: #f472b6; box-shadow: 0 0 6px #f472b6; }
 @keyframes cl-shine { 0%, 55% { left: -40%; } 100% { left: 120%; } }
 @keyframes cl-run { 0% { opacity: .35; } 50% { opacity: 1; } }
+
+/* 下パネル消灯: 回転中に消えたら確定 */
+.cab-label { transition: filter .25s; }
+.cab-label.off { animation: cl-off .9s steps(1) forwards; }
+.cab-label.off .cl-logo, .cab-label.off .cl-sub, .cab-label.off .cl-line, .cab-label.off .cl-screw { transition: opacity .2s; }
+.cab-label.flash { animation: cl-on 1s ease-out; }
+@keyframes cl-off { 0% { filter: none; } 12% { filter: brightness(.15); } 24% { filter: none; } 36% { filter: brightness(.1); } 48% { filter: brightness(.9); } 60%, 100% { filter: brightness(.04) saturate(.2); } }
+@keyframes cl-on { 0% { filter: brightness(4) saturate(1.8); } 100% { filter: none; } }
+
+/* AUTOボタン: TOTAL GETの段の右 / 著作表示は歯車メニュー内 */
+.led-row { align-items: center; gap: 6px; grid-template-columns: 1fr 1.2fr 1.2fr auto; }
+.led-row .bb-auto { flex: none; width: 52px; padding: 12px 0; font-size: 11px; letter-spacing: .08em; border: 1px solid rgba(255, 255, 255, .25); cursor: pointer; }
+.more-menu a.mm-item { text-decoration: none; color: inherit; }
+.mm-info { padding: 6px 10px 4px; font-size: 10px; color: #94a3b8; font-weight: 700; white-space: nowrap; border-top: 1px solid rgba(255, 255, 255, .1); margin-top: 2px; }
+.led-row .bb-auto { width: 44px; padding: 10px 0; font-size: 10px; letter-spacing: .04em; }
+@media (max-width: 400px) { .cab-panel { zoom: .9; } }
+.led-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.2fr) 42px; }
+.led-row .bb-auto { width: 42px; padding: 10px 0; }
+@media (max-width: 400px) { .led-row .dg { font-size: 18px; } }

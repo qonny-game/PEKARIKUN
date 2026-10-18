@@ -6,11 +6,11 @@
   <title>ペカり君 - パチスロ エンタメシミュレーター</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="CSS/style.css?v=1.20.3">
-  <link rel="stylesheet" href="CSS/fx.css?v=1.20.3">
-  <link rel="stylesheet" href="CSS/lcd.css?v=1.20.3">
-  <link rel="stylesheet" href="CSS/trophy.css?v=1.20.3">
-  <link rel="stylesheet" href="CSS/layout4.css?v=1.20.3">
+  <link rel="stylesheet" href="CSS/style.css?v=1.20.6">
+  <link rel="stylesheet" href="CSS/fx.css?v=1.20.6">
+  <link rel="stylesheet" href="CSS/lcd.css?v=1.20.6">
+  <link rel="stylesheet" href="CSS/trophy.css?v=1.20.6">
+  <link rel="stylesheet" href="CSS/layout4.css?v=1.20.6">
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-5 select-none">
 
@@ -35,6 +35,8 @@
             <button class="mm-item" id="reel-btn" aria-label="リール配列" ><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="9.5" y="3" width="5" height="18" rx="1"/><rect x="16" y="3" width="5" height="18" rx="1"/></svg><span class="mm-label">リール配列</span></button>
             <button class="mm-item" id="settings-btn" aria-label="確率設定" ><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="6" r="2.2" fill="currentColor"/><circle cx="15" cy="12" r="2.2" fill="currentColor"/><circle cx="8" cy="18" r="2.2" fill="currentColor"/></svg><span class="mm-label">確率設定</span></button>
             <button class="mm-item" id="reset-btn" ><span class="mm-label">データリセット</span></button>
+            <a class="mm-item" href="guide.html"><span class="mm-label">攻略ガイド</span></a>
+            <div class="mm-info">&copy; ペカり君 - GOGO! SIMULATOR <span id="app-version"></span></div>
           </div>
       </div>
       <div class="dc-sub">
@@ -153,6 +155,7 @@
           <div class="led"><div class="led-label">PAYOUT</div><div id="led-win" class="led-digits" data-n="3"></div></div>
           <div class="led green"><div class="led-label">MEDAL</div><div id="led-credit" class="led-digits" data-n="4"></div></div>
           <div class="led amber"><div class="led-label">TOTAL GET</div><div id="led-total" class="led-digits" data-n="4"></div></div>
+          <button id="auto-btn" type="button" aria-pressed="false" class="bb-auto">AUTO</button>
         </div>
       </div>
 
@@ -178,17 +181,8 @@
 
     </div>
 
-    <!-- 下部バー: 1行。入りきらない操作は歯車のメニューへ -->
-    <div class="bottom-bar">
-      <button id="auto-btn" type="button" aria-pressed="false" class="bb-auto">AUTO</button>
-    </div>
-
   </main>
 
-  <footer class="ui-shade relative z-10 my-2 px-4 py-1 text-[11px] text-slate-400 font-bold text-center">
-    &copy; ペカり君 - GOGO! SIMULATOR <span id="app-version"></span>
-    <a href="guide.html" class="ml-2 underline text-sky-300">攻略ガイド</a>
-  </footer>
 
   <!-- 当選グラフ -->
   <div id="graph-modal" class="modal">
@@ -232,30 +226,30 @@
   </div>
 
 
-  <script src="JS/data/config.js?v=1.20.3"></script>
-  <script src="JS/data/symimg.js?v=1.20.3"></script>
-  <script src="JS/core/settings.js?v=1.20.3"></script>
-  <script src="JS/core/state.js?v=1.20.3"></script>
-  <script src="JS/core/audio.js?v=1.20.3"></script>
-  <script src="JS/core/effects.js?v=1.20.3"></script>
-  <script src="JS/game/flow.js?v=1.20.3"></script>
-  <script src="JS/game/reels.js?v=1.20.3"></script>
-  <script src="JS/game/reel-spin.js?v=1.20.3"></script>
-  <script src="JS/game/bell.js?v=1.20.3"></script>
-  <script src="JS/game/cherry.js?v=1.20.3"></script>
-  <script src="JS/game/at.js?v=1.20.3"></script>
-  <script src="JS/game/bonus.js?v=1.20.3"></script>
-  <script src="JS/game/at-result.js?v=1.20.3"></script>
-  <script src="JS/ui/display.js?v=1.20.3"></script>
-  <script src="JS/game/auto.js?v=1.20.3"></script>
-  <script src="JS/ui/settings-panel.js?v=1.20.3"></script>
-  <script src="JS/ui/graph.js?v=1.20.3"></script>
-  <script src="JS/ui/more-menu.js?v=1.20.3"></script>
-  <script src="JS/ui/modal.js?v=1.20.3"></script>
-  <script src="JS/ui/reel-view.js?v=1.20.3"></script>
-  <script src="JS/ui/boot.js?v=1.20.3"></script>
-  <script src="JS/ext/fx.js?v=1.20.3"></script>
-  <script src="JS/ext/lcd.js?v=1.20.3"></script>
-  <script src="JS/ext/trophy.js?v=1.20.3"></script>
+  <script src="JS/data/config.js?v=1.20.6"></script>
+  <script src="JS/data/symimg.js?v=1.20.6"></script>
+  <script src="JS/core/settings.js?v=1.20.6"></script>
+  <script src="JS/core/state.js?v=1.20.6"></script>
+  <script src="JS/core/audio.js?v=1.20.6"></script>
+  <script src="JS/core/effects.js?v=1.20.6"></script>
+  <script src="JS/game/flow.js?v=1.20.6"></script>
+  <script src="JS/game/reels.js?v=1.20.6"></script>
+  <script src="JS/game/reel-spin.js?v=1.20.6"></script>
+  <script src="JS/game/bell.js?v=1.20.6"></script>
+  <script src="JS/game/cherry.js?v=1.20.6"></script>
+  <script src="JS/game/at.js?v=1.20.6"></script>
+  <script src="JS/game/bonus.js?v=1.20.6"></script>
+  <script src="JS/game/at-result.js?v=1.20.6"></script>
+  <script src="JS/ui/display.js?v=1.20.6"></script>
+  <script src="JS/game/auto.js?v=1.20.6"></script>
+  <script src="JS/ui/settings-panel.js?v=1.20.6"></script>
+  <script src="JS/ui/graph.js?v=1.20.6"></script>
+  <script src="JS/ui/more-menu.js?v=1.20.6"></script>
+  <script src="JS/ui/modal.js?v=1.20.6"></script>
+  <script src="JS/ui/reel-view.js?v=1.20.6"></script>
+  <script src="JS/ui/boot.js?v=1.20.6"></script>
+  <script src="JS/ext/fx.js?v=1.20.6"></script>
+  <script src="JS/ext/lcd.js?v=1.20.6"></script>
+  <script src="JS/ext/trophy.js?v=1.20.6"></script>
 </body>
 </html>

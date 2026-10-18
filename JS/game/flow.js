@@ -328,6 +328,16 @@ function droughtMult(inAT) {
   return Math.min(DROUGHT_MAX, 1 + (totalGames - DROUGHT_START) / DROUGHT_STEP);
 }
 
+const PANEL_P_CZ = 0.5, PANEL_P_AT = 0.03, PANEL_P_CHANCE = 0.15;   // 下パネル消灯の抽選率
+/* 消灯で確定した上乗せ: 回転が止まり、他のPUSH演出が終わってから表示 (ゲーム数は消灯の時点で加算済み) */
+function awardPanelUp(n) {
+  const iv = setInterval(() => {
+    if (isPushing || isReelSpinning || isRushing || isAtResult) return;
+    clearInterval(iv);
+    pushReveal(`+${n}G`, true, () => { updateAT(); });
+  }, 400);
+}
+
 function handleSpin() {
   hideLastCount();   // レバーを押したら LAST カウントダウンは消す
   // PUSHボタン待ちのときは、レバーでもPUSHできる
@@ -427,6 +437,16 @@ function handleSpin() {
   }
 
   if (zStep && typeof window.onZenchoStep === 'function') window.onZenchoStep(zStep);
+  // 下パネル消灯: 回転中にパネルが消えたら確定。CZ=当選確定 / RUSH中=100G以上の上乗せ確定 (確定でないゲームでは絶対に消えない)
+  if (!isDebugRun) {
+    if (inCZ && (isHit || zenchoLeft > 0) && Math.random() < PANEL_P_CZ) window.panelPlan = 'cz';
+    else if (inAT && !isHit && Math.random() < PANEL_P_AT) {
+      window.panelPlan = 'at';
+      const bigG = scaleG([100, 100, 150, 200, 300, 500][Math.floor(Math.random() * 6)]);
+      atGames += bigG; atEnding = false;
+      awardPanelUp(bigG);
+    }
+  }
 
   if (inCZ && (isHit || zenchoLeft > 0)) { window.czFrozen = (!isHit && zenchoLeft > 0) ? czLeft : null; czLeft = 0; if (window.onCzSuccess) window.onCzSuccess(); }   // 前兆に入った場合は、CZの残りGを止めたまま表示し続ける(czFrozen)     // 当選(前兆に入った場合も)でゾーン終了=成功
   else if (inCZ && czLeft === 0) { window.czTimedOut = true; if (window.onCzEnd) window.onCzEnd(false); }

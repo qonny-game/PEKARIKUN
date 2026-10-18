@@ -120,7 +120,19 @@
     if (symHint && symHint.T === 0 && !hintPair && !(pushPlan && !pushPlan.done)) { const h = symHint; symHint = null; symShow(h); return 1100; }
     return 0;
   }
-  function spinStart() {   // 回転中・第1停止の前
+  /* 下パネル消灯演出: 回転中にパネルが消えたら確定 (CZ/PEKA CHANCE=当選確定 / RUSH中=100G以上の上乗せ確定) */
+  const panelEl = document.querySelector('.cab-label');
+  function panelDark() {
+    if (!panelEl || !window.panelPlan || isDebugRun) return;
+    panelEl.classList.remove('flash'); panelEl.classList.add('off');
+    if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(220, t, 0.5, 'sawtooth', 0.08); tone(110, t + 0.15, 0.7, 'sine', 0.16); }
+  }
+  function panelLight() {
+    if (!panelEl) return;
+    if (panelEl.classList.contains('off')) { panelEl.classList.remove('off'); panelEl.classList.add('flash'); setTimeout(() => panelEl.classList.remove('flash'), 1000); }
+  }
+  function spinStart() {
+    panelDark();   // 回転中・第1停止の前
     if (!symHint || symHint.T !== 1) return;
     const h = symHint;
     setTimeout(() => { if (symHint === h && !hintPair && !pushPlan && typeof reelSpin !== 'undefined' && reelSpin.order && reelSpin.order.length === 0) { symHint = null; symShow(h); } }, 650);
@@ -154,6 +166,7 @@
   }
   /* 新しい回転の開始前: 直前の液晶演出をすべて消す */
   function clearAll() {
+    window.panelPlan = null; panelLight();
     if (window.hideGet) hideGet();
     hintHoldUntil = 0; symHint = null; hintClear(true);
     clearTimeout(tagT); tagEl.classList.remove('on');
