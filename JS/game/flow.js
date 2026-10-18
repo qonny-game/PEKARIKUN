@@ -337,7 +337,7 @@ function droughtMult(inAT) {
   return Math.min(DROUGHT_MAX, 1 + (totalGames - DROUGHT_START) / DROUGHT_STEP);
 }
 
-const PANEL_P_CZ = 0.5, PANEL_P_AT = 0.03, PANEL_P_CHANCE = 0.15;   // 下パネル消灯の抽選率
+const PANEL_P_CZ = 0.2, PANEL_P_AT = 0.008, PANEL_P_CHANCE = 0.04;   // 下パネル消灯の抽選率
 /* 消灯で確定した上乗せ: 回転が止まり、他のPUSH演出が終わってから表示 (ゲーム数は消灯の時点で加算済み) */
 function awardPanelUp(n) {
   const iv = setInterval(() => {
