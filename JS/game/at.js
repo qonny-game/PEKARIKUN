@@ -67,6 +67,7 @@ function pushReveal(text, premium, onDone) {
   }
   const handler = () => {
     pushBtn.removeEventListener('click', handler);
+    rushOverlay.classList.remove('show', 'held', 'premium', 't-heaven', 't-death');
     pushOverlay.className = 'push-overlay show revealed' + (premium ? ' premium' : '');
     playPayoutSound(premium ? 6 : 3);
     playPayoutFanfare(premium ? 8 : 3);
@@ -100,7 +101,7 @@ function startAT(games, typeId) {
   rushSub.textContent = '';
   rushLines[0].textContent = T.line1;
   rushLines[1].textContent = T.line2;
-  rushOverlay.classList.remove('show', 'premium', 't-heaven', 't-death');
+  rushOverlay.classList.remove('show', 'held', 'premium', 't-heaven', 't-death');
   if (atType > 0) rushOverlay.classList.add('t-' + T.id);
   void rushOverlay.offsetWidth;
   rushOverlay.classList.add('show');
@@ -120,7 +121,8 @@ function startAT(games, typeId) {
 
   const ms = premium ? 2200 : 1500;
   setTimeout(() => {
-    rushOverlay.classList.remove('show', 'premium', 't-heaven', 't-death');
+    rushOverlay.classList.remove('premium');
+    rushOverlay.classList.add('held');   // ロゴはPUSHを押すまで出したまま (PUSHの背面に回す)
     stopParticles();
     mainEl.classList.remove('shake-main');
     isRushing = false;

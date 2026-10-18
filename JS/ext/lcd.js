@@ -124,9 +124,21 @@
   const panelEl = document.querySelector('.cab-label');
   function panelDark() {
     if (!panelEl || !window.panelPlan || isDebugRun) return;
+    const was = panelEl.classList.contains('off');
     panelEl.classList.remove('flash'); panelEl.classList.add('off');
-    if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(220, t, 0.5, 'sawtooth', 0.08); tone(110, t + 0.15, 0.7, 'sine', 0.16); }
+    panelMode = window.panelPlan; panelSeen = false;
+    if (!was && soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(220, t, 0.5, 'sawtooth', 0.08); tone(110, t + 0.15, 0.7, 'sine', 0.16); }
   }
+  let panelMode = null, panelSeen = false;
+  /* 消灯したら、そのモードが終わるまで消えたまま */
+  setInterval(() => {
+    if (!panelEl || !panelMode || !panelEl.classList.contains('off')) return;
+    let end = false;
+    if (panelMode === 'cz') end = !!bonusRun;
+    else if (panelMode === 'chance') { if (bonusRun) panelSeen = true; end = panelSeen && !bonusRun; }
+    else if (panelMode === 'at') { if (atGames > 0) panelSeen = true; end = (panelSeen || !atRun) && atGames <= 0 && !atEnding && !isAtResult; }
+    if (end) { panelMode = null; panelLight(); }
+  }, 250);
   function panelLight() {
     if (!panelEl) return;
     if (panelEl.classList.contains('off')) { panelEl.classList.remove('off'); panelEl.classList.add('flash'); setTimeout(() => panelEl.classList.remove('flash'), 1000); }
@@ -181,7 +193,7 @@
   }
   /* 新しい回転の開始前: 直前の液晶演出をすべて消す */
   function clearAll() {
-    window.panelPlan = null; panelLight();
+    window.panelPlan = null;
     if (window.hideGet) hideGet();
     hintHoldUntil = 0; symHint = null; hintClear(true);
     clearTimeout(tagT); tagEl.classList.remove('on');
@@ -564,7 +576,7 @@
   }
   function scene() {
     if (bonusRun) return bonusRun.zone ? 'zone' : 'bonus';
-    if (atGames > 0 || atEnding) return atType === 1 ? 'heaven' : atType === 2 ? 'death' : 'at';
+    if (rushNow()) return atType === 1 ? 'heaven' : atType === 2 ? 'death' : 'at';
     if (zenchoLeft > 0 || fakeZencho > 0) return 'zencho';
     if (czLeft > 0) return 'cz';
     return stageNow();
@@ -580,7 +592,8 @@
   };
   window.onCzEnd = function () { if (isDebugRun) return; setTimeout(() => { if (czLeft === 0 && !window.czHoldNow) say('', 'ゾーン終了…', 2800, 'sad', 'sad'); }, 400); };   // 連続演出でHOLDされたら終了しない
   window.onCzHold = function () { if (isDebugRun) return; setTimeout(() => { act('hop'); }, 100); };
-  window.onCzSuccess = function () {
+  window.czKeepClear = function () { const E = window.czKeep; window.czKeep = null; if (E) { E.classList.add('out'); setTimeout(() => E.remove(), 400); } };
+window.onCzSuccess = function () {
     if (isDebugRun || !stageEl) return;
     window.sideConfirm = true;   // 確定したら、以降サイドのGOGO!ランプは(ボーナス開始まで)光り続ける
     setTimeout(() => {   // 液晶に「BONUS 確定!」だけを、どどどどどん!と連打で大きく表示 (トーストなし)
@@ -588,7 +601,8 @@
       E.className = 'lcd-czwin';
       E.innerHTML = '<i class="cw-bg"></i><span class="cw-a">BONUS</span><b class="cw-b">確定!</b>';
       stageEl.appendChild(E);
-      setTimeout(() => E.remove(), 3000);
+      window.czKeep = E;   // 777が揃うまで液晶に残す
+      setTimeout(() => { if (window.czKeep !== E) return; E.classList.add('keep'); E.insertAdjacentHTML('beforeend', '<div class="cw-sev"><em>777を揃えろ！</em><div class="cw-imgs"><img src="assets/img/7red.png"><img src="assets/img/7red.png"><img src="assets/img/7red.png"></div></div>'); }, 2200);
       act('jump'); swoosh(3);
       window.sideRb = Date.now() + 3200;   // 確定表示の間は、サイドのGOGO!がちかちか虹色
       for (let i = 0; i < 9; i++) setTimeout(() => {
@@ -612,10 +626,16 @@
       }
     });
   }, 500);
+  /* 本当にRUSH中か: PEKA CHANCE中・ボーナスだけで終わったリザルト(RUSHに入らなかった)は含めない */
+  function rushNow() {
+    if (bonusRun && !bonusRun.zone) return false;
+    if (atGames > 0) return true;
+    return !!atEnding && !(atRun && atRun.bonusOnly);
+  }
   /* サイドの PEKA RUSH / PEKA CHANCE ランプ: AT中 / ボーナス中だけ光る */
   const rlRush = [...document.querySelectorAll('.rl.rush')], rlChance = [...document.querySelectorAll('.rl.chance')];
   setInterval(() => {
-    const rush = atGames > 0 || atEnding;
+    const rush = rushNow();   // PEKA CHANCE中は光らせない (RUSH突入から)
     const chance = !!bonusRun && !bonusRun.zone;
     rlRush.forEach(e => e.classList.toggle('lit', !!rush));
     rlChance.forEach(e => e.classList.toggle('lit', chance));
@@ -682,7 +702,7 @@
     if (!mqText) return;
     let t = MQ_BASE, c = '';
     if (typeof bonusRun !== 'undefined' && bonusRun) { t = bonusRun.zone ? 'PEKA PEKA MOUNTAIN!' : 'PEKA CHANCE!'; c = bonusRun.zone ? 'mq-zone' : 'mq-chance'; }
-    else if (atGames > 0 || atEnding) { t = ['PEKA RUSH', 'PEKA RUSH  HEAVEN', 'PEKA RUSH  DEATH'][atType] || 'PEKA RUSH'; c = ['mq-rush', 'mq-heaven', 'mq-death'][atType] || 'mq-rush'; }
+    else if (rushNow()) { t = ['PEKA RUSH', 'PEKA RUSH  HEAVEN', 'PEKA RUSH  DEATH'][atType] || 'PEKA RUSH'; c = ['mq-rush', 'mq-heaven', 'mq-death'][atType] || 'mq-rush'; }
     else if (zenchoLeft > 0 || fakeZencho > 0) { t = 'ZENCHO'; c = 'mq-zencho'; }
     else if (czLeft > 0) { t = 'CHANCE ZONE'; c = 'mq-cz'; }
     if (t === mqLast) return;

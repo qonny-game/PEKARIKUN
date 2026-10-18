@@ -42,7 +42,7 @@ function startReels(plan, onDone) {
   spinBtn.innerText = spinBtn.dataset.navi ? `ストップ ${spinBtn.dataset.navi}` : 'ストップ';
   cols.forEach(drawOverlay);
   reelSpin.raf = requestAnimationFrame(reelFrame);
-  if (AUTO_STOP || plan.auto) [0, 1, 2].forEach(c => reelSpin.timers.push(setTimeout(() => stopCol(c, true), 380 + c * 260)));
+  if (AUTO_STOP) [0, 1, 2].forEach(c => reelSpin.timers.push(setTimeout(() => stopCol(c, true), 380 + c * 260)));
 }
 
 function drawOverlay(col) {
@@ -88,7 +88,7 @@ function landCol(col) {
 function stopCol(c, auto) {
   const rs = reelSpin;
   if (!rs) return;
-  if (rs.plan.auto) auto = true;     // ボーナスの7揃えは自動で揃う
+  if (rs.plan.assist) auto = true;     // ボーナスの7揃え: 押せば必ず揃う(アシスト)。止めるのは自分のボタン
   // 押し順ナビ付きのチェリー/スイカ: ナビ通りに止めれば取りこぼさない
   if (rs.plan.navi) {
     if (rs.naviOk === undefined) rs.naviOk = true;

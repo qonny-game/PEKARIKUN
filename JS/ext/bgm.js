@@ -185,7 +185,44 @@
     }
   }
   function nameOf(mode) { return mode === 'at' ? (atType === 1 ? 'heaven' : atType === 2 ? 'death' : 'at') : mode; }
+  /* ---------- CHANCE ZONE: 音源ファイル(assets/sound/bgm_cz.mp3)をクロスフェードでループ ---------- */
+  const CZF = { src: 'assets/sound/bgm_cz.mp3', len: 87.1, xf: 3.0, vol: 0.5, a: null, b: null, cur: null, timer: 0, on: false, fadeT: 0 };
+  function czMk() { const a = new Audio(CZF.src); a.preload = 'auto'; a.volume = 0; return a; }
+  function czStart() {
+    if (CZF.on) return;
+    CZF.on = true; clearInterval(CZF.fadeT);
+    if (!CZF.a) { CZF.a = czMk(); CZF.b = czMk(); }
+    const A = CZF.a, B = CZF.b;
+    [A, B].forEach(x => { x.pause(); x.currentTime = 0; x.volume = 0; });
+    CZF.cur = A; CZF.nxt = B; CZF.xfing = false;
+    const p = A.play(); if (p && p.catch) p.catch(() => { CZF.on = false; });
+    A.volume = CZF.vol;
+    clearInterval(CZF.timer);
+    CZF.timer = setInterval(() => {
+      const c = CZF.cur, n = CZF.nxt; if (!c) return;
+      const left = CZF.len - c.currentTime;
+      if (left <= CZF.xf && !CZF.xfing) { CZF.xfing = true; n.currentTime = 0; n.volume = 0; const q = n.play(); if (q && q.catch) q.catch(() => {}); }
+      if (CZF.xfing) {
+        const k = Math.min(1, Math.max(0, 1 - left / CZF.xf));   // 0→1: 等パワーのクロスフェード
+        c.volume = CZF.vol * Math.cos(k * Math.PI / 2); n.volume = CZF.vol * Math.sin(k * Math.PI / 2);
+        if (k >= 1 || c.ended) { c.pause(); c.volume = 0; CZF.cur = n; CZF.nxt = c; CZF.xfing = false; }
+      }
+    }, 80);
+  }
+  function czStop() {
+    if (!CZF.on) return;
+    CZF.on = false; clearInterval(CZF.timer);
+    const A = CZF.a, B = CZF.b; let k = 0;
+    clearInterval(CZF.fadeT);
+    CZF.fadeT = setInterval(() => {
+      k += 0.1;
+      [A, B].forEach(x => { if (x && !x.paused) x.volume = Math.max(0, x.volume * 0.7); });
+      if (k >= 0.6) { clearInterval(CZF.fadeT); [A, B].forEach(x => { if (x) { x.pause(); x.volume = 0; } }); }
+    }, 60);
+  }
   function set(mode, lvl) {
+    if (mode === 'cz') { clearInterval(ST.timer); ST.timer = 0; ST.name = null; czStart(); return; }
+    czStop();
     const name = mode ? nameOf(mode) : null;
     if (name === ST.name) { ST.lvl = lvl || 0; return; }
     clearInterval(ST.timer); ST.timer = 0; ST.name = name; ST.lvl = lvl || 0; ST.step = 0;
@@ -202,5 +239,5 @@
     const sd = 60 / SONGS[name].bpm / 4;
     for (let s = 0, t = 0.05; t < sec; s++, t += sd) playStep(ctx, name, lvl, s, t);
   }
-  window.BGM2 = { set, renderTest, SONGS };
+  window.BGM2 = { set, renderTest, SONGS, czf: CZF };
 })();

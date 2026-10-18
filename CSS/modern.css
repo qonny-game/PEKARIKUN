@@ -89,3 +89,10 @@
 .lcd-zoneintro { background: #04120c; }
 .lcd-zoneintro .zi-img { position: absolute; inset: 0; background: url(../assets/img/logo_mountain.jpg) center / cover no-repeat; animation: logo-slam .45s cubic-bezier(.16, 1.2, .3, 1) .08s both, logo-breath .3s ease-in-out .55s infinite alternate; }
 .lcd-zoneintro .zi-glint { position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .85) 50%, transparent 65%); background-size: 300% 100%; mix-blend-mode: overlay; animation: win-sweep .7s linear .5s 3; }
+
+/* RUSH突入ロゴ: PUSHを押すまで残す (PUSHボタンの背面) */
+#lcd-stage > .rush-overlay.held { z-index: 70 !important; animation: none; }
+#lcd-stage > .rush-overlay.held .rush-text { display: none; }
+
+/* HEAVEN中もメダル情報の段は通常どおり暗い背景のまま (明るい筐体色で見えにくくならないように) */
+.cabinet.at-heaven .cab-panel { background: linear-gradient(rgba(23, 16, 47, .96), rgba(11, 7, 25, .96)) !important; }

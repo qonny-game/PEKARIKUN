@@ -261,6 +261,7 @@ function atTension(n) {
 /* ボーナス揃い (7が揃った) */
 function onBonusAligned() {
   alignStage = 1;
+  if (window.czKeepClear) czKeepClear();
   const tier = BIG_TIERS[pendingTierIndex];
   markWin([3, 4, 5], tier.grand ? 'sym-glow-gold' : '');
   alignDisplay.classList.remove('show-lose');
@@ -281,7 +282,7 @@ function attemptBonus() {
     recordPoint();
     updateUI();
   }
-  startReels({ kind: 'seven', auto: true }, res => {
+  startReels({ kind: 'seven', assist: true }, res => {
     if (res.success) {
       onBonusAligned();
     } else {

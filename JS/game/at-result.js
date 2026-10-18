@@ -320,6 +320,7 @@ function stopHeartbeat() {
 
 /* ランプ状態をリセットして通常状態に戻す */
 function resetPekaState() {
+  if (window.czKeepClear) czKeepClear();
   window.pekaLit = false; window.pekaAt = null; window.sideGogo = false; window.sideAt = null; window.sideConfirm = false; window.sideRb = 0;
   isPekared = false;
   isBonusAligned = false;

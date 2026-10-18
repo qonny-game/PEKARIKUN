@@ -145,7 +145,7 @@
 .lever-btn:active i { transform: translateY(5px); box-shadow: 0 0 8px rgba(239, 68, 68, .7), 0 0 0 #450a0a; }
 
 /* CHANCE ZONE 成功: BONUS 確定! */
-.lcd-czwin { position: absolute; inset: 0; z-index: 77; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; font-family: 'Orbitron', sans-serif; font-weight: 900; font-style: italic; animation: cw-life 3s linear both; }
+.lcd-czwin { position: absolute; inset: 0; z-index: 77; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; font-family: 'Orbitron', sans-serif; font-weight: 900; font-style: italic; animation: cw-in .3s linear both; }
 .lcd-czwin .cw-bg { position: absolute; inset: 0; background: radial-gradient(circle, rgba(255, 240, 150, .9), rgba(255, 61, 113, .85) 55%, rgba(30, 5, 60, .9)); animation: cw-bgp .15s steps(2) infinite; }
 .lcd-czwin .cw-a { position: relative; font-size: 54px; line-height: 1; color: #fff; -webkit-text-stroke: 4px #9a3412; paint-order: stroke fill; text-shadow: 0 0 22px #fde047, 0 0 44px #ff6a00; animation: cw-don .15s ease-out 0s 9, cw-hue 1s linear .3s infinite; }
 .lcd-czwin .cw-b { position: relative; margin-top: 4px; font-size: 62px; line-height: 1; color: #fde047; -webkit-text-stroke: 4px #7f1d1d; paint-order: stroke fill; text-shadow: 0 0 22px #fff, 0 0 44px #f97316; animation: cw-don .15s ease-out .07s 9, cw-hue 1s linear .3s infinite; }
@@ -162,3 +162,17 @@
 /* 通常時のPUSHボタン(液晶内)も長方形 */
 .lcd-push { width: 104px; height: 42px; margin-left: -52px; border-radius: 10px; font-size: 16px; }
 .lcd-push.ready { width: 128px; height: 50px; margin-left: -64px; border-radius: 12px; font-size: 20px; }
+
+/* 確定表示を残す: 3秒の登場のあと、そのまま次ゲームへ。777が揃うまで */
+.lcd-czwin.keep { animation: none; opacity: 1; transition: opacity .4s; }
+.lcd-czwin.keep .cw-bg { animation: none; opacity: .72; }
+.lcd-czwin.keep .cw-a { font-size: 34px; animation: cw-hue 1s linear infinite; }
+.lcd-czwin.keep .cw-b { font-size: 40px; margin-top: 0; animation: cw-hue 1s linear infinite; }
+.lcd-czwin.out { opacity: 0; }
+.lcd-czwin .cw-sev { position: relative; margin-top: 8px; display: flex; flex-direction: column; align-items: center; gap: 2px; animation: cw-don .25s ease-out both; }
+.lcd-czwin .cw-sev span { display: none; }
+.lcd-czwin .cw-sev em { font-style: normal; font-size: 15px; color: #fff; letter-spacing: .05em; text-shadow: 0 0 8px #000, 0 0 14px #fde047; animation: cw-blink .5s steps(2) infinite; }
+.lcd-czwin .cw-imgs { display: flex; gap: 4px; }
+.lcd-czwin .cw-imgs img { width: 34px; height: 34px; object-fit: contain; filter: drop-shadow(0 0 6px #fde047); }
+@keyframes cw-blink { 50% { opacity: .45; } }
+@keyframes cw-in { 0% { opacity: 0; } 100% { opacity: 1; } }
