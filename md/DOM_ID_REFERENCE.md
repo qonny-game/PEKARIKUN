@@ -46,7 +46,7 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `aura` | `JS/game/bonus.js` |  |
 | `judge-overlay` | `JS/game/flow.js` |  |
 | `judge-text` | `JS/game/flow.js` |  |
-| `rush-overlay` | `JS/game/at.js` |  |
+| `rush-overlay` | `JS/game/at.js`, `JS/ext/debug.js` |  |
 | `rush-sub` | `JS/game/at.js` |  |
 | `push-overlay` | `JS/game/at.js`, `JS/ui/display.js`, `JS/ext/fx.js` |  |
 | `push-btn` | `JS/game/at.js` |  |

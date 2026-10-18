@@ -20,7 +20,7 @@
 | 14 | `JS/game/at-result.js` | ATリザルト・獲得枚数OVER・次回示唆 | 371 | atResultEl, atResultGain, arHintBar, arHintText, atResultRAF, MODES, HINT_LABELS, decideNextMode …他27 |
 | 15 | `JS/ui/display.js` | 電光掲示（LED・ランプ表示） | 219 | setOn, setLed, ledWinEl, ledCreditEl, ledTotalEl, ledWin, setLedWin, creditNow …他13 |
 | 16 | `JS/game/auto.js` | オートプレイ・サウンドボタン | 168 | autoBtn, AUTO_KEY, AUTO_SPEEDS, AUTO_STOPS, AUTO_OPT, saveAutoOpt, AUTOPLAY, autoIdle …他20 |
-| 17 | `JS/ui/settings-panel.js` | 確率設定パネル | 165 | settingsModal, settingsBody, displayRate, SETTING_ROWS, formLevel, secretBuf, buildSettingsForm, setMode …他6 |
+| 17 | `JS/ui/settings-panel.js` | 確率設定パネル | 178 | settingsModal, settingsBody, displayRate, SETTING_ROWS, formLevel, lvHist, DEBUG_SEQ, secretBuf …他8 |
 | 18 | `JS/ui/graph.js` | 当選グラフ | 131 | graphModal, graphLine, graphBars, graphSummary, LEVEL_COLORS, bonusColor, setupCanvas, drawEmpty …他3 |
 | 19 | `JS/ui/more-menu.js` | 下部バーの歯車メニュー (オート設定・リール配列・確率設定・称号 など) | 17 |  |
 | 20 | `JS/ui/modal.js` | モーダル共通・版の表示 | 28 | openModal, closeModal, versionEl, cabVerEl |
@@ -30,6 +30,7 @@
 | 24 | `JS/ext/fx.js` | 追加演出 | 1041 |  |
 | 25 | `JS/ext/lcd.js` | 演出液晶 | 790 | fitReels |
 | 26 | `JS/ext/trophy.js` | トロフィー / ミッション / ランキング | 218 |  |
+| 27 | `JS/ext/debug.js` | デバッグモード（設定ボタンを 3→2→3→3→1→2→3 の順に押すと開く／もう一度で閉じる） | 175 |  |
 
 ## その他
 

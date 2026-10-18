@@ -51,6 +51,8 @@ const SETTING_ROWS = [
 ];
 
 let formLevel = DEFAULT_LEVEL;   // 設定パネルで編集中の設定
+let lvHist = [];                // 押す前の設定（デバッグを開いたとき、押す前の設定に戻すため）
+const DEBUG_SEQ = [3, 2, 3, 3, 1, 2, 3];   // デバッグモードの合言葉（設定ボタンを押す順）
 let secretBuf = [];             // 設定ボタンの押した順 (裏コマンド判定用)
 
 function buildSettingsForm(level = formLevel, src = SETTINGS.profiles[level]) {
@@ -120,8 +122,19 @@ function setLevel(l, random = false) {
   buildSettingsForm(l);
 }
 function pressLevelButton(l) {
+  if (secretBuf.length === 0) lvHist = [];
+  lvHist.push({ l: SETTINGS.level, r: SETTINGS.random });
   secretBuf.push(l);
-  if (secretBuf.length > SECRET_SEQ.length) secretBuf.shift();
+  if (secretBuf.length > SECRET_SEQ.length) { secretBuf.shift(); lvHist.shift(); }
+  if (secretBuf.join() === DEBUG_SEQ.join() && window.toggleDebugMode) {   // デバッグモードの開閉。設定は押す前に戻す
+    const b = lvHist[0];
+    if (b && (b.l !== SETTINGS.level || b.r !== SETTINGS.random)) setLevel(b.l, b.r);
+    secretBuf = []; lvHist = [];
+    const on = window.toggleDebugMode();
+    const mc = document.querySelector('#settings-modal [data-close-modal]'); if (mc) mc.click();
+    if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; (on ? [880, 1175, 1568] : [1568, 1175, 880]).forEach((f, i) => tone(f, t + i * 0.08, 0.16, 'triangle', 0.12)); }
+    return;
+  }
   if (secretBuf.join() === SECRET_SEQ.join()) {
     setLevel(7);
     secretBuf = [];
