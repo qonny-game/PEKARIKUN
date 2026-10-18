@@ -16,6 +16,9 @@
   setTimeout(applyLite, 0);
   window.vibrate = pat => { try { if (FXO.vib && navigator.vibrate) navigator.vibrate(pat); } catch (e) { /* 非対応 */ } };
   try { Object.assign(FXO, JSON.parse(localStorage.getItem(FXO_KEY) || '{}')); } catch (e) { /* 初期値 */ }
+  // 保存値の範囲外は既定に戻す（選択肢に無い値だと設定画面の表示と動作がずれる）
+  if (!['off', 'low', 'normal', 'high'].includes(FXO.freq)) FXO.freq = 'normal';
+  if (!['normal', 'short', 'off'].includes(FXO.wait)) FXO.wait = 'normal';
   const saveFxo = () => { try { localStorage.setItem(FXO_KEY, JSON.stringify(FXO)); } catch (e) { /* 無視 */ } };
   const freqMul = () => ({ off: 0, low: 0.5, normal: 1, high: 1.6 }[FXO.freq] ?? 1);
   window.FXO_FREQ = freqMul;

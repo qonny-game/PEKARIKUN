@@ -3,6 +3,10 @@
 // 読み込み順は index.html の <script> 並びどおり。グローバル変数で共有するので順序を変えない。
 // ==========================================
 /* UIデータ更新 */
+/* クラスは状態が変わった時だけ書く（50msごとの同期で無駄な再描画を出さない） */
+function setOn(el, cls, on) {
+  if (el && el.classList.contains(cls) !== !!on) el.classList.toggle(cls, !!on);
+}
 /* ---------- 電光掲示 (7セグ風) ---------- */
 function setLed(el, n, digits) {
   if (!el) return;
@@ -44,7 +48,7 @@ function tweenLed(key, el, target, digits) {
   ledShown[key] = s;
   setLed(el, s, digits);
   const box = el.parentElement;
-  if (box) box.classList.toggle('counting', s !== target);
+  if (box) setOn(box, 'counting', s !== target);
   return s;
 }
 function tickDiff() {
@@ -52,14 +56,15 @@ function tickDiff() {
   if (diffCoins < s) s = diffCoins;
   else if (diffCoins > s) s = Math.min(diffCoins, s + Math.max(1, Math.ceil((diffCoins - s) / 5)));
   ledShown.diff = s;
-  displayDiff.textContent = s >= 0 ? `+${s}` : `${s}`;
-  displayDiff.className = `digital-font font-bold text-sm ${diffCoins >= 0 ? 'text-green-400' : 'text-red-400'}`;
+  const txt = s >= 0 ? `+${s}` : `${s}`;
+  if (displayDiff.textContent !== txt) displayDiff.textContent = txt;
+  const cls = `digital-font font-bold text-sm ${diffCoins >= 0 ? 'text-green-400' : 'text-red-400'}`;
+  if (displayDiff.className !== cls) displayDiff.className = cls;
 }
 /* STOPボタン: 押せる列は青丸、停止済み・待機中は赤丸 */
+const STOP_BTNS = [...document.querySelectorAll('.stop-btn')];
 function syncStopButtons() {
-  document.querySelectorAll('.stop-btn').forEach((b, i) => {
-    b.classList.toggle('ready', !!isReelSpinning && !!reelSpin && !reelSpin.order.includes(i));
-  });
+  STOP_BTNS.forEach((b, i) => setOn(b, 'ready', !!isReelSpinning && !!reelSpin && !reelSpin.order.includes(i)));
 }
 /* 画面の空気感: BIG中=赤金 / AT中=橙 / 通常時。body の data-mode で CSS を切り替える */
 function syncModeTheme() {
@@ -75,11 +80,11 @@ function syncPanel() {
   tickDiff();
   const idle = !isReelSpinning && !spinBtn.disabled && !reelLocked;
   const betting = isReelSpinning || (replayPending ? false : false);
-  plIds.insert.classList.toggle('on', idle && !replayPending && !bonusRun);
-  plIds.bet.classList.toggle('on', isReelSpinning && !bonusRun && !isDebugRun);
-  plIds.replay.classList.toggle('on', replayPending);
-  plIds.start.classList.toggle('on', idle);
-  plIds.wait.classList.toggle('on', reelLocked || isCounting || isSuspense || isRushing || isPushing || window.leverWaiting);
+  setOn(plIds.insert, 'on', idle && !replayPending && !bonusRun);
+  setOn(plIds.bet, 'on', isReelSpinning && !bonusRun && !isDebugRun);
+  setOn(plIds.replay, 'on', replayPending);
+  setOn(plIds.start, 'on', idle);
+  setOn(plIds.wait, 'on', reelLocked || isCounting || isSuspense || isRushing || isPushing || window.leverWaiting);
 }
 setInterval(syncPanel, 50);
 document.querySelectorAll('.stop-btn').forEach(b => {

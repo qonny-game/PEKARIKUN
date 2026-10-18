@@ -24,7 +24,6 @@ function pickAuraLevel(atWin) {
 /* ペカ!ペカ!マウンテン (AT中の当選): 5〜10G。ロゴの段階(0〜3)で上乗せの期待値が変わる */
 const ZONE_G_CHOICES = [5, 10, 20, 30, 50, 100];
 const ZONE_G_WEIGHTS = [[50, 30, 15, 5, 0, 0], [30, 30, 25, 12, 3, 0], [10, 20, 30, 25, 13, 2], [0, 5, 20, 30, 35, 10]];
-const ZONE_LOGO_NAMES = ['青', '緑', '金', '虹'];
 function makeBonusPlan(coins, opts = {}) {
   const games = opts.zone ? 5 + Math.floor(Math.random() * 6) : Math.ceil(coins / BONUS_BELL_PAY);
   const atWin = opts.atWin !== undefined ? opts.atWin : Math.random() < atEntryRateFor(coins);

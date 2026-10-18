@@ -38,6 +38,19 @@ def top_names(text, limit=8):
     more = len(out) - limit
     return ", ".join(out[:limit]) + (f" …他{more}" if more > 0 else "")
 
+CSS_DESC = {
+    "style.css": "本体のスタイル（筐体・リール・電光掲示・設定画面）",
+    "fx.css": "追加演出のスタイル（カットイン・称号・コインの山など）",
+    "lcd.css": "演出液晶（ペカり君・飛来物・示唆）のスタイル",
+    "trophy.css": "トロフィー / ミッション / ランキングのスタイル",
+    "layout4.css": "4段構成の筐体レイアウト・ゾーン開始演出",
+    "modern.css": "演出のスタイル刷新（1.20.19〜）",
+    "neon.css": "筐体デザイン（ネオン調）",
+}
+
+def css_files():
+    return sorted(os.path.basename(p) for p in glob.glob(os.path.join(ROOT, "CSS", "*.css")))
+
 def file_map():
     rows = ["# ファイルマップ（自動生成・直接編集しない）", "",
             "読み込み順（index.html）どおりに並べている。後ろのファイルほど前のものを上書き・拡張できる。", "",
@@ -50,11 +63,10 @@ def file_map():
              "| `index.html` | 本体の画面（PC/SP共通。読み込み順の定義） |",
              "| `debug.html` | 演出確認用パネル（同じJSを読む） |",
              "| `guide.html` | 攻略ガイド |",
-             "| `CSS/style.css` | 本体のスタイル |",
-             "| `CSS/fx.css` / `CSS/lcd.css` / `CSS/trophy.css` | 追加演出・液晶・トロフィーのスタイル |",
-             "| `assets/img/` | 図柄画像（7red / 7blue / 7white） |",
+             ] + [f"| `CSS/{f}` | {CSS_DESC.get(f, '')} |" for f in css_files()] + [
+             "| `assets/img/` | 図柄画像（元画像。JS/data/symimg.js に埋め込み済み）・ロゴ・パネル画像 |",
              "| `assets/img/guide/` | 攻略ガイドの画像 |",
-             "| `assets/sound/` | 効果音（gako / vvv） |", ""]
+             "| `assets/sound/` | 効果音・BGM・ボイス（mp3） |", ""]
     return "\n".join(rows)
 
 def dom_ref():

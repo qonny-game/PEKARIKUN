@@ -186,13 +186,6 @@ function stopNextReel() {
   const col = reelSpin.cols.find(x => x.state === 'spin');
   if (col) stopCol(col.c, false);
 }
-function stopByPointer(e) {
-  const rs = reelSpin;
-  if (!rs) return;
-  const r = reelsEl.getBoundingClientRect();
-  const c = Math.min(2, Math.max(0, Math.floor(((e.clientX - r.left) / r.width) * 3)));
-  if (rs.cols[c].state === 'spin') stopCol(c, false); else stopNextReel();
-}
 
 function finishReels() {
   const rs = reelSpin;

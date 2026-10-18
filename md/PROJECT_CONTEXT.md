@@ -3,19 +3,19 @@
 修正依頼の前に該当節を見て、同じ調査・同じ失敗を繰り返さないようにする。**随時更新する**（コードと同じ版で）。
 
 **関連ファイル（`md/`）**：`PROJECT_CONTEXT.md`（このファイル）／`FILE_MAP.md`（ファイル一覧・自動生成）／`DOM_ID_REFERENCE.md`（id・保存キー・自動生成）／`WORKFLOW_RULES.md`（進め方）／`GOTCHAS_GENERAL.md`（共通の落とし穴）／`GOTCHAS.md`（このアプリの落とし穴）／`UI_TERMINOLOGY.md`（呼び方→要素）／`CHANGELOG.md`
-**道具（`md/tools/`）**：`file_map.py`（目次とID一覧を再生成）／`regress.py`（旧版・新版を同じ操作で動かして比較）／`pack.py`（パッチZIP作成）
+**道具（`md/tools/`）**：`file_map.py`（目次とID一覧を再生成）／`regress.py`（旧版・新版を同じ操作で動かして比較）／`pack.py`（パッチZIP作成）／`dead_scan.py`（整理の下調べ：未使用の名前・CSS・重複宣言）／`ux_audit.py`（UXの機械チェック）。UXレビューの手順は `UX_REVIEW_TEMPLATE.md`
 
 ## 1. ファイルマップ
 ```text
 index.html        本体の画面。<script> の並び（＝読み込み順）もここで決まる
 debug.html        演出確認パネル（同じJSを読む）
 guide.html        攻略ガイド
-CSS/              style.css（本体）/ fx.css / lcd.css / trophy.css
+CSS/              style.css（本体）/ fx.css / lcd.css / trophy.css / layout4.css（4段筐体）/ modern.css・neon.css（演出・筐体のデザイン層）
 JS/data/          config.js … 数字の表（確率・枚数・設定値・リール配列・バージョン・ASSET_DIR） / symimg.js … 図柄画像のdata URI（自動生成）
 JS/core/          settings（設定の適用・保存） / state（状態変数） / audio（音） / effects（画面演出）
 JS/game/          flow（ゲーム進行の中心） / reels / reel-spin / bell / cherry / at / bonus / at-result / auto
 JS/ui/            display（電光掲示） / settings-panel / graph / modal / reel-view / boot（起動処理）
-JS/ext/           fx / lcd / trophy … 本体の関数を包んで拡張する追加層（本体の後に読む）
+JS/ext/           bgm / fx / lcd / trophy … 本体の関数を包んで拡張する追加層（本体の後に読む）
 assets/img/       7red / 7blue / 7white / bar / bell / cherry / replay / melon（図柄 360x180。本体は JS/data/symimg.js に埋め込み済み）
 assets/img/guide/ 攻略ガイドの画像
 assets/sound/     gako.mp3 / vvv.mp3
@@ -55,7 +55,7 @@ md/               このフォルダ
 - 回帰テストは通常のスピンのみを流す。ボーナス・AT突入などの経路は運任せで届きにくいので、変更がその周辺なら `debug.html` で手動確認する。
 
 
-## 5. 1.19系の構造メモ（引き継ぎ）
+## 6. 1.19系の構造メモ（引き継ぎ）
 - **演出ステージ `#lcd-stage`**（index.html の `#gogo-box` 内）: 数字・文字・キャラが動く演出はすべてここに入れる（演出液晶 `#sub-lcd` と同じ範囲、overflow hidden）。動的に作る要素も `document.getElementById('lcd-stage').appendChild(el)`。高さは CSS 変数 `--lcd-h`。
 - **`fitReels()`（ext/lcd.js）**: リールを幅に合わせて拡大し（`scale`）、残りの高さを `--lcd-h` に回す。`--reel-w` も設定する（STOPボタンをリールの真下に合わせるのに使用）。`#gogo-box` を ResizeObserver で監視。
 - **リール**: 1マス 66x34（`CELL_H`）、3x3 で 198x102。図柄は `symbolHTML(key)`（reels.js）が `<img>` を返す。画像は `SYM_IMG[key]`（data URI。JS/data/symimg.js）、無ければ `assets/img/<key>.png?v=版`、読めなければ文字/絵文字で代用。キー: 7red 7blue 7white bar bell cherry replay melon。画像を差し替えたら symimg.js を作り直す（240x120にリサイズしてbase64化）。

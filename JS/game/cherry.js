@@ -159,7 +159,6 @@ function showRoleBadge(label, coins, notes, role) {
   }
 }
 const CHERRY_NOTES = [1319, 1760, 2349];
-const MELON_NOTES = [1047, 1319, 1568, 2093];
 
 /* デバッグ用: 回さずに、止まった状態でチェリーを表示 */
 function hitCherry(isDebugCall, inAT) {

@@ -45,7 +45,6 @@ const leftCherries = g => [0, 3, 6].filter(i => g[i] === 'cherry').length;
 const ROLE_COMBOS = { lose: [], replay: [], cherry: [], cherryW: [], cherryS: [], melonW: [], chanceW: [], chanceS: [], sand: [], bell0: [], bell1: [], bell2: [] };
 /* 上段のスイカ（第1リール上段）は、スイカ系（弱=左上→右下の斜め / 強=上段横）か強チャンス目の確定のときだけ。それ以外の役・ハズレでは出さない
    強チャンス目: 第1リール上段スイカ・第2リール中段スイカ・第3リール中段スイカ（揃わない）/ 弱チャンス目: 中段リプレイ・リプレイ・ベル（揃わない） */
-const colHas = (g, c, f) => [c, 3 + c, 6 + c].some(i => f(g[i]));
 
 (function buildCombos() {
   for (let a = 0; a < STRIP_LEN; a++) for (let b = 0; b < STRIP_LEN; b++) for (let c = 0; c < STRIP_LEN; c++) {

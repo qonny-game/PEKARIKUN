@@ -11,11 +11,12 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `sound-toggle-btn` | `JS/game/auto.js` |  |
 | `graph-btn` | `JS/ui/modal.js` |  |
 | `more-btn` | `JS/ui/more-menu.js` |  |
-| `more-menu` | `JS/ui/more-menu.js` |  |
+| `more-menu` | `JS/ui/display.js`, `JS/ui/more-menu.js` |  |
 | `auto-opt-btn` | `JS/game/auto.js`, `JS/ext/fx.js`, `JS/ext/trophy.js` |  |
 | `reel-btn` | `JS/ui/reel-view.js` |  |
 | `settings-btn` | `JS/ui/modal.js` |  |
 | `reset-btn` | `JS/ui/display.js` |  |
+| `app-version` | `JS/ui/modal.js` |  |
 | `display-diff` | `JS/core/state.js` |  |
 | `display-rate` | `JS/ui/settings-panel.js` |  |
 | `side-l` | `JS/game/flow.js` |  |
@@ -70,6 +71,7 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `side-r` | `JS/game/flow.js` |  |
 | `align-display` | `JS/core/state.js`, `JS/ext/lcd.js` |  |
 | `reels` | `JS/core/state.js`, `JS/ext/lcd.js` |  |
+| `lever-btn` | `JS/ui/display.js` |  |
 | `pl-insert` | （HTMLのみ） |  |
 | `pl-bet` | （HTMLのみ） |  |
 | `pl-replay` | （HTMLのみ） |  |
@@ -78,10 +80,10 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `led-win` | `JS/ui/display.js` |  |
 | `led-credit` | `JS/ui/display.js` |  |
 | `led-total` | `JS/ui/display.js` |  |
+| `auto-btn` | `JS/game/auto.js` |  |
+| `cab-version` | `JS/ui/modal.js` |  |
 | `spin-btn` | `JS/core/state.js` |  |
 | `align-btn` | `JS/core/state.js` |  |
-| `auto-btn` | `JS/game/auto.js` |  |
-| `app-version` | `JS/ui/modal.js` |  |
 | `graph-modal` | `JS/ui/graph.js` |  |
 | `graph-summary` | `JS/ui/graph.js` |  |
 | `graph-line` | `JS/ui/graph.js` |  |

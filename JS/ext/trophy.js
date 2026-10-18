@@ -9,6 +9,7 @@
   const KEY = 'pekari-tro-v1';
   const D = { c: {}, t: {}, xp: 0, last: '', streak: 0, days: 0, daily: null, lb: {} };
   try { Object.assign(D, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { /* 初期値 */ }
+  ['c', 't', 'lb'].forEach(k => { if (!D[k] || typeof D[k] !== 'object') D[k] = {}; });   // 壊れた保存値の防御
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(D)); } catch (e) { /* 無視 */ } };
   const dateStr = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const isDbg = () => (typeof isDebugRun !== 'undefined' && isDebugRun) || (typeof SETTINGS !== 'undefined' && SETTINGS.level === 7);

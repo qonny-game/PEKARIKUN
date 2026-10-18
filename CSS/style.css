@@ -47,10 +47,6 @@ body {
 #fx-overlay[class*="fx-"] { opacity: 1; }
 
 /* REG : ピンク脈動 */
-#fx-overlay.fx-reg {
-  background: radial-gradient(circle at 50% 45%, #ff3d9a 0%, #ff007f 35%, #880044 75%, #2a0013 100%);
-  animation: fx-pulse 0.6s infinite alternate;
-}
 /* BIG 1 (200枚) : ブルーウェーブ */
 #fx-overlay.fx-t1 {
   background: radial-gradient(circle at 50% 45%, #7cb8ff 0%, #2563eb 40%, #0b2a7a 80%, #050b1f 100%);
@@ -216,73 +212,14 @@ body {
 }
 
 /* 777 BIGテキスト (ティア色 --glow に連動) */
-.text-777-big {
-  display: inline-block;
-  color: #ffffff;
-  font-family: 'Orbitron', sans-serif;
-  font-weight: 900;
-  letter-spacing: 2px;
-  text-shadow: 0 0 10px #ffffff, 0 0 20px var(--glow), 0 0 40px var(--glow), 0 0 60px var(--glow);
-  animation: big-glow 0.6s infinite alternate;
-}
-@keyframes big-glow {
-  0% { filter: brightness(1); transform: scale(1); }
-  100% { filter: brightness(1.5); transform: scale(1.03); }
-}
 
 /* 777 GOLD (1000枚) */
-.text-777-gold {
-  display: inline-block;
-  color: #fff8c4;
-  font-family: 'Orbitron', sans-serif;
-  font-weight: 900;
-  letter-spacing: 3px;
-  text-shadow: 0 0 10px #ffffff, 0 0 20px #ffd700, 0 0 40px #ffb300, 0 0 70px #ff9900;
-  animation: big-glow 0.3s infinite alternate;
-}
 
 /* 777 RAINBOW (2000枚) */
-.text-777-super {
-  display: inline-block;
-  color: #ffffff;
-  font-family: 'Orbitron', sans-serif;
-  font-weight: 900;
-  letter-spacing: 3px;
-  text-shadow: 0 0 10px #ffffff, 0 0 20px #00ffff, 0 0 40px #ff00ff, 0 0 60px #ffff00;
-  animation: super-glow 0.35s infinite alternate;
-}
-@keyframes super-glow {
-  0% { filter: hue-rotate(0deg) brightness(1.2); transform: scale(1); }
-  100% { filter: hue-rotate(360deg) brightness(1.8); transform: scale(1.1); }
-}
 
 /* 77 REGテキスト */
-.text-777-reg {
-  color: #ffffff;
-  font-family: 'Orbitron', sans-serif;
-  font-weight: 900;
-  letter-spacing: 2px;
-  text-shadow: 0 0 10px #ffffff, 0 0 20px #00ffcc, 0 0 40px #00ffcc;
-}
 
 /* スロット実機風BAR図柄 */
-.bar-symbol {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(180deg, #3f3f46 0%, #000000 50%, #18181b 100%);
-  color: #ffffff;
-  border: 3px solid #fbbf24;
-  border-radius: 8px;
-  padding: 2px 14px;
-  font-family: 'Noto Sans JP', sans-serif;
-  font-weight: 900;
-  letter-spacing: 3px;
-  box-shadow: inset 0 0 10px rgba(255,255,255,0.4), 0 0 20px #00ffcc;
-  text-shadow: 0 0 8px #ffffff;
-  transform: translateY(-4px);
-  line-height: 1;
-}
 
 /* ==========================================
    揃い図柄 (777 / BAR BAR BAR) リール風表示
@@ -330,16 +267,6 @@ body {
 .reels .sym-bar { width: 62px; padding: 5px 0; font-size: 1rem; border-width: 2px; flex: none; }
 .reels .sym-seven { font-size: 2.9rem; flex: none; }
 .sym-glow-gold { filter: drop-shadow(0 0 10px #ffd700) drop-shadow(0 0 18px #ffb300); }
-.sym-glow-mega { animation: sym-mega-glow 0.6s linear infinite; }
-@keyframes sym-mega-glow {
-  0%   { filter: drop-shadow(0 0 12px #ff0000) drop-shadow(0 0 20px #ff0000); }
-  17%  { filter: drop-shadow(0 0 12px #ffee00) drop-shadow(0 0 20px #ffee00); }
-  34%  { filter: drop-shadow(0 0 12px #00e040) drop-shadow(0 0 20px #00e040); }
-  50%  { filter: drop-shadow(0 0 12px #00c8ff) drop-shadow(0 0 20px #00c8ff); }
-  67%  { filter: drop-shadow(0 0 12px #3355ff) drop-shadow(0 0 20px #3355ff); }
-  84%  { filter: drop-shadow(0 0 12px #ff00ff) drop-shadow(0 0 20px #ff00ff); }
-  100% { filter: drop-shadow(0 0 12px #ff0000) drop-shadow(0 0 20px #ff0000); }
-}
 
 /* 赤7 */
 .sym-seven {
@@ -354,19 +281,7 @@ body {
   filter: drop-shadow(2px 0 0 #3a0000) drop-shadow(-2px 0 0 #3a0000) drop-shadow(0 2px 0 #3a0000) drop-shadow(0 -2px 0 #3a0000);
 }
 /* 金7 (1000枚) */
-.sym-seven.sym-seven-gold {
-  background: linear-gradient(180deg, #fffbd0 0%, #ffd700 45%, #a06a00 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-}
 /* 虹7 (2000枚) */
-.sym-seven.sym-seven-rainbow {
-  background: linear-gradient(90deg, #ff0000, #ff9900, #ffee00, #00e040, #00c8ff, #3355ff, #d000ff, #ff0000);
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  animation: rainbow-slide 0.8s linear infinite;
-}
 /* BARプレート */
 .sym-bar {
   width: 90%;
@@ -492,13 +407,6 @@ body {
 main { overflow: visible !important; }
 
 /* 上乗せの鼓動演出: 数字エリアがドクンと脈打つ */
-.payout-display.suspense { animation: suspense-pulse 0.9s ease-in-out infinite; }
-@keyframes suspense-pulse {
-  0%, 100% { transform: scale(1);    filter: brightness(1); }
-  20%      { transform: scale(1.06); filter: brightness(1.5); }
-  35%      { transform: scale(0.98); filter: brightness(0.8); }
-  50%      { transform: scale(1.04); filter: brightness(1.3); }
-}
 
 /* モーダル (当選グラフ / 確率設定) */
 .modal {
@@ -946,15 +854,6 @@ main { overflow: visible !important; }
 .ar-hint b[data-lv="3"] { color: #fca5a5; }
 
 /* レバー操作ガイド (リール表示エリアをタップ) */
-.tap-hint {
-  text-align: center;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #e2e8f0;
-  padding: 8px 0;
-}
-.tap-hint.off { color: #94a3b8; }
 
 /* 設定ボタン (設定1〜6) */
 .set-levels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px; }
@@ -1191,7 +1090,6 @@ main { overflow: visible !important; }
   touch-action: manipulation;
 }
 .stop-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #4a0505; }
-.cab-panel .tap-hint { padding: 6px 0 0; font-size: 12px; }
 
 /* ペカ演出バリエーション */
 .gogo-lamp.fx-gakkun .gogo-text { animation: gakkun 0.9s steps(1) both; }
@@ -1212,7 +1110,6 @@ main { overflow: visible !important; }
 .ar-trophy svg { width: 34px; height: 34px; filter: drop-shadow(0 0 6px var(--tc, #fff)); }
 .ar-trophy b { color: var(--tc, #fff); font-size: 14px; }
 .ar-trophy.t6 svg { animation: rb-hue 1.2s linear infinite; }
-.at-result-gain.lucky { text-shadow: 0 0 14px #fde047, 0 0 28px #f59e0b; box-shadow: none; }
 .at-result-stats { flex-wrap: wrap; }
 
 /* PEKA CHANCE! (ボーナス消化中のロゴ。PEKA RUSHとは別演出) */
@@ -1731,8 +1628,6 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 }
 
 /* 1.19.15 下部バーは1行 (AUTO / 音 / グラフ / 歯車)。ほかの操作は歯車のメニューへ */
-.bottom-bar { position: relative; display: flex; align-items: center; gap: 8px; padding: 4px 0; background: none; }
-.bottom-bar button { cursor: pointer; }
 .bb-auto {
   flex: 1; padding: 9px 0; border-radius: 10px; border: none;
   background: rgba(255, 255, 255, 0.1); color: #f1f5f9;
@@ -1877,7 +1772,6 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 .dc-icons .bb-ico { width: 32px; height: 30px; border-radius: 8px; }
 .dc-icons .bb-ico svg { width: 18px; height: 18px; }
 .dc-icons .more-menu { right: 0; top: calc(100% + 8px); bottom: auto; }
-.bottom-bar { padding: 4px 0 0; }
 .cab-panel { gap: 4px; }
 .panel-lamps { gap: 2px 2px; }
 .pl { font-size: 7px; padding: 1px 3px; }
@@ -1935,7 +1829,6 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 /* 1.19.36 サイドランプは上半分。下半分に PEKA RUSH / PEKA CHANCE 専用ランプ（それぞれの最中だけ光る） */
 .side-lamp { position: relative; box-sizing: border-box; padding-bottom: var(--side-h2, 200px); }
 .side-lamp i { font-size: min(21px, calc(var(--side-h2, 200px) / 10.5)); }
-.side-lamp .rl-box { position: absolute; left: 0; right: 0; bottom: 2px; display: flex; flex-direction: column; align-items: center; gap: 10px; pointer-events: none; }
 .rl { display: block; writing-mode: vertical-rl; text-orientation: upright; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: clamp(7px, calc(var(--side-h2, 200px) / 24), 11px); line-height: 1.02; letter-spacing: 0; white-space: nowrap; color: #3a2d70; -webkit-text-stroke: .5px rgba(120, 100, 200, .45); padding: 4px 3px; border-radius: 8px; border: 1px solid rgba(120, 100, 200, .3); transition: color .2s; }
 .rl.rush.lit { color: #fff; -webkit-text-stroke: 0; border-color: #ff7a45; background: rgba(255, 90, 40, .22); text-shadow: 0 0 6px #ff3b30, 0 0 14px #ff9d00; animation: rl-rush .35s ease-in-out infinite alternate; }
 .rl.chance.lit { color: #fff; -webkit-text-stroke: 0; border-color: #67e8f9; background: rgba(56, 189, 248, .22); text-shadow: 0 0 6px #22d3ee, 0 0 14px #f472b6; animation: rl-chance .5s ease-in-out infinite alternate; }
@@ -1944,4 +1837,3 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 
 /* サイドの PEKA CHANCE / PEKA RUSH ランプを大きく */
 .rl { font-size: clamp(10px, calc(var(--side-h2, 200px) / 15), 16px); padding: 6px 4px; border-width: 1.5px; border-radius: 10px; }
-.side-lamp .rl-box { bottom: 3px; }

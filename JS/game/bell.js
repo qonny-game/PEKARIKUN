@@ -8,11 +8,6 @@ const BELL_TYPES = [
   { name: '斜め左上から', coins: 1 },   // 左上 → 右下
   { name: '斜め左下から', coins: 15 }   // 左下 → 右上
 ];
-const BELL_LINES = {
-  0: [[0, 1, 2], [3, 4, 5], [6, 7, 8]],
-  1: [[0, 4, 8]],
-  2: [[2, 4, 6]]
-};
 function pickBellType(inAT) {
   return weightedPick(inAT ? AT_BELL_WEIGHTS : BELL_WEIGHTS);
 }

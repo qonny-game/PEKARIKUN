@@ -86,9 +86,6 @@
 .fx-whisper { left: 0; right: 0; bottom: 16px; text-align: center; color: #cbd5f5; font-size: 12px; letter-spacing: .2em; text-shadow: 0 0 6px #000; animation: fx-fade 2.6s both; }
 
 /* ---- 称号 ---- */
-.fx-ach { left: 8px; right: 8px; top: 6px; padding: 5px 10px; border-radius: 8px; background: linear-gradient(90deg, rgba(20, 30, 70, .95), rgba(60, 40, 110, .95)); border: 1px solid #ffd23f; color: #fff; font-size: 11px; font-weight: 800; display: flex; gap: 8px; align-items: center; animation: fx-ach 2.8s both; box-shadow: 0 0 14px rgba(255, 210, 63, .5); }
-.fx-ach b { color: #ffd23f; letter-spacing: .08em; font-size: 10px; }
-@keyframes fx-ach { 0% { transform: translateY(-140%); } 12%, 84% { transform: translateY(0); } 100% { transform: translateY(-140%); } }
 
 /* ---- 筐体全体 ---- */
 .cabinet.fx-glow .cab-lcd { animation: fx-glow 1.2s ease-in-out infinite alternate; }
@@ -121,9 +118,6 @@
 .ach-sum { font-size: 12px; color: #94a3b8; margin: 4px 0 8px; }
 
 /* コインの山 (獲得枚数に応じて積もる) */
-.fx-pile { left: 0; right: 0; bottom: 0; height: 4px; transition: height .6s ease-out;
-  background: radial-gradient(circle at 8px 10px, #ffe27a 0 5px, #b8860b 6px 7px, transparent 8px) 0 0 / 16px 14px repeat-x,
-    linear-gradient(#e0a800, #7a4a00); border-top: 2px solid #ffd23f; opacity: .85; }
 
 /* 通常時の追加予告 */
 .fx-pv { position: absolute; left: 6px; right: 6px; top: 74px; bottom: 8px; z-index: 40; display: flex; align-items: center; justify-content: center; pointer-events: none; overflow: hidden; border-radius: 10px;

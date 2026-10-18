@@ -215,7 +215,6 @@
 @keyframes wx-flash { 0%,50%,100% { background: rgba(10,20,50,.35); } 10%,30% { background: rgba(255,255,255,.8); } }
 
 /* 2択: 「どっち？」は図柄の上に重ならないよう配置 */
-.lcd-hint .lh-q { position: absolute; left: 0; right: 0; bottom: calc(50% + 34px); text-align: center; font-family: 'Orbitron', 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 20px; letter-spacing: .08em; color: #fff; -webkit-text-stroke: 0; text-shadow: 0 0 10px #22d3ee, 0 0 18px #f472b6, 0 2px 3px rgba(0, 0, 0, .9); }
 
 /* ボーナス/AT中: 上の残りG表示を小さくし、タグは重ならないよう下へ */
 .cab-lcd .at-status.on, .gogo-lamp .at-status.on { font-size: 10px; gap: 6px; line-height: 1.1; }
