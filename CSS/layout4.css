@@ -158,3 +158,7 @@
 .rl.gogo.rb .gogo-text { color: #fff; animation: gg-rb .18s steps(2) infinite, gg-hue .7s linear infinite !important; text-shadow: 0 0 6px #fff, 0 0 14px #f0abfc, 0 0 28px #38bdf8, 0 0 44px #fde047; }
 @keyframes gg-rb { 0% { opacity: 1; } 50% { opacity: .15; } }
 @keyframes gg-hue { to { filter: hue-rotate(360deg) brightness(1.6); } }
+
+/* 通常時のPUSHボタン(液晶内)も長方形 */
+.lcd-push { width: 104px; height: 42px; margin-left: -52px; border-radius: 10px; font-size: 16px; }
+.lcd-push.ready { width: 128px; height: 50px; margin-left: -64px; border-radius: 12px; font-size: 20px; }
