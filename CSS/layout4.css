@@ -48,7 +48,7 @@
 .rl small.rk.dt { color: #fca5a5; text-shadow: 0 0 6px #ef4444; }
 .rl.cz.lit { color: #fff; -webkit-text-stroke: 0; border-color: #a3e635; background: rgba(132, 204, 22, .22); text-shadow: 0 0 6px #84cc16, 0 0 14px #facc15; animation: rl-chance .5s ease-in-out infinite alternate; }
 .rl.mtn.lit { color: #fff; -webkit-text-stroke: 0; border-color: #f0abfc; background: rgba(217, 70, 239, .24); text-shadow: 0 0 6px #e879f9, 0 0 14px #fde047; animation: rl-rush .35s ease-in-out infinite alternate; }
-.rl.gogo.lit { color: #fff; -webkit-text-stroke: 0; border-color: #fde047; background: rgba(250, 204, 21, .3); text-shadow: 0 0 6px #facc15, 0 0 16px #f97316; animation: rl-rush .3s ease-in-out infinite alternate; }
+
 
 /* 5段目: 筐体下部のラベルパネル */
 .cab-label { position: relative; border-top: 1px solid rgba(124, 92, 214, .7); padding: 10px 14px 12px; text-align: center; overflow: hidden; background: linear-gradient(180deg, #1b1240 0%, #0b0719 55%, #1a0f3a 100%); }
@@ -83,3 +83,28 @@
 .led-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1.2fr) 42px; }
 .led-row .bb-auto { width: 42px; padding: 10px 0; }
 @media (max-width: 400px) { .led-row .dg { font-size: 18px; } }
+
+/* サイドのGOGO!ランプ: 液晶のGOGO!と同じ文字・同じ光り方 */
+.rl.gogo { writing-mode: horizontal-tb; border-color: rgba(120, 100, 200, .3); background: transparent; padding: 5px 2px; overflow: visible; }
+.rl.gogo .gogo-text { display: block; font-family: inherit; font-weight: 900; font-style: italic; font-size: clamp(14px, 4.4vw, 19px); letter-spacing: -.04em; line-height: 1; transform: rotate(-3deg) scaleY(1.1); -webkit-text-stroke: 0; }
+.rl.gogo.lit { border-color: transparent; background: transparent; animation: none; text-shadow: none; }
+
+/* 3段目の左右: リールの高さいっぱいに2段(右)/3段(左)でぴっちり並べる */
+.rr-icon { align-self: center; height: var(--reel-h, 102px); gap: 4px; align-items: stretch; justify-content: stretch; }
+.rr-icon .rl { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: clamp(7.5px, 2.3vw, 10.5px); line-height: 1.1; padding: 1px 1px; box-sizing: border-box; }
+.rr-icon .rl.gogo { display: flex; }
+.rl.mtn { font-size: clamp(7px, 2.1vw, 9.5px); }
+
+/* PEKA PEKA MOUNTAIN 開始演出 */
+.lcd-zoneintro { position: absolute; inset: 0; z-index: 76; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; font-family: 'Orbitron', sans-serif; font-weight: 900; font-style: italic; animation: zi-life 3.5s linear both; }
+.lcd-zoneintro .zi-bg { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, #fff7ae 0%, #ffb300 28%, #ff3d71 62%, #3b0764 100%); animation: zi-bgp .5s ease-in-out infinite alternate; }
+.lcd-zoneintro .zi-rays { position: absolute; left: 50%; top: 50%; width: 260%; aspect-ratio: 1; margin: -130% 0 0 -130%; background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, .95) 0 3deg, transparent 3deg 9deg); -webkit-mask: radial-gradient(circle, transparent 12%, #000 60%); mask: radial-gradient(circle, transparent 12%, #000 60%); animation: zi-spin 2.6s linear infinite; mix-blend-mode: soft-light; }
+.lcd-zoneintro .zi-rays.b { background: repeating-conic-gradient(from 4deg, rgba(255, 240, 150, .8) 0 2deg, transparent 2deg 12deg); animation: zi-spin 1.7s linear infinite reverse; mix-blend-mode: screen; opacity: .6; }
+.lcd-zoneintro .zi-a { position: relative; font-size: 44px; line-height: 1; color: #fff; -webkit-text-stroke: 4px #9a3412; paint-order: stroke fill; text-shadow: 0 0 16px #fde047, 0 0 34px #ff6a00; animation: zi-slam .45s cubic-bezier(.2, 1.7, .4, 1) .1s both; }
+.lcd-zoneintro .zi-b { position: relative; margin-top: 2px; font-size: 46px; line-height: 1; color: #fde047; -webkit-text-stroke: 4px #7f1d1d; paint-order: stroke fill; text-shadow: 0 0 18px #fff, 0 0 40px #f97316; animation: zi-slam .55s cubic-bezier(.2, 1.7, .4, 1) 1.1s both, zi-hue 1s linear 1.7s infinite; white-space: nowrap; }
+.lcd-zoneintro .zi-c { position: relative; margin-top: 8px; font-size: 14px; letter-spacing: .5em; color: #fff; text-shadow: 0 0 10px #f472b6; animation: zi-slam .4s ease-out 1.5s both; }
+@keyframes zi-life { 0% { opacity: 0; } 4% { opacity: 1; } 88% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes zi-slam { 0% { transform: scale(5) rotate(-10deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+@keyframes zi-spin { to { transform: rotate(360deg); } }
+@keyframes zi-bgp { from { filter: brightness(1); } to { filter: brightness(1.35) saturate(1.3); } }
+@keyframes zi-hue { to { filter: hue-rotate(360deg); } }

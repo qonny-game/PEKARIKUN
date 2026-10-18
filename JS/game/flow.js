@@ -86,7 +86,15 @@ function pickPekaAt() {
   for (const [k, v] of w) { x -= v; if (x < 0) return k; }
   return 'end';
 }
+/* サイドのGOGO!ランプだけが、液晶のランプより先に光ることがある (ボーナス確定のゲームだけ) */
+window.sideAt = null; window.sideGogo = false;
+function sideEarly(at) {
+  if (window.sideAt !== at || window.sideGogo) return;
+  window.sideGogo = true;
+  if (soundEnabled) { initAudio(); tone(1568, audioCtx.currentTime, 0.3, 'triangle', 0.08); tone(2093, audioCtx.currentTime + 0.1, 0.4, 'triangle', 0.06); }
+}
 function lampEarly(at) {   // 先に点灯させる(ボーナス確定のゲームだけ)
+  sideEarly(at);
   if (window.pekaAt !== at || window.pekaLit || isPekared || pendingBonusType !== 'BIG') return;
   window.pekaLit = true;
   lightLamp();
@@ -137,7 +145,7 @@ function triggerPekari(forceFx) {
     pekaLater(armPekari, 500);
   } else if (fx === 'freeze') {
     // フリーズ風: 暗転 → 鼓動 → ドン! と点灯
-    startTension('FREEZE');
+    startTension('');
     pekaLater(() => {
       stopTension();
       lightLamp('peka-rainbow');
@@ -478,6 +486,11 @@ function handleSpin() {
     pendingPlan = null;
     replayPending = false;
     window.pekaAt = isDebugRun ? 'end' : pickPekaAt(); window.pekaLit = false;
+    {
+      const ORD = ['lever', 'fx', 's2', 's3', 'end'], pi = ORD.indexOf(window.pekaAt);
+      window.sideGogo = false;
+      window.sideAt = (!isDebugRun && pi > 0 && Math.random() < 0.4) ? ORD[Math.floor(Math.random() * pi)] : null;   // 液晶より前のタイミングで、サイドだけ光る
+    }
     lampEarly('lever');
     if (inAT && atRun) atRun.bonuses++;
     cherryGames = 0;

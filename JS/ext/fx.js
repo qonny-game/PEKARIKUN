@@ -532,7 +532,6 @@
     unlock('freeze');
     cab.classList.add('fx-noise');
     wait(1100, () => cab.classList.remove('fx-noise'));
-    showBanner('...!?', 'FREEZE', 'red', true, 1600);
     st.fromFreeze = true;
     _freezeToZone(debug);
   };
@@ -560,6 +559,7 @@
     st.combo = 0; hideCombo();
     if (!plan.zone) unlock('first_peka');
     _beginBonus(plan);
+    if (plan.zone && !plan.debug && !isDebugRun && window.LCDX && LCDX.zoneIntro) { st.zoneIntroEnd = Date.now() + 3400; LCDX.zoneIntro(); }
   };
   /* PEKA! PEKA! MOUNTAIN! の最初のゲームの前に、カウントダウン (レバー1回目をここで受ける) */
   const _bonusGame = bonusGame;
@@ -568,10 +568,10 @@
     if (b && b.zone && b.played === 0 && !b.intro && !b.debug && !isDebugRun) {
       b.intro = true;
       const fz = st.fromFreeze; st.fromFreeze = false;
-      FX.hold(1300 + 3 * 750 + 200);
-      showBanner('MOUNTAIN!', fz ? 'FREEZE BONUS' : 'ZONE START', 'blue', false, 1500);
-      [3, 2, 1].forEach((n, i) => wait(1300 + i * 750, () => { put('fx-count warn', String(n), 800); snd([440 + n * 110], 0, 0.2, 'square', 0.12); }));
-      wait(1300 + 3 * 750 + 100, () => { _bonusGame(); });
+      const base = Math.max(0, (st.zoneIntroEnd || 0) - Date.now()) + 200;   // 開始演出(どどーん)が終わってからカウントダウン
+      FX.hold(base + 3 * 750 + 200);
+      [3, 2, 1].forEach((n, i) => wait(base + i * 750, () => { put('fx-count warn', String(n), 800); snd([440 + n * 110], 0, 0.2, 'square', 0.12); }));
+      wait(base + 3 * 750 + 100, () => { _bonusGame(); });
       return;
     }
     _bonusGame();

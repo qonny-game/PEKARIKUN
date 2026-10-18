@@ -149,6 +149,21 @@
       else symShow(h);
     }
   }
+  /* PEKA PEKA MOUNTAIN 開始: ロゴをどどどーんと大きく、集中線の豪華な背景で (約3.4秒) */
+  function zoneIntro() {
+    if (isDebugRun || !stageEl) return;
+    const E = document.createElement('div');
+    E.className = 'lcd-zoneintro';
+    E.innerHTML = '<i class="zi-bg"></i><i class="zi-rays"></i><i class="zi-rays b"></i><span class="zi-a">PEKA PEKA</span><b class="zi-b">MOUNTAIN!</b><em class="zi-c">SPECIAL ZONE</em>';
+    stageEl.appendChild(E);
+    setTimeout(() => E.remove(), 3500);
+    const at = (ms, f) => setTimeout(f, ms);
+    const don = (lv) => { if (window.shakeMain) shakeMain(260 + lv * 120); burst(); if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(70 - lv * 8, t, 0.5, 'sine', 0.35); tone(150 + lv * 40, t, 0.14, 'square', 0.12); } };
+    at(150, () => don(0)); at(650, () => don(1)); at(1250, () => { don(2); swoosh(3); act('jump'); });
+    [1250, 1600, 2000, 2500].forEach((t, i) => at(t, () => spawn(i % 2 ? 'star' : 'fire', 3)));
+    for (let i = 0; i < 18; i++) at(1300 + i * 80, () => spawn('coin', 3));
+    if (soundEnabled) { initAudio(); const t0 = audioCtx.currentTime + 1.25; [523, 659, 784, 1047, 1319, 1568, 2093, 2637].forEach((f, i) => tone(f, t0 + i * 0.07, 0.4, 'triangle', 0.12)); }
+  }
   /* サンド目が揃った: BARの次にすごい役。スイカ・チェリーより豪華に */
   function sandWin(n) {
     if (isDebugRun || !stageEl) return;
@@ -175,7 +190,7 @@
     hold = 0; m1.textContent = ''; m2.textContent = ''; msg.classList.remove('pop');
     if (!(pushPlan && !pushPlan.done)) pushEl.className = 'lcd-push';
   }
-  window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0), pair, hintStop, clearAll, sandWin, preHint, spinStart, hintClear, hint: hintShow, tag, miss: () => missMark(), story: (i, n, l) => story(i, n, l), don: n => { if (n >= 3) forceLv = 2; }, donWin: role => { forceLv = 2; const h = planHint(role || 'lose'); if (h) { hints.push(h); showHint(h); } } };
+  window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0), pair, hintStop, clearAll, sandWin, zoneIntro, preHint, spinStart, hintClear, hint: hintShow, tag, miss: () => missMark(), story: (i, n, l) => story(i, n, l), don: n => { if (n >= 3) forceLv = 2; }, donWin: role => { forceLv = 2; const h = planHint(role || 'lose'); if (h) { hints.push(h); showHint(h); } } };
   let hold = 0;
   function say(a, b, ms, md, an) {
     m1.textContent = a || ''; m2.textContent = b || '';
@@ -589,9 +604,16 @@
     const cz = !inBonus && !rush && (czLeft > 0 || (window.czFrozen != null && zenchoLeft > 0));
     document.querySelectorAll('.rl.cz').forEach(e => e.classList.toggle('lit', !!cz));
     document.querySelectorAll('.rl.mtn').forEach(e => e.classList.toggle('lit', !!(inBonus && bonusRun.zone)));
-    document.querySelectorAll('.rl.gogo').forEach(e => e.classList.toggle('lit', !!window.pekaLit));
+    /* サイドのGOGO!ランプ: 液晶のGOGO!と同じ見た目・同じ色。液晶より先に光ることもある(ボーナス確定のゲームだけ) */
+    const gl = !!(gogoBox.classList.contains('peka') || window.sideGogo);
+    document.querySelectorAll('.rl.gogo').forEach(e => {
+      const tn = (typeof pendingDisplayIndex === 'number' ? pendingDisplayIndex : 0) + 1;
+      const cls = gl ? `rl gogo lit peka tier-${tn}` : 'rl gogo';
+      if (e.className !== cls) e.className = cls;
+      if (gl && typeof BIG_TIERS !== 'undefined' && BIG_TIERS[tn - 1]) e.style.setProperty('--glow', BIG_TIERS[tn - 1].glow);
+    });
     document.querySelectorAll('.rl.rush .rk').forEach(e => { const t = rush ? (['', 'HEAVEN', 'DEATH'][atType] || '') : ''; if (e.textContent !== t) e.textContent = t; e.className = 'rk' + (atType === 1 ? ' hv' : atType === 2 ? ' dt' : ''); });
-  }, 200);
+  }, 100);
   /* PEKA CHANCE中、背景(オーラ)の色が昇格したら LEVEL UP! */
   const AURA_NAME = ['白', '青', '黄', '緑', '赤', '金', '虹'];
   const _setAura = window.setAura;
