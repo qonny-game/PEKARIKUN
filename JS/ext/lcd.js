@@ -579,7 +579,23 @@
   };
   window.onCzEnd = function () { if (isDebugRun) return; setTimeout(() => { if (czLeft === 0 && !window.czHoldNow) say('', 'ゾーン終了…', 2800, 'sad', 'sad'); }, 400); };   // 連続演出でHOLDされたら終了しない
   window.onCzHold = function () { if (isDebugRun) return; setTimeout(() => { act('hop'); }, 100); };
-  window.onCzSuccess = function () { if (isDebugRun) return; setTimeout(() => { tag('CHANCE ZONE 成功  ボーナス確定', 'f3', 3200); say('SUCCESS!!', 'ボーナス確定', 2600, 'shock', 'jump'); burst(); }, 600); };
+  window.onCzSuccess = function () {
+    if (isDebugRun || !stageEl) return;
+    setTimeout(() => {   // 液晶に「BONUS 確定!」だけを、どどどどどん!と連打で大きく表示 (トーストなし)
+      const E = document.createElement('div');
+      E.className = 'lcd-czwin';
+      E.innerHTML = '<i class="cw-bg"></i><span class="cw-a">BONUS</span><b class="cw-b">確定!</b>';
+      stageEl.appendChild(E);
+      setTimeout(() => E.remove(), 3000);
+      act('jump'); swoosh(3);
+      for (let i = 0; i < 9; i++) setTimeout(() => {
+        if (window.shakeMain) shakeMain(140); burst();
+        if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(72 + (i % 3) * 10, t, 0.3, 'sine', 0.3); tone(160 + i * 18, t, 0.08, 'square', 0.1); }
+      }, 100 + i * 150);
+      for (let i = 0; i < 10; i++) setTimeout(() => spawn('coin', 3), 900 + i * 90);
+      if (soundEnabled) { initAudio(); const t0 = audioCtx.currentTime + 1.4; [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => tone(f, t0 + i * 0.07, 0.4, 'triangle', 0.12)); }
+    }, 400);
+  };
   /* ハマり中のひとこと: ペカり君が励ます。250G超えで救済(当選率UP)が始まる */
   const HAMARI = [[150, 'ちょっとハマり気味…', 'sad'], [250, '救済スタート！', 'jump'], [400, 'がんばれ！', 'jump'], [600, '絶対くるよ！', 'cross'], [800, 'もう少し…！', 'jump']];
   let hamariG = 0;

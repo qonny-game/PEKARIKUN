@@ -136,3 +136,20 @@
 
 /* バージョン表示: 筐体右下に小さく */
 .cab-ver { position: absolute; right: 22px; bottom: 4px; z-index: 2; font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: .08em; color: rgba(165, 180, 252, .65); pointer-events: none; }
+
+/* レバーボタン: リール停止エリアの左 */
+.cabinet > .stop-row { position: relative; }
+.lever-btn { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); width: 44px; padding: 3px 0 4px; border: 1px solid rgba(255, 255, 255, .2); border-radius: 10px; background: linear-gradient(#2a1f55, #120a2a); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; touch-action: manipulation; }
+.lever-btn i { width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fecaca, #ef4444 45%, #7f1d1d); box-shadow: 0 0 8px rgba(239, 68, 68, .7), 0 3px 0 #450a0a; }
+.lever-btn span { font-family: 'Orbitron', sans-serif; font-size: 7px; font-weight: 900; letter-spacing: .06em; color: #c7d2fe; }
+.lever-btn:active i { transform: translateY(5px); box-shadow: 0 0 8px rgba(239, 68, 68, .7), 0 0 0 #450a0a; }
+
+/* CHANCE ZONE 成功: BONUS 確定! */
+.lcd-czwin { position: absolute; inset: 0; z-index: 77; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; font-family: 'Orbitron', sans-serif; font-weight: 900; font-style: italic; animation: cw-life 3s linear both; }
+.lcd-czwin .cw-bg { position: absolute; inset: 0; background: radial-gradient(circle, rgba(255, 240, 150, .9), rgba(255, 61, 113, .85) 55%, rgba(30, 5, 60, .9)); animation: cw-bgp .15s steps(2) infinite; }
+.lcd-czwin .cw-a { position: relative; font-size: 54px; line-height: 1; color: #fff; -webkit-text-stroke: 4px #9a3412; paint-order: stroke fill; text-shadow: 0 0 22px #fde047, 0 0 44px #ff6a00; animation: cw-don .15s ease-out 0s 9, cw-hue 1s linear .3s infinite; }
+.lcd-czwin .cw-b { position: relative; margin-top: 4px; font-size: 62px; line-height: 1; color: #fde047; -webkit-text-stroke: 4px #7f1d1d; paint-order: stroke fill; text-shadow: 0 0 22px #fff, 0 0 44px #f97316; animation: cw-don .15s ease-out .07s 9, cw-hue 1s linear .3s infinite; }
+@keyframes cw-life { 0% { opacity: 0; } 3% { opacity: 1; } 88% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes cw-don { 0% { transform: scale(1.7) translateY(-6px); } 100% { transform: scale(1) translateY(0); } }
+@keyframes cw-bgp { from { filter: brightness(1); } to { filter: brightness(1.5); } }
+@keyframes cw-hue { to { filter: hue-rotate(360deg); } }

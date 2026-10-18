@@ -169,10 +169,18 @@ if (reelRowEl) reelRowEl.addEventListener('pointerdown', e => {
 document.addEventListener('pointerdown', e => {
   const t = e.target;
   if (!(t instanceof Element)) return;
-  if (t.closest('button, a, input, select, textarea, label, .modal, .more-menu, .data-counter, .cab-reelrow, #gogo-box, .stop-row, #push-overlay, .at-result')) return;
+  if (t.closest('button, a, input, select, textarea, label, .modal, .more-menu, .data-counter, #gogo-box, #push-overlay, .at-result')) return;
+  if (isReelSpinning && t.closest('.cab-reelrow')) return;   // リール段の回転中タップは専用の処理(押した位置のリールが止まる)
   if (document.querySelector('.modal.open')) return;
   const mm = document.getElementById('more-menu');
   if (mm && !mm.hidden) return;   // メニューを開いているときは、閉じるだけ
+  if (isReelSpinning) { stopNextReel(); return; }
+  if (!spinBtn.disabled) handleSpin();
+});
+// レバーボタン (リール停止エリアの左): タップでレバーON
+const leverBtn = document.getElementById('lever-btn');
+if (leverBtn) leverBtn.addEventListener('pointerdown', e => {
+  e.preventDefault();
   if (isReelSpinning) { stopNextReel(); return; }
   if (!spinBtn.disabled) handleSpin();
 });
