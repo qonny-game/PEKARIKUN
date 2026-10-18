@@ -84,6 +84,17 @@ function playSampleOnce(name) {
   });
 }
 
+/* ボイス (押し順ナビ LEFT/CENTER/RIGHT・GET・CHANCE): 同じ声が重なったら頭から鳴らし直す */
+const VOICE_FILES = { left: 'v_left', center: 'v_center', right: 'v_right', get: 'v_get', chance: 'v_chance' };
+const voiceAudio = {};
+Object.keys(VOICE_FILES).forEach(k => { const a = new Audio(ASSET_DIR.sound + VOICE_FILES[k] + '.mp3'); a.preload = 'auto'; a.volume = 0.9; voiceAudio[k] = a; });
+function playVoice(name) {
+  if (!soundEnabled) return;
+  const a = voiceAudio[name];
+  if (!a) return;
+  try { a.currentTime = 0; const p = a.play(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* 再生できなくても進行には影響しない */ }
+}
+
 /* ペカリ音 (name: 'gako' | 'vvv' を count回 gapミリ秒刻みで連続再生) */
 function playGakoSound(name = 'gako', count = 1, gap = 100) {
   if (!soundEnabled) return;

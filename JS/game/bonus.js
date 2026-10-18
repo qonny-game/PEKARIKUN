@@ -69,7 +69,8 @@ function showChance(zone, zlv) {
   chanceLogo.classList.remove('on', 'judge');
   void chanceLogo.offsetWidth;
   chanceLogo.classList.add('on');
-  if (soundEnabled) {
+  if (!zone) playVoice('chance');   // CHANCE! の声
+  else if (soundEnabled) {
     initAudio();
     const t = audioCtx.currentTime;
     [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, t + i * 0.06, 0.28, 'sawtooth', 0.07));
@@ -155,7 +156,10 @@ function rareWarn(style) {
     for (let i = 0; i < 2; i++) tone(1175, t + i * 0.2, 0.16, 'square', 0.1);
   }
 }
+let naviVoiceIdx = -1;   // 押し順ボイス: 次に鳴らす番号 (止めるたびに次のリールの声)
+function naviVoice(c) { playVoice(['left', 'center', 'right'][c]); }
 function showNavi(order, style = '', partial = false) {
+  naviVoiceIdx = 0; naviVoice(order[0]);
   if (style === 'red' || style === 'purple') rareWarn(style);
   document.body.dataset.navi = style || 'y';
   naviOrder = order;
@@ -171,6 +175,7 @@ function showNavi(order, style = '', partial = false) {
 function refreshNavi() {
   if (!naviOrder || !naviEl) return;
   const done = reelSpin ? reelSpin.order : [];
+  if (isReelSpinning && !naviPartial && done.length > 0 && done.length < 3 && done.length > naviVoiceIdx) { naviVoiceIdx = done.length; naviVoice(naviOrder[done.length]); }   // 1つ止めるたびに、次に押すリールを声で知らせる
   [...naviEl.children].forEach((el, c) => {
     el.classList.toggle('done', done.includes(c));
     el.classList.toggle('next', !done.includes(c) && naviOrder[done.length] === c && (!naviPartial || done.length === 0));

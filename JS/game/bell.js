@@ -52,6 +52,7 @@ function playJaraJara(len) {
   tone(1568, t0 + len, 0.5, 'triangle', 0.07);   // 最後の余韻
 }
 function showGet(coins) {
+  playVoice('get');   // GET の声
   if (coins >= 15) playJaraJara(2.6);
   getPop.innerHTML = `0<span>枚 GET</span>`;
   cancelAnimationFrame(getRAF);
