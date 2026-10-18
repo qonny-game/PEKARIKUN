@@ -98,5 +98,6 @@
 .cabinet.at-heaven .cab-panel { background: linear-gradient(rgba(23, 16, 47, .96), rgba(11, 7, 25, .96)) !important; }
 
 /* 下パネル: 画像に差し替え (横長にトリミング、ロゴを中央に) */
-.cab-label { height: 96px; padding: 0; background: #0b0719 url(../assets/img/panel_logo.jpg) center 54% / cover no-repeat; }
+.cab-label { height: 96px; padding: 0; background: #0b0719 url(../assets/img/panel_logo.jpg) center 49% / cover no-repeat; }
 .cab-label::before { display: none; }
+.cab-ver { color: #fff; text-shadow: 0 0 3px #000, 0 0 6px #000, 0 1px 2px #000; }

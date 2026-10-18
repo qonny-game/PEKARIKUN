@@ -185,45 +185,51 @@
     }
   }
   function nameOf(mode) { return mode === 'at' ? (atType === 1 ? 'heaven' : atType === 2 ? 'death' : 'at') : mode; }
-  /* ---------- CHANCE ZONE: 音源ファイル(assets/sound/bgm_cz.mp3)をクロスフェードでループ ---------- */
-  const CZF = { src: 'assets/sound/bgm_cz.mp3', len: 87.1, xf: 3.0, vol: 0.5, a: null, b: null, cur: null, timer: 0, on: false, fadeT: 0 };
-  function czMk() { const a = new Audio(CZF.src); a.preload = 'auto'; a.volume = 0; return a; }
-  function czStart() {
-    if (CZF.on) return;
-    CZF.on = true; clearInterval(CZF.fadeT);
-    if (!CZF.a) { CZF.a = czMk(); CZF.b = czMk(); }
-    const A = CZF.a, B = CZF.b;
-    [A, B].forEach(x => { x.pause(); x.currentTime = 0; x.volume = 0; });
-    CZF.cur = A; CZF.nxt = B; CZF.xfing = false;
-    const p = A.play(); if (p && p.catch) p.catch(() => { CZF.on = false; });
-    A.volume = CZF.vol;
-    clearInterval(CZF.timer);
-    CZF.timer = setInterval(() => {
-      const c = CZF.cur, n = CZF.nxt; if (!c) return;
-      const left = CZF.len - c.currentTime;
-      if (left <= CZF.xf && !CZF.xfing) { CZF.xfing = true; n.currentTime = 0; n.volume = 0; const q = n.play(); if (q && q.catch) q.catch(() => {}); }
-      if (CZF.xfing) {
-        const k = Math.min(1, Math.max(0, 1 - left / CZF.xf));   // 0→1: 等パワーのクロスフェード
-        c.volume = CZF.vol * Math.cos(k * Math.PI / 2); n.volume = CZF.vol * Math.sin(k * Math.PI / 2);
-        if (k >= 1 || c.ended) { c.pause(); c.volume = 0; CZF.cur = n; CZF.nxt = c; CZF.xfing = false; }
-      }
-    }, 80);
+  /* ---------- 音源ファイルのBGM (CZ / 通常RUSH / PEKA PEKA MOUNTAIN): クロスフェードでループ ---------- */
+  function mkLoop(src, len) {
+    const F = { src, len, xf: 3.0, vol: 0.5, a: null, b: null, cur: null, nxt: null, timer: 0, on: false, fadeT: 0, xfing: false };
+    const mk = () => { const a = new Audio(src); a.preload = 'auto'; a.volume = 0; return a; };
+    F.start = function () {
+      if (F.on) return;
+      F.on = true; clearInterval(F.fadeT);
+      if (!F.a) { F.a = mk(); F.b = mk(); }
+      const A = F.a, B = F.b;
+      [A, B].forEach(x => { x.pause(); x.currentTime = 0; x.volume = 0; });
+      F.cur = A; F.nxt = B; F.xfing = false;
+      const p = A.play(); if (p && p.catch) p.catch(() => { F.on = false; });
+      A.volume = F.vol;
+      clearInterval(F.timer);
+      F.timer = setInterval(() => {
+        const c = F.cur, n = F.nxt; if (!c) return;
+        const left = F.len - c.currentTime;
+        if (left <= F.xf && !F.xfing) { F.xfing = true; n.currentTime = 0; n.volume = 0; const q = n.play(); if (q && q.catch) q.catch(() => {}); }
+        if (F.xfing) {
+          const k = Math.min(1, Math.max(0, 1 - left / F.xf));   // 0→1: 等パワーのクロスフェード
+          c.volume = F.vol * Math.cos(k * Math.PI / 2); n.volume = F.vol * Math.sin(k * Math.PI / 2);
+          if (k >= 1 || c.ended) { c.pause(); c.volume = 0; F.cur = n; F.nxt = c; F.xfing = false; }
+        }
+      }, 80);
+    };
+    F.stop = function () {
+      if (!F.on) return;
+      F.on = false; clearInterval(F.timer);
+      const A = F.a, B = F.b; let k = 0;
+      clearInterval(F.fadeT);
+      F.fadeT = setInterval(() => {
+        k += 0.1;
+        [A, B].forEach(x => { if (x && !x.paused) x.volume = Math.max(0, x.volume * 0.7); });
+        if (k >= 0.6) { clearInterval(F.fadeT); [A, B].forEach(x => { if (x) { x.pause(); x.volume = 0; } }); }
+      }, 60);
+    };
+    return F;
   }
-  function czStop() {
-    if (!CZF.on) return;
-    CZF.on = false; clearInterval(CZF.timer);
-    const A = CZF.a, B = CZF.b; let k = 0;
-    clearInterval(CZF.fadeT);
-    CZF.fadeT = setInterval(() => {
-      k += 0.1;
-      [A, B].forEach(x => { if (x && !x.paused) x.volume = Math.max(0, x.volume * 0.7); });
-      if (k >= 0.6) { clearInterval(CZF.fadeT); [A, B].forEach(x => { if (x) { x.pause(); x.volume = 0; } }); }
-    }, 60);
-  }
+  const CZF = mkLoop('assets/sound/bgm_cz.mp3', 87.1);
+  const LOOPS = { cz: CZF, at: mkLoop('assets/sound/bgm_rush.mp3', 62.2), zone: mkLoop('assets/sound/bgm_mtn.mp3', 62.5) };   // at = 通常のPEKA RUSH (HEAVEN/DEATHは従来のシンセ曲)
   function set(mode, lvl) {
-    if (mode === 'cz') { clearInterval(ST.timer); ST.timer = 0; ST.name = null; czStart(); return; }
-    czStop();
     const name = mode ? nameOf(mode) : null;
+    const lp = name && LOOPS[name];
+    Object.keys(LOOPS).forEach(k => { if (LOOPS[k] !== lp) LOOPS[k].stop(); });
+    if (lp) { clearInterval(ST.timer); ST.timer = 0; ST.name = null; lp.start(); return; }
     if (name === ST.name) { ST.lvl = lvl || 0; return; }
     clearInterval(ST.timer); ST.timer = 0; ST.name = name; ST.lvl = lvl || 0; ST.step = 0;
     if (!name) return;
@@ -239,5 +245,5 @@
     const sd = 60 / SONGS[name].bpm / 4;
     for (let s = 0, t = 0.05; t < sec; s++, t += sd) playStep(ctx, name, lvl, s, t);
   }
-  window.BGM2 = { set, renderTest, SONGS, czf: CZF };
+  window.BGM2 = { set, renderTest, SONGS, czf: CZF, loops: LOOPS };
 })();

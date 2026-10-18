@@ -1,5 +1,8 @@
 # CHANGELOG
 
+- 1.20.34 下パネルの画像を差し替え(ネオンのPEKARI-KUN SLOT-SIMULATOR)。バージョン表記は明るい背景でも読めるよう白+黒縁に
+- 1.20.33 PEKA RUSH中(HEAVEN/DEATH以外)のBGMを High_Stakes_Finish(assets/sound/bgm_rush.mp3)、PEKA PEKA MOUNTAIN中のBGMを Golden_Ascent(assets/sound/bgm_mtn.mp3)に変更。CZと同じ、曲の終わりを頭に重ねるクロスフェードでループ。HEAVEN/DEATHは従来のシンセ曲
+- 1.20.32 筐体のデザインをネオン調に変更(CSS/neon.css 新規)。黒い筐体にシアン/マゼンタの発光ライン、マーキーはゴールドの発光文字、液晶はシアンのネオン枠、左右タイルは角丸の暗いパネル、PEKA RUSHタイルはオレンジ+シアンの二重枠、背景に多角形ワイヤー
 - 1.20.31 下パネルの中身を画像(assets/img/panel_logo.jpg)に差し替え。横長にトリミングしてロゴを中央表示。消灯演出・バージョン表示は従来どおり
 - 1.20.30 PEKA RUSH(HEAVEN/DEATH含む)突入ロゴを、PUSHボタンを押すまで液晶に出したままに変更(PUSHは手前に表示)。HEAVEN中でもメダル情報の段は通常の暗い背景のままにして見やすく
 - 1.20.29 RUSHに入らなかったPEKA CHANCE(ボーナスのみ)の終了リザルトでPEKA RUSHランプ・RUSH表示・RUSH BGMになってしまう不具合を修正(rushNowで判定を一本化)
