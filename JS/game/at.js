@@ -13,7 +13,7 @@ function updateAT() {
   if (bonusRun) {
     atStatus.classList.add('on', 'bonus');
     atLabel.textContent = bonusRun.zone ? 'ZONE' : 'BONUS';
-    atRemain.textContent = Math.max(0, bonusRun.games - bonusRun.played);
+    atRemain.textContent = String(Math.max(0, bonusRun.games - bonusRun.played)).padStart(2, '0');   // LAST 00G 表記
     const gainEl = document.getElementById('at-gain');   // ボーナス中の獲得枚数（右上）
     if (gainEl) { gainEl.textContent = bonusRun.paid; gainEl.parentNode.classList.add('has-gain'); }
     atStatus.classList.toggle('low', !bonusRun.zone && bonusRun.games - bonusRun.played <= 3);
@@ -25,7 +25,7 @@ function updateAT() {
   atLabel.textContent = AT_TYPES[atType].name;
   atStatus.classList.toggle('heaven', atType === 1);
   atStatus.classList.toggle('death', atType === 2);
-  atRemain.textContent = atGames;
+  atRemain.textContent = String(atGames).padStart(2, '0');   // LAST 00G 表記
   updateAtGain();
 }
 /* ペカラッシュ中の合計獲得枚数 */

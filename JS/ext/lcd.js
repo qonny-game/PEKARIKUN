@@ -690,7 +690,7 @@ window.onCzSuccess = function () {
   /* CHANCE ZONE 残りゲーム数: 液晶の左上に常時表示。連続演出中は HOLD (消化ストップ) */
   const czEl = document.createElement('div');
   czEl.className = 'lcd-cz';
-  czEl.innerHTML = '<span class="cz-l">CZ</span><em class="cz-h">HOLD</em><b class="cz-n">0</b><span class="cz-g">G</span><em class="cz-z">前兆中</em>';
+  czEl.innerHTML = '<span class="cz-l">LAST</span><em class="cz-h">HOLD</em><b class="cz-n">00</b><span class="cz-g">G</span><em class="cz-z">前兆中</em>';
   if (stageEl) stageEl.appendChild(czEl);
   const czN = czEl.querySelector('.cz-n');
   setInterval(() => {
@@ -698,7 +698,7 @@ window.onCzSuccess = function () {
     const zen = window.czFrozen != null && zenchoLeft > 0;
     const on = (czLeft > 0 || zen) && !(typeof bonusRun !== 'undefined' && bonusRun) && !(atGames > 0);
     czEl.classList.toggle('on', on);
-    if (on) { czN.textContent = zen ? window.czFrozen : czLeft; czEl.classList.toggle('hold', zen || !!window.czHoldNow); czEl.classList.toggle('zen', zen); }
+    if (on) { czN.textContent = String(zen ? window.czFrozen : czLeft).padStart(2, '0'); czEl.classList.toggle('hold', zen || !!window.czHoldNow); czEl.classList.toggle('zen', zen); }
   }, 100);
   /* PEKA CHANCE中は、RUSHに入る条件を常時表示 */
   const capEl = document.createElement('div');

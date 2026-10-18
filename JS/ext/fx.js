@@ -52,10 +52,22 @@
     ap();
     if (window.MutationObserver) { const mo = new MutationObserver(ap); mo.observe(e, { attributes: true, subtree: true, childList: true }); setTimeout(() => mo.disconnect(), 5000); }
   }
+  /* 同時に出る演出は順番に: バナーは前の演出（カットイン・会話・暗転・別のバナー）が消えてから出す */
+  const BIG_SEL = '.fx-cutin, .fx-step, .fx-talk, .fx-dark, .fx-banner';
+  const slotQ = [];
+  function slotPump() {
+    if (!slotQ.length) return;
+    if (layer.querySelector(BIG_SEL)) { wait(80, slotPump); return; }
+    const { e, ms } = slotQ.shift();
+    layer.appendChild(e);
+    if (ms) wait(ms, () => e.remove());
+    if (slotQ.length) wait(80, slotPump);
+  }
   function put(cls, html, ms) {
     const e = document.createElement('div');
     e.className = cls;
     e.innerHTML = html;
+    if (/^fx-banner\b/.test(cls) && (slotQ.length || layer.querySelector(BIG_SEL))) { slotQ.push({ e, ms }); wait(80, slotPump); return e; }
     layer.appendChild(e);
     if (/^fx-(cutin|step|talk|dark|peek|whisper)\b/.test(cls)) { ms = ms ? Math.round(ms * TEMPO) : ms; speedUp(e); }   // 全体にテンポ良く
     if (window.TRO) {
@@ -982,6 +994,15 @@
       });
     }
   }, 500);
+
+  /* ---------- 演出の順番: 表示中の演出（カットイン・ステップ・会話・暗転・バナー）が消えるまでリールを回さない ---------- */
+  const PRESENT_SEL = '.fx-cutin, .fx-step, .fx-talk, .fx-dark, .fx-banner, .fx-flash, .fx-contra';
+  const presenting = () => slotQ.length > 0 || layer.querySelector(PRESENT_SEL) !== null;
+  const _startReels = startReels;
+  startReels = function (plan, onDone) {
+    if (presenting() || FX.busy > 0) { wait(100, () => startReels(plan, onDone)); return; }
+    _startReels(plan, onDone);
+  };
 
   /* ---------- レバー: 演出中は受け付けない ---------- */
   const _handleSpin = handleSpin;

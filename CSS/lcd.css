@@ -229,9 +229,11 @@
 .lcd-cz .cz-l { font-size: 10px; color: #f9a8d4; letter-spacing: .08em; }
 .lcd-cz .cz-n { font-size: 20px; line-height: 1; color: #fde047; text-shadow: 0 0 8px #f59e0b; }
 .lcd-cz .cz-g { font-size: 10px; }
-.lcd-cz .cz-h { display: none; margin-right: 3px; padding: 0 5px; border-radius: 4px; font-style: normal; font-size: 10px; color: #0f172a; background: #67e8f9; animation: cz-hold .4s ease-in-out infinite alternate; }
-.lcd-cz.hold .cz-h { display: inline; }
-.lcd-cz.hold { border-color: #67e8f9; box-shadow: 0 0 12px #22d3ee; }
+/* HOLD: LAST 00G に斜線を引き、その上に HOLD を出す（連続演出中） */
+.lcd-cz .cz-h { display: none; position: absolute; left: 50%; top: -11px; transform: translateX(-50%); padding: 0 6px; border-radius: 4px; font-style: normal; font-size: 10px; line-height: 14px; color: #0f172a; background: #67e8f9; animation: cz-hold .4s ease-in-out infinite alternate; }
+.lcd-cz.hold .cz-h { display: block; }
+.lcd-cz.hold { top: 16px; border-color: #67e8f9; box-shadow: 0 0 12px #22d3ee; }
+.lcd-cz.hold::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(to top right, transparent calc(50% - 1px), #67e8f9 calc(50% - 1px), #67e8f9 calc(50% + 1px), transparent calc(50% + 1px)); }
 @keyframes cz-hold { from { opacity: 1; } to { opacity: .45; } }
 
 /* LAST 3/2/1: でかでか表示したあと、うっすらフェードアウト */

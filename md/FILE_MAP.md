@@ -27,7 +27,7 @@
 | 21 | `JS/ui/reel-view.js` | リール配列の表示 | 26 | reelModal, reelView, miniSym, buildReelView |
 | 22 | `JS/ui/boot.js` | 起動時の初期化（iOS対策・画面スリープ防止） | 29 | lastTouchEnd |
 | 23 | `JS/ext/bgm.js` | BGMエンジン (1.20.24) | 249 |  |
-| 24 | `JS/ext/fx.js` | 追加演出 | 1019 |  |
+| 24 | `JS/ext/fx.js` | 追加演出 | 1040 |  |
 | 25 | `JS/ext/lcd.js` | 演出液晶 | 799 | fitReels |
 | 26 | `JS/ext/trophy.js` | トロフィー / ミッション / ランキング | 218 |  |
 
