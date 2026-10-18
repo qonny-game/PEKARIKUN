@@ -160,3 +160,33 @@
 .cabinet > .stop-row .lever-btn { left: calc(50% - var(--reel-w, 198px) / 2 - 40px); width: 34px; padding: 0; border: 0; border-radius: 0; background: none; gap: 2px; }
 .cabinet > .stop-row .lever-btn i { width: 28px; height: 28px; background: radial-gradient(circle at 35% 30%, #6b6b7a, #1d1d28 55%, #040406); box-shadow: 0 3px 0 #000, 0 0 6px rgba(0, 0, 0, .7); }
 .cabinet > .stop-row .lever-btn:active i { transform: translateY(3px); box-shadow: 0 0 0 #000; }
+
+/* 1.26.0 ストップ3つを中央に寄せて間隔を詰める（リール下に揃えない）。レバーは文字なしの黒い玉だけ、ボタン群の左横 */
+.cabinet > .stop-row { grid-template-columns: repeat(3, 32px); justify-content: center; column-gap: 14px; }
+.cabinet > .stop-row .lever-btn { left: calc(50% - 110px); width: 36px; height: 36px; justify-content: center; }
+.cabinet > .stop-row .lever-btn span { display: none; }
+
+/* 1.26.0 図柄を一回り小さく（66x33 → 58x29）。図柄の間にすき間を作る */
+.reels .sym-img, .reel.win .sym-img, .reels .sym-img[alt], .reel.win .sym-img[alt] { width: 58px; height: 29px; }
+
+/* 1.26.0 液晶の上の PEKARI-KUN 表示領域を高く（上下の余白 6px → 13px） */
+.cab-marquee { padding: 13px 0; }
+
+/* 1.26.0 BONUS 確定: 画像をズームで出して弾ませる。キラキラと光の流れ付き。777の予告は画像の下に出す */
+.lcd-czwin { overflow: hidden; }
+.lcd-czwin .cw-bg { background: radial-gradient(circle, #fff7b0, #ff4fa8 55%, #1a0540); }
+.lcd-czwin .cw-pic { position: absolute; left: 0; right: 0; top: 0; bottom: 0; background: url(../assets/img/logo_bonus.jpg) center 42% / cover no-repeat; transition: bottom .4s; animation: cw-zoom 1.3s cubic-bezier(.2, .9, .3, 1) both, cw-pulse .32s ease-in-out 1.3s infinite alternate; }
+.lcd-czwin .cw-pic::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .9) 50%, transparent 65%); background-size: 300% 100%; mix-blend-mode: overlay; animation: win-sweep .7s linear .9s infinite; }
+@keyframes cw-zoom { 0% { transform: scale(3.2); opacity: 0; filter: brightness(3); } 22% { transform: scale(.82); opacity: 1; filter: brightness(1.6); } 38% { transform: scale(1.18); filter: brightness(1.2); } 52% { transform: scale(.94); } 66% { transform: scale(1.08); } 80% { transform: scale(.98); } 100% { transform: scale(1); filter: brightness(1.1); } }
+@keyframes cw-pulse { from { transform: scale(1); filter: brightness(1.05) saturate(1.1); } to { transform: scale(1.04); filter: brightness(1.3) saturate(1.35); } }
+.lcd-czwin.keep { justify-content: flex-end; }
+.lcd-czwin.keep .cw-bg { opacity: 1; background: #0b0420; }
+.lcd-czwin.keep .cw-pic { bottom: 50px; }
+.lcd-czwin .cw-sev { z-index: 3; margin: 0 0 8px; }
+
+/* 1.26.0 サンド目が揃った瞬間: リール全体をビカビカ点滅させ、虹色の縁と白い閃光を重ねる */
+@keyframes sand-bika { 0%, 100% { filter: brightness(1) saturate(1); } 20% { filter: brightness(2.8) saturate(1.8) hue-rotate(30deg); } 40% { filter: brightness(1.1); } 60% { filter: brightness(2.4) saturate(2) hue-rotate(-40deg); } 80% { filter: brightness(1.2); } }
+@keyframes sand-edge { 0%, 100% { box-shadow: 0 0 14px 5px #fde047, 0 0 30px 10px #f97316; } 33% { box-shadow: 0 0 14px 5px #f472b6, 0 0 30px 10px #a78bfa; } 66% { box-shadow: 0 0 14px 5px #38bdf8, 0 0 30px 10px #4ade80; } }
+@keyframes sand-glow { 0%, 100% { opacity: 0; } 20%, 60% { opacity: .85; } }
+.reels.sand-flash { animation: sand-bika .17s steps(1) 10, sand-edge .34s linear 5; }
+.reels.sand-flash::after { content: ''; position: absolute; inset: 0; z-index: 6; pointer-events: none; background: radial-gradient(circle, rgba(255, 255, 255, .95), rgba(255, 214, 90, .45) 60%, transparent 85%); mix-blend-mode: screen; animation: sand-glow .17s steps(1) 10; }

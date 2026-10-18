@@ -503,6 +503,7 @@ function handleSpin() {
     sandReachNow = reach;
     runRole('lose', () => {
       sandReachNow = false;
+      if (reach) sandFlash();   // 通常時のサンド目が揃った瞬間もビカビカ
       stopTension();
       totalGames = 0;
       updateUI();

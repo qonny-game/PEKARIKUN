@@ -466,6 +466,7 @@
   const _landCol = landCol;
   landCol = function (col) {
     _landCol(col);
+    if (reelsEl.classList.contains('focus-mid')) reelsEl.classList.remove('focus-mid');   // サンド目: 中リールを止めたら、左右を暗くしていたのを解除
     if (st.saki) {
       const real = st.saki === 'real';
       st.saki = null;

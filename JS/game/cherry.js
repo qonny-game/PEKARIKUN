@@ -64,6 +64,35 @@ let sandReachNow = false;     // このゲームがリーチ目（通常時）�
 /* サンド目までの残りゲーム (AT中: スイカ・チェリー成立の次から3G以内) */
 let sandLeft = 0;
 const SAND_UP = [5, 10, 15, 20, 25, 30, 50];   // 揃えたときの上乗せG数 (どれか抽選)
+/* サンド目が揃った瞬間: リール全体をビカビカ光らせる（光の点滅・虹色の縁・上昇音） */
+function sandFlash() {
+  if (!reelsEl) return;
+  reelsEl.classList.remove('sand-flash');
+  void reelsEl.offsetWidth;
+  reelsEl.classList.add('sand-flash');
+  setTimeout(() => reelsEl.classList.remove('sand-flash'), 1700);
+  sandSound();
+}
+/* サンド目の音: ブシュー(蒸気) → ドゴドゴ(低い連打) → 上昇音 */
+function sandSound() {
+  if (!soundEnabled) return;
+  initAudio();
+  const c = audioCtx, t = c.currentTime;
+  const len = Math.floor(c.sampleRate * 1.1), buf = c.createBuffer(1, len, c.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  const n = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+  n.buffer = buf; f.type = 'highpass';
+  f.frequency.setValueAtTime(5000, t); f.frequency.exponentialRampToValueAtTime(1800, t + 1.0);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.3, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.05);
+  n.connect(f); f.connect(g); g.connect(c.destination); n.start(t);
+  [0.05, 0.19, 0.33, 0.5, 0.64, 0.78].forEach(dt => {
+    const o = c.createOscillator(), og = c.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(150, t + dt); o.frequency.exponentialRampToValueAtTime(42, t + dt + 0.16);
+    og.gain.setValueAtTime(0.55, t + dt); og.gain.exponentialRampToValueAtTime(0.001, t + dt + 0.2);
+    o.connect(og); og.connect(c.destination); o.start(t + dt); o.stop(t + dt + 0.22);
+  });
+  [784, 988, 1319, 1568, 1976].forEach((fr, i) => tone(fr, t + 0.95 + i * 0.06, 0.2, 'square', 0.1));
+}
 /* サンド目: 第2リールを目押しで止める (バー・チェリー・バー)。揃えたら AT に上乗せ、外れは何も無し */
 function playSand() {
   const N = SAND_UP[Math.floor(Math.random() * SAND_UP.length)];
@@ -75,6 +104,7 @@ function playSand() {
     if (res.success) {
       atGames += N;
       markWin([1, 4, 7], '');
+      sandFlash();
       showAtToast(`サンド目 上乗せ +${N}G`);
       triggerFlash();
       sideLampFlash('heaven', 2000);   // 揃えたら虹色のランプ

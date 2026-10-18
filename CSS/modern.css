@@ -108,3 +108,14 @@
 
 /* ミッション表示は非表示 (内部では動作し、称号『ミッション3回』のカウントは進む) */
 .fx-mission { display: none !important; }
+
+/* 1.26.0 PEKA RUSH / PEKA PEKA MOUNTAIN 突入: 明るくキラキラ（星・光の流れ・明るさアップ）。ヘブン・デスのRUSHも同じ星を重ねる */
+@keyframes sp-twinkle { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+@keyframes sp-drift-a { from { background-position: 0 0; } to { background-position: 24px 96px; } }
+@keyframes sp-drift-b { from { background-position: 0 0; } to { background-position: -18px 72px; } }
+.rush-overlay.show::before, .rush-overlay.show::after, .lcd-zoneintro::before, .lcd-zoneintro::after, .lcd-czwin::before, .lcd-czwin::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; filter: drop-shadow(0 0 3px #fff); }
+.rush-overlay.show::before, .lcd-zoneintro::before, .lcd-czwin::before { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cpath fill='white' d='M14 3L15.98 10.02L23 12L15.98 13.98L14 21L12.02 13.98L5 12L12.02 10.02Z'/%3E%3Cpath fill='%23fff3a0' d='M70 18L71.32 22.68L76 24L71.32 25.32L70 30L68.68 25.32L64 24L68.68 22.68Z'/%3E%3Cpath fill='%23ffd0ff' d='M40 58L41.76 64.24L48 66L41.76 67.76L40 74L38.24 67.76L32 66L38.24 64.24Z'/%3E%3Cpath fill='%23b8f0ff' d='M86 71L87.1 74.9L91 76L87.1 77.1L86 81L84.9 77.1L81 76L84.9 74.9Z'/%3E%3Cpath fill='white' d='M58 88L58.88 91.12L62 92L58.88 92.88L58 96L57.12 92.88L54 92L57.12 91.12Z'/%3E%3C/svg%3E") 0 0 / 96px 96px repeat; animation: sp-twinkle .5s ease-in-out infinite alternate, sp-drift-a 2.4s linear infinite; }
+.rush-overlay.show::after, .lcd-zoneintro::after, .lcd-czwin::after { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72'%3E%3Cpath fill='%23fff3a0' d='M10 43L11.54 48.46L17 50L11.54 51.54L10 57L8.46 51.54L3 50L8.46 48.46Z'/%3E%3Cpath fill='white' d='M52 6L53.76 12.24L60 14L53.76 15.76L52 22L50.24 15.76L44 14L50.24 12.24Z'/%3E%3Cpath fill='%23b8f0ff' d='M36 36L36.88 39.12L40 40L36.88 40.88L36 44L35.12 40.88L32 40L35.12 39.12Z'/%3E%3Cpath fill='%23ffd0ff' d='M64 54L65.32 58.68L70 60L65.32 61.32L64 66L62.68 61.32L58 60L62.68 58.68Z'/%3E%3C/svg%3E") 0 0 / 72px 72px repeat; animation: sp-twinkle .38s ease-in-out .15s infinite alternate, sp-drift-b 1.9s linear infinite; }
+.rush-overlay.show:not(.t-heaven):not(.t-death) .rush-logo { filter: brightness(1.2) saturate(1.3); }
+.lcd-zoneintro .zi-img { filter: brightness(1.2) saturate(1.3); }
+.rush-overlay .rush-logo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .85) 50%, transparent 65%); background-size: 300% 100%; mix-blend-mode: overlay; animation: win-sweep .7s linear .5s 3; }

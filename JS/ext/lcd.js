@@ -250,7 +250,6 @@ function fitReels() {
   try {
     if (typeof showStatic === 'function' && !isReelSpinning && cumulativeGames === 0) showStatic(gridOf([0, 1, 2].map(() => Math.floor(rnd() * STRIP_LEN))), null);
   } catch (e) { /* 表示だけなので無視 */ }
-  setTimeout(() => { if (!isDebugRun) { say('PEKARI-KUN', `今日のラッキー役 ${LUCKY[1]}`, 3200, 'happy', 'peek'); } }, 700);
 
   /* ---------- 飛来物 ---------- */
   const SPRITES = { firefly: 4200, leaf: 3600, whale: 5200, bird: 3000, bat: 2600, flock: 3400, coin: 1000, ripple: 1000, star: 900, ufo: 2000, rocket: 1400, balloon: 2600, rainbow: 2200, cloud: 3200, thunder: 3200, fire: 1100, chest: 1900, eye: 1800 };
@@ -464,11 +463,6 @@ function fitReels() {
     if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; for (let k = 0; k < 2 + i; k++) tone(392 * Math.pow(1.19, k + i), t + k * 0.07, 0.16, 'triangle', 0.09); tone(80, t, 0.3, 'sine', 0.2 + 0.05 * i); }
     if (lv >= 3 || last) { act('jump'); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1500); }
   }
-  /* 今日のラッキー役: 日付で決まる。成立すると一言と演出が出る（出玉には影響しない） */
-  const LUCKY_LIST = [['cherry', 'チェリー'], ['melon', 'スイカ'], ['chance', 'チャンス目'], ['bell', 'ベル'], ['replay', 'リプレイ']];
-  const _d = new Date(), _doy = Math.floor((_d - new Date(_d.getFullYear(), 0, 0)) / 86400000);
-  const LUCKY = LUCKY_LIST[(_doy * 7 + _d.getFullYear()) % LUCKY_LIST.length];
-  const luckyOf = kind => /^(cherry|melon|chance|bell|replay)/.exec(kind) ? /^(cherry|melon|chance|bell|replay)/.exec(kind)[1] : '';
   const ROLE_MSG = { cherryW: ['弱チェリー', 'CHERRY'], cherryS: ['強チェリー', 'CHERRY!!'], melonW: ['弱スイカ', 'MELON'], melon: ['強スイカ', 'MELON!!'], chanceW: ['弱チャンス目', 'CHANCE'], chanceS: ['強チャンス目', 'CHANCE!!'] };
 
   /* ---------- 小役の成立とペカり ---------- */
@@ -501,9 +495,6 @@ function fitReels() {
       pushPlan = null;
       const WIN_LAMP = LAMP_TABLE.win;
       const aimedRole = kind === 'cherryW' || kind === 'cherryS' || kind === 'melon';   // 狙う役だけ成否がある（ベル・リプレイ・弱スイカは success が付かない）
-      if (!isDebugRun && !bonusRun && luckyOf(kind) === LUCKY[0] && (!aimedRole || (res && res.success) || kind === 'chanceW' || kind === 'chanceS')) {
-        setTimeout(() => { say('LUCKY!', `今日のラッキー役 ${LUCKY[1]}`, 2200, 'happy', 'jump'); spawn('fire', 1); for (let i = 0; i < 5; i++) setTimeout(() => spawn('coin', 2), i * 100); }, 350);
-      }
       if (WIN_LAMP[kind] && (!aimedRole || (res && res.success))) { const rareK = /^(cherry|melon|chance)/.test(kind); sideLampFlash(WIN_LAMP[kind], rareK ? 1700 : 1100, 'strobe'); }   // 当たった役の色で高速点滅(レア役は長め)
       if (!isDebugRun) {
         const r = ROLE_MSG[kind];
@@ -609,7 +600,7 @@ window.onCzSuccess = function () {
       window.panelUpDone = true;   // 確定画面が出たら下パネルを元に戻す、どどどどどん!と連打で大きく表示 (トーストなし)
       const E = document.createElement('div');
       E.className = 'lcd-czwin';
-      E.innerHTML = '<i class="cw-bg"></i><span class="cw-a">BONUS</span><b class="cw-b">確定!</b>';
+      E.innerHTML = '<i class="cw-bg"></i><i class="cw-pic"></i>';   // 「BONUS 確定」の画像をズームで出す
       stageEl.appendChild(E);
       window.czKeep = E;   // 777が揃うまで液晶に残す
       setTimeout(() => { if (window.czKeep !== E) return; E.classList.add('keep'); const im = SYM_IMG[window.czSevenColor] || ASSET_DIR.img + window.czSevenColor + '.png'; E.insertAdjacentHTML('beforeend', `<div class="cw-sev"><div class="cw-imgs"><img src="${im}"><img src="${im}"><img src="${im}"></div></div>`); }, 2200);
