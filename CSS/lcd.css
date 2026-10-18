@@ -230,7 +230,7 @@
 .lcd-cz .cz-l { font-size: 10px; color: #f9a8d4; letter-spacing: .08em; }
 .lcd-cz .cz-n { font-size: 20px; line-height: 1; color: #fde047; text-shadow: 0 0 8px #f59e0b; }
 .lcd-cz .cz-g { font-size: 10px; }
-.lcd-cz .cz-h { display: none; margin-left: 4px; padding: 0 5px; border-radius: 4px; font-style: normal; font-size: 10px; color: #0f172a; background: #67e8f9; animation: cz-hold .4s ease-in-out infinite alternate; }
+.lcd-cz .cz-h { display: none; margin-right: 3px; padding: 0 5px; border-radius: 4px; font-style: normal; font-size: 10px; color: #0f172a; background: #67e8f9; animation: cz-hold .4s ease-in-out infinite alternate; }
 .lcd-cz.hold .cz-h { display: inline; }
 .lcd-cz.hold { border-color: #67e8f9; box-shadow: 0 0 12px #22d3ee; }
 @keyframes cz-hold { from { opacity: 1; } to { opacity: .45; } }
@@ -251,3 +251,20 @@
 .lcd-cap { position: absolute; left: 0; right: 0; top: 24px; z-index: 66; display: none; text-align: center; font-size: 10px; font-weight: 800; color: #fef9c3; text-shadow: 0 1px 3px rgba(0, 0, 0, .95), 0 0 6px rgba(0, 0, 0, .8); white-space: nowrap; pointer-events: none; }
 .lcd-cap.on { display: block; }
 .gogo-lamp:has(.lcd-cap.on) .lcd-tag { top: 50px; }
+
+.lcd-cz .cz-z { display: none; margin-left: 5px; font-style: normal; font-size: 10px; color: #fff; }
+.lcd-cz.zen .cz-z { display: inline; }
+.lcd-cz.zen { border-color: #fb7185; box-shadow: 0 0 14px #f43f5e; }
+.lcd-cz.zen .cz-h { background: #fb7185; color: #fff; }
+
+/* 筐体上部の表示: ゲーム種類を1行で */
+.cab-marquee > span { white-space: nowrap; }
+.cab-marquee > span.mq-chance { color: #7dd3fc; text-shadow: 0 0 10px #0ea5e9; }
+.cab-marquee > span.mq-zone { color: #fde047; text-shadow: 0 0 10px #f59e0b; }
+.cab-marquee > span.mq-rush { color: #ffe6a6; text-shadow: 0 0 10px #ff9d00; }
+.cab-marquee > span.mq-heaven { color: #fef9c3; text-shadow: 0 0 10px #fde047, 0 0 18px #7dd3fc; }
+.cab-marquee > span.mq-death { color: #fca5a5; text-shadow: 0 0 10px #ff0033; }
+.cab-marquee > span.mq-cz { color: #f9a8d4; text-shadow: 0 0 10px #f472b6; }
+.cab-marquee > span.mq-zencho { color: #fb923c; text-shadow: 0 0 10px #f97316; }
+/* LCD内のPEKA CHANCE!ロゴは筐体上部に移したので出さない */
+#lcd-stage .chance-logo, .gogo-lamp .chance-logo { display: none !important; }

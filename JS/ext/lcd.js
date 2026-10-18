@@ -137,7 +137,16 @@
       else symShow(h);
     }
   }
-  window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0), pair, hintStop, preHint, spinStart, hintClear, hint: hintShow, tag, miss: () => missMark(), story: (i, n, l) => story(i, n, l), don: n => { if (n >= 3) forceLv = 2; }, donWin: role => { forceLv = 2; const h = planHint(role || 'lose'); if (h) { hints.push(h); showHint(h); } } };
+  /* 新しい回転の開始前: 直前の液晶演出をすべて消す */
+  function clearAll() {
+    hintHoldUntil = 0; symHint = null; hintClear(true);
+    clearTimeout(tagT); tagEl.classList.remove('on');
+    wxPlan = null; wxClear();
+    if (stageEl) stageEl.querySelectorAll('.lcd-miss, .lcd-lvup, .lcd-burst, .don-pop, .sp').forEach(e => e.remove());
+    hold = 0; m1.textContent = ''; m2.textContent = ''; msg.classList.remove('pop');
+    if (!(pushPlan && !pushPlan.done)) pushEl.className = 'lcd-push';
+  }
+  window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0), pair, hintStop, clearAll, preHint, spinStart, hintClear, hint: hintShow, tag, miss: () => missMark(), story: (i, n, l) => story(i, n, l), don: n => { if (n >= 3) forceLv = 2; }, donWin: role => { forceLv = 2; const h = planHint(role || 'lose'); if (h) { hints.push(h); showHint(h); } } };
   let hold = 0;
   function say(a, b, ms, md, an) {
     m1.textContent = a || ''; m2.textContent = b || '';
@@ -415,7 +424,7 @@
       if (!armed && !second && !forceLv) wxPlan = planWeather(kind, hit0);
       if (!second) symHint = (!armed && !wxPlan) ? planSymHint(kind) : null;
       if (!armed && !wxPlan && (!second || forceLv)) { const h = planHint(kind); if (h) { hints.push(h); showHint(h); } }
-      if (!second && czLeft > 0) { spawn('star', 1); say('CHANCE ZONE', `残り ${czLeft}G`, 1600, 'happy', 'hop'); if (!czTipShown) { czTipShown = true; tag('ボーナス当選か前兆で成功', 'role', 3000); } }
+      if (!second && czLeft > 0) { spawn('star', 1); if (!czTipShown) { czTipShown = true; tag('ボーナス当選か前兆で成功', 'role', 3000); } }
     }
     return _rr(kind, res => {
       const hintsNow = hints; hints = [];
@@ -521,7 +530,7 @@
     story(z.i, z.n, z.i >= z.n);
   };
   window.onCzEnd = function () { if (isDebugRun) return; setTimeout(() => { if (czLeft === 0 && !window.czHoldNow) say('', 'ゾーン終了…', 2800, 'sad', 'sad'); }, 400); };   // 連続演出でHOLDされたら終了しない
-  window.onCzHold = function () { if (isDebugRun) return; setTimeout(() => { tag('連続演出中 HOLD', 'f2', 2400); say('CHANCE ZONE', `残り ${czLeft}G HOLD`, 2000, 'happy', 'hop'); }, 100); };
+  window.onCzHold = function () { if (isDebugRun) return; setTimeout(() => { act('hop'); }, 100); };
   window.onCzSuccess = function () { if (isDebugRun) return; setTimeout(() => { tag('CHANCE ZONE 成功  ボーナス確定', 'f3', 3200); say('SUCCESS!!', 'ボーナス確定', 2600, 'shock', 'jump'); burst(); }, 600); };
   /* ハマり中のひとこと: ペカり君が励ます。250G超えで救済(当選率UP)が始まる */
   const HAMARI = [[150, 'ちょっとハマり気味…', 'sad'], [250, '救済スタート！', 'jump'], [400, 'がんばれ！', 'jump'], [600, '絶対くるよ！', 'cross'], [800, 'もう少し…！', 'jump']];
@@ -568,13 +577,15 @@
   /* CHANCE ZONE 残りゲーム数: 液晶の左上に常時表示。連続演出中は HOLD (消化ストップ) */
   const czEl = document.createElement('div');
   czEl.className = 'lcd-cz';
-  czEl.innerHTML = '<span class="cz-l">CZ</span><b class="cz-n">0</b><span class="cz-g">G</span><em class="cz-h">HOLD</em>';
+  czEl.innerHTML = '<span class="cz-l">CZ</span><em class="cz-h">HOLD</em><b class="cz-n">0</b><span class="cz-g">G</span><em class="cz-z">前兆中</em>';
   if (stageEl) stageEl.appendChild(czEl);
   const czN = czEl.querySelector('.cz-n');
   setInterval(() => {
-    const on = czLeft > 0 && !(typeof bonusRun !== 'undefined' && bonusRun) && !(atGames > 0);
+    if (zenchoLeft === 0 || bonusRun || atGames > 0) window.czFrozen = null;   // 前兆が終われば(=ボーナス)CZ表示も終わる
+    const zen = window.czFrozen != null && zenchoLeft > 0;
+    const on = (czLeft > 0 || zen) && !(typeof bonusRun !== 'undefined' && bonusRun) && !(atGames > 0);
     czEl.classList.toggle('on', on);
-    if (on) { czN.textContent = czLeft; czEl.classList.toggle('hold', !!window.czHoldNow); }
+    if (on) { czN.textContent = zen ? window.czFrozen : czLeft; czEl.classList.toggle('hold', zen || !!window.czHoldNow); czEl.classList.toggle('zen', zen); }
   }, 100);
   /* PEKA CHANCE中は、RUSHに入る条件を常時表示 */
   const capEl = document.createElement('div');
@@ -582,6 +593,22 @@
   capEl.textContent = '最終GのJUDGEMENTに勝てばPEKA RUSH';
   if (stageEl) stageEl.appendChild(capEl);
   setInterval(() => capEl.classList.toggle('on', !!(typeof bonusRun !== 'undefined' && bonusRun && !bonusRun.zone && !isDebugRun)), 200);
+  /* 筐体上部の表示(PEKARI-KUN)に、いまのゲーム種類を1行で出す */
+  const mqText = document.querySelector('.cab-marquee > span');
+  const MQ_BASE = mqText ? mqText.textContent : 'PEKARI-KUN';
+  let mqLast = '';
+  setInterval(() => {
+    if (!mqText) return;
+    let t = MQ_BASE, c = '';
+    if (typeof bonusRun !== 'undefined' && bonusRun) { t = bonusRun.zone ? 'PEKA PEKA MOUNTAIN!' : 'PEKA CHANCE!'; c = bonusRun.zone ? 'mq-zone' : 'mq-chance'; }
+    else if (atGames > 0 || atEnding) { t = ['PEKA RUSH', 'PEKA RUSH  HEAVEN', 'PEKA RUSH  DEATH'][atType] || 'PEKA RUSH'; c = ['mq-rush', 'mq-heaven', 'mq-death'][atType] || 'mq-rush'; }
+    else if (zenchoLeft > 0 || fakeZencho > 0) { t = 'ZENCHO'; c = 'mq-zencho'; }
+    else if (czLeft > 0) { t = 'CHANCE ZONE'; c = 'mq-cz'; }
+    if (t === mqLast) return;
+    mqLast = t;
+    mqText.textContent = t;
+    mqText.className = c;
+  }, 200);
   let last = '';
   setInterval(() => {
     const sc = scene();
@@ -608,7 +635,6 @@
       const gain = atRun ? diffCoins - atRun.startDiff : 0;
       m2.textContent = `残り ${atGames}G  ${gain >= 0 ? '+' : ''}${gain}`;
     } else if (zenchoLeft > 0 || fakeZencho > 0) { m1.textContent = 'ZENCHO'; m2.textContent = ''; }
-    else if (czLeft > 0) { m1.textContent = 'CHANCE ZONE'; m2.textContent = `残り ${czLeft}G` + (window.czHoldNow ? ' HOLD' : ''); }
     else { m1.textContent = ''; m2.textContent = ''; }
   }, 300);
   /* AT / ボーナスの結果に合わせてペカり君が反応する */

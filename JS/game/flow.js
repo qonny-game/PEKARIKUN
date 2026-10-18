@@ -78,6 +78,19 @@ function lightLamp(extra) {
     triggerFlash();
   }
 }
+/* GOGOランプが点灯するタイミング: レバーON / 演出後(回転開始直前) / 第2停止 / 第3停止 / 全停止後(従来) */
+window.pekaAt = null; window.pekaLit = false;
+function pickPekaAt() {
+  const w = [['lever', 12], ['fx', 18], ['s2', 22], ['s3', 18], ['end', 30]];
+  let x = Math.random() * w.reduce((a, b) => a + b[1], 0);
+  for (const [k, v] of w) { x -= v; if (x < 0) return k; }
+  return 'end';
+}
+function lampEarly(at) {   // 先に点灯させる(ボーナス確定のゲームだけ)
+  if (window.pekaAt !== at || window.pekaLit || isPekared || pendingBonusType !== 'BIG') return;
+  window.pekaLit = true;
+  lightLamp();
+}
 /* 次のレバーONで、同じ色の7を狙って揃える */
 function armPekari() {
   reelLocked = false;
@@ -325,6 +338,7 @@ function handleSpin() {
   // リール回転中は、止まっていないリールを左から止める
   if (isReelSpinning) { stopNextReel(); return; }
   if (isCooldown || isCounting || isSuspense || isRushing || isAtResult || reelLocked) return;
+  if (window.LCDX && LCDX.clearAll) LCDX.clearAll();   // 新しい回転を始める前に、直前の演出(液晶の図柄・ハズレ・文字・キャラなど)をすべて消す
 
   // 枚数表示のあとのレバーON: ボーナス消化(ベルでの枚数獲得)が始まる
   if (isBonusAligned) {
@@ -414,7 +428,7 @@ function handleSpin() {
 
   if (zStep && typeof window.onZenchoStep === 'function') window.onZenchoStep(zStep);
 
-  if (inCZ && (isHit || zenchoLeft > 0)) { czLeft = 0; if (window.onCzSuccess) window.onCzSuccess(); }     // 当選(前兆に入った場合も)でゾーン終了=成功
+  if (inCZ && (isHit || zenchoLeft > 0)) { window.czFrozen = (!isHit && zenchoLeft > 0) ? czLeft : null; czLeft = 0; if (window.onCzSuccess) window.onCzSuccess(); }   // 前兆に入った場合は、CZの残りGを止めたまま表示し続ける(czFrozen)     // 当選(前兆に入った場合も)でゾーン終了=成功
   else if (inCZ && czLeft === 0) { window.czTimedOut = true; if (window.onCzEnd) window.onCzEnd(false); }
 
   // 通常時のサンド目（リーチ目）: ボーナス確定。当選と同じ流れで、サンド目の形で止まる
@@ -443,6 +457,8 @@ function handleSpin() {
     pendingTierIndex = pendingDisplayIndex;
     pendingPlan = null;
     replayPending = false;
+    window.pekaAt = isDebugRun ? 'end' : pickPekaAt(); window.pekaLit = false;
+    lampEarly('lever');
     if (inAT && atRun) atRun.bonuses++;
     cherryGames = 0;
     updateCherry();

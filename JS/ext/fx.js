@@ -386,6 +386,7 @@
     if (!inBonus) cumGames();
     const after = res => { gameAfter(kind, cls, inAT, inBonus); if (st.pseudoN && kind === 'lose' && !hit && window.LCDX) { LCDX.miss(); } st.pseudoN = 0; done(res); };
     const go = () => {
+      if (typeof lampEarly === 'function') lampEarly('fx');   // 演出後にGOGOランプが点灯するパターン
       if (!inBonus) {
         // 先ペカ / 疑似連 / 消灯焦らし / 全回転風のグロー
         if (hit) {
@@ -424,6 +425,7 @@
       }
       cab.classList.remove('fx-glow'); d(res);
     }, n);
+    if (window.pekaLit && !inBonus) { go(); return; }   // レバーONで点灯済みなら予告演出は挟まない
     // ハズレ矛盾 = 当選確定のサイン (確定後の3〜5Gの間と、ランプが光るゲームに出る。ガセはなし)
     if (!inBonus && !inAT && kind === 'lose' && (zenchoLeft > 0 || hit) && rnd() < (zenchoLeft > 0 ? 0.5 : 0.2) * Math.max(0.5, freqMul())) { showContradict(hit, go); return; }
     // 予告
@@ -473,6 +475,7 @@
   /* ---------- ペカり: 逆転 / 消灯焦らし / 音のバリエーション ---------- */
   const _triggerPekari = triggerPekari;
   triggerPekari = function (forceFx) {
+    if (window.pekaLit) { st.rev = null; return _triggerPekari('plain'); }   // すでに点灯済み(レバーON/演出後/停止時に点灯): 追加の演出は付けない
     const mode = st.rev;
     st.rev = null;
     // 連チャン数
