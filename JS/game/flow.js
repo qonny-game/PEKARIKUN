@@ -444,6 +444,9 @@ function handleSpin() {
     if (isHit && !inAT && Math.random() < ZENCHO_P) { zenchoLeft = zenchoTotal = 3 + Math.floor(Math.random() * 3); isHit = false; fakeZencho = 0; zStep = { real: true, i: 1, n: zenchoTotal, end: false }; }
   }
 
+  // CHANCE ZONE中に当選が決まったら、前兆(連続演出)は省略して、そのまま当選画面へ
+  const czWin = inCZ && (isHit || zenchoLeft > 0);
+  if (czWin && !isHit) { zenchoLeft = 0; zenchoTotal = 0; isHit = true; zStep = null; }
   if (zStep && typeof window.onZenchoStep === 'function') window.onZenchoStep(zStep);
   // 下パネル消灯: 回転中にパネルが消えたら確定。CZ=当選確定 / RUSH中=100G以上の上乗せ確定 (確定でないゲームでは絶対に消えない)
   if (!isDebugRun) {
@@ -485,11 +488,11 @@ function handleSpin() {
     pendingTierIndex = pendingDisplayIndex;
     pendingPlan = null;
     replayPending = false;
-    window.pekaAt = isDebugRun ? 'end' : pickPekaAt(); window.pekaLit = false;
+    window.pekaAt = isDebugRun ? 'end' : (czWin ? 'end' : pickPekaAt()); window.pekaLit = false;   // CZ成功は「BONUS確定!」を見せたあとにランプ
     {
       const ORD = ['lever', 'fx', 's2', 's3', 'end'], pi = ORD.indexOf(window.pekaAt);
       window.sideGogo = false;
-      window.sideAt = (!isDebugRun && pi > 0 && Math.random() < 0.4) ? ORD[Math.floor(Math.random() * pi)] : null;   // 液晶より前のタイミングで、サイドだけ光る
+      window.sideAt = (!isDebugRun && !czWin && pi > 0 && Math.random() < 0.4) ? ORD[Math.floor(Math.random() * pi)] : null;   // 液晶より前のタイミングで、サイドだけ光る
     }
     lampEarly('lever');
     if (inAT && atRun) atRun.bonuses++;

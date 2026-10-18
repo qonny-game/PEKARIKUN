@@ -581,6 +581,7 @@
   window.onCzHold = function () { if (isDebugRun) return; setTimeout(() => { act('hop'); }, 100); };
   window.onCzSuccess = function () {
     if (isDebugRun || !stageEl) return;
+    window.sideConfirm = true;   // 確定したら、以降サイドのGOGO!ランプは(ボーナス開始まで)光り続ける
     setTimeout(() => {   // 液晶に「BONUS 確定!」だけを、どどどどどん!と連打で大きく表示 (トーストなし)
       const E = document.createElement('div');
       E.className = 'lcd-czwin';
@@ -588,6 +589,7 @@
       stageEl.appendChild(E);
       setTimeout(() => E.remove(), 3000);
       act('jump'); swoosh(3);
+      window.sideRb = Date.now() + 3200;   // 確定表示の間は、サイドのGOGO!がちかちか虹色
       for (let i = 0; i < 9; i++) setTimeout(() => {
         if (window.shakeMain) shakeMain(140); burst();
         if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(72 + (i % 3) * 10, t, 0.3, 'sine', 0.3); tone(160 + i * 18, t, 0.08, 'square', 0.1); }
@@ -621,10 +623,11 @@
     document.querySelectorAll('.rl.cz').forEach(e => e.classList.toggle('lit', !!cz));
     document.querySelectorAll('.rl.mtn').forEach(e => e.classList.toggle('lit', !!(inBonus && bonusRun.zone)));
     /* サイドのGOGO!ランプ: 液晶のGOGO!と同じ見た目・同じ色。液晶より先に光ることもある(ボーナス確定のゲームだけ) */
-    const gl = !!(gogoBox.classList.contains('peka') || window.sideGogo);
+    const gl = !!(gogoBox.classList.contains('peka') || window.sideGogo || window.sideConfirm);
+    const rb = Date.now() < (window.sideRb || 0);
     document.querySelectorAll('.rl.gogo').forEach(e => {
-      const tn = (typeof pendingDisplayIndex === 'number' ? pendingDisplayIndex : 0) + 1;
-      const cls = gl ? `rl gogo lit peka tier-${tn}` : 'rl gogo';
+      const tn = Math.max(1, (typeof pendingDisplayIndex === 'number' ? pendingDisplayIndex : 0) + 1);
+      const cls = gl ? `rl gogo lit peka tier-${tn}${rb ? ' rb' : ''}` : 'rl gogo';
       if (e.className !== cls) e.className = cls;
       if (gl && typeof BIG_TIERS !== 'undefined' && BIG_TIERS[tn - 1]) e.style.setProperty('--glow', BIG_TIERS[tn - 1].glow);
     });

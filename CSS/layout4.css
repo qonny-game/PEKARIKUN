@@ -153,3 +153,8 @@
 @keyframes cw-don { 0% { transform: scale(1.7) translateY(-6px); } 100% { transform: scale(1) translateY(0); } }
 @keyframes cw-bgp { from { filter: brightness(1); } to { filter: brightness(1.5); } }
 @keyframes cw-hue { to { filter: hue-rotate(360deg); } }
+
+/* BONUS確定表示の間: サイドのGOGO!がちかちかと虹色 */
+.rl.gogo.rb .gogo-text { color: #fff; animation: gg-rb .18s steps(2) infinite, gg-hue .7s linear infinite !important; text-shadow: 0 0 6px #fff, 0 0 14px #f0abfc, 0 0 28px #38bdf8, 0 0 44px #fde047; }
+@keyframes gg-rb { 0% { opacity: 1; } 50% { opacity: .15; } }
+@keyframes gg-hue { to { filter: hue-rotate(360deg) brightness(1.6); } }
