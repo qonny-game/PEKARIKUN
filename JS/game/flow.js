@@ -343,7 +343,7 @@ function awardPanelUp(n) {
   const iv = setInterval(() => {
     if (isPushing || isReelSpinning || isRushing || isAtResult) return;
     clearInterval(iv);
-    pushReveal(`+${n}G`, true, () => { updateAT(); });
+    pushReveal(`+${n}G`, true, () => { updateAT(); window.panelUpDone = true; });   // 上乗せ演出が済んだら下パネルを元に戻す
   }, 400);
 }
 

@@ -126,7 +126,7 @@
     if (!panelEl || !window.panelPlan || isDebugRun) return;
     const was = panelEl.classList.contains('off');
     panelEl.classList.remove('flash'); panelEl.classList.add('off');
-    panelMode = window.panelPlan; panelSeen = false;
+    panelMode = window.panelPlan; panelSeen = false; window.panelUpDone = false;
     if (!was && soundEnabled) { initAudio(); const t = audioCtx.currentTime; tone(220, t, 0.5, 'sawtooth', 0.08); tone(110, t + 0.15, 0.7, 'sine', 0.16); }
   }
   let panelMode = null, panelSeen = false;
@@ -134,14 +134,14 @@
   setInterval(() => {
     if (!panelEl || !panelMode || !panelEl.classList.contains('off')) return;
     let end = false;
-    if (panelMode === 'cz') end = !!bonusRun;
-    else if (panelMode === 'chance') { if (bonusRun) panelSeen = true; end = panelSeen && !bonusRun; }
-    else if (panelMode === 'at') { if (atGames > 0) panelSeen = true; end = (panelSeen || !atRun) && atGames <= 0 && !atEnding && !isAtResult; }
+    if (panelMode === 'cz') end = !!window.panelUpDone || !!bonusRun;   // BONUS確定画面が出る / CZの最終ゲームが終わる / ボーナス開始 で元に戻す
+    else if (panelMode === 'chance') { if (bonusRun) panelSeen = true; end = (!!bonusRun && !bonusRun.zone && bonusRun.played >= bonusRun.games) || !!isRushing || (panelSeen && !bonusRun); }   // 最終ゲーム(JUDGEMENT)が終わる / RUSH突入の確定画面
+    else if (panelMode === 'at') { if (atGames > 0) panelSeen = true; end = !!window.panelUpDone || (panelSeen || !atRun) && atGames <= 0 && !atEnding && !isAtResult; }
     if (end) { panelMode = null; panelLight(); }
   }, 250);
   function panelLight() {
     if (!panelEl) return;
-    if (panelEl.classList.contains('off')) { panelEl.classList.remove('off'); panelEl.classList.add('flash'); setTimeout(() => panelEl.classList.remove('flash'), 1000); }
+    if (panelEl.classList.contains('off')) { panelEl.classList.remove('off'); panelEl.classList.add('flash'); setTimeout(() => panelEl.classList.remove('flash'), 1200); }
   }
   function spinStart() {
     panelDark();   // 回転中・第1停止の前
@@ -590,13 +590,14 @@
     say(`STORY ${z.i}/${z.n}`, t, 2000, z.i >= 3 ? 'shock' : 'happy');
     story(z.i, z.n, z.i >= z.n);
   };
-  window.onCzEnd = function () { if (isDebugRun) return; setTimeout(() => { if (czLeft === 0 && !window.czHoldNow) say('', 'ゾーン終了…', 2800, 'sad', 'sad'); }, 400); };   // 連続演出でHOLDされたら終了しない
+  window.onCzEnd = function () { if (isDebugRun) return; setTimeout(() => { window.panelUpDone = true; if (czLeft === 0 && !window.czHoldNow) say('', 'ゾーン終了…', 2800, 'sad', 'sad'); }, 400); };   // 連続演出でHOLDされたら終了しない
   window.onCzHold = function () { if (isDebugRun) return; setTimeout(() => { act('hop'); }, 100); };
   window.czKeepClear = function () { const E = window.czKeep; window.czKeep = null; if (E) { E.classList.add('out'); setTimeout(() => E.remove(), 400); } };
 window.onCzSuccess = function () {
     if (isDebugRun || !stageEl) return;
     window.sideConfirm = true;   // 確定したら、以降サイドのGOGO!ランプは(ボーナス開始まで)光り続ける
-    setTimeout(() => {   // 液晶に「BONUS 確定!」だけを、どどどどどん!と連打で大きく表示 (トーストなし)
+    setTimeout(() => {   // 液晶に「BONUS 確定!」だけを
+      window.panelUpDone = true;   // 確定画面が出たら下パネルを元に戻す、どどどどどん!と連打で大きく表示 (トーストなし)
       const E = document.createElement('div');
       E.className = 'lcd-czwin';
       E.innerHTML = '<i class="cw-bg"></i><span class="cw-a">BONUS</span><b class="cw-b">確定!</b>';

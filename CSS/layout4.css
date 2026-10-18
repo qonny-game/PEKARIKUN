@@ -69,9 +69,9 @@
 .cab-label { transition: filter .25s; }
 .cab-label.off { animation: cl-off .9s steps(1) forwards; }
 .cab-label.off .cl-logo, .cab-label.off .cl-sub, .cab-label.off .cl-line, .cab-label.off .cl-screw { transition: opacity .2s; }
-.cab-label.flash { animation: cl-on 1s ease-out; }
+.cab-label.flash { animation: cl-on 1.1s linear; }
 @keyframes cl-off { 0% { filter: none; } 12% { filter: brightness(.15); } 24% { filter: none; } 36% { filter: brightness(.1); } 48% { filter: brightness(.9); } 60%, 100% { filter: brightness(.04) saturate(.2); } }
-@keyframes cl-on { 0% { filter: brightness(4) saturate(1.8); } 100% { filter: none; } }
+@keyframes cl-on { 0% { filter: brightness(.04) saturate(.2); } 6% { filter: brightness(1.7); } 12% { filter: brightness(.05) saturate(.2); } 20% { filter: brightness(1.1); } 26% { filter: brightness(.08) saturate(.3); } 34% { filter: brightness(.9); } 40% { filter: brightness(.12); } 48% { filter: brightness(1.9) saturate(1.5); } 54% { filter: brightness(.5); } 62% { filter: brightness(2.6) saturate(1.8); } 100% { filter: none; } }
 
 /* AUTOボタン: TOTAL GETの段の右 / 著作表示は歯車メニュー内 */
 .led-row { align-items: center; gap: 6px; grid-template-columns: 1fr 1.2fr 1.2fr auto; }
