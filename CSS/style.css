@@ -1760,7 +1760,6 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 /* PAYOUT / MEDAL / TOTAL GET とランプを1段に */
 .cab-panel { display: flex; align-items: center; gap: 6px; padding: 2px 0 0; }
 .panel-lamps { display: grid; grid-template-columns: auto auto; gap: 2px 3px; margin: 0; flex: none; justify-content: start; }
-.pl { padding: 1px 4px; font-size: 7.5px; letter-spacing: .04em; text-align: center; white-space: nowrap; }
 .led-row { flex: 1; min-width: 0; display: grid; grid-template-columns: .9fr 1.1fr 1.1fr; gap: 2px; }
 .led-label { font-size: 7px; letter-spacing: .06em; white-space: nowrap; }
 .dg { font-size: 17px; line-height: 1.1; }
@@ -1769,12 +1768,11 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 .data-counter { display: flex; align-items: center; gap: 4px; z-index: 500; }
 .data-counter .dc-grid { flex: 1; min-width: 0; }
 .dc-icons { position: relative; display: flex; align-items: center; gap: 0; flex: none; }
-.dc-icons .bb-ico { width: 32px; height: 30px; border-radius: 8px; }
+.dc-icons .bb-ico { width: 36px; height: 34px; border-radius: 8px; }
 .dc-icons .bb-ico svg { width: 18px; height: 18px; }
 .dc-icons .more-menu { right: 0; top: calc(100% + 8px); bottom: auto; }
 .cab-panel { gap: 4px; }
 .panel-lamps { gap: 2px 2px; }
-.pl { font-size: 7px; padding: 1px 3px; }
 .led-row { grid-template-columns: .85fr 1.1fr 1.1fr; gap: 0; }
 .led-label { font-size: 8px; }
 .dg { font-size: 27px; line-height: 1.05; }
@@ -1793,7 +1791,8 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 .cabinet > .stop-row { padding: 8px calc((100% - var(--reel-w, 198px)) / 2) 6px; gap: 0; box-sizing: border-box; }
 /* INSERT〜WAIT は3列2行 */
 .panel-lamps { grid-template-columns: repeat(3, auto); gap: 2px 3px; }
-.pl { min-width: 0; padding: 1px 2px; font-size: 6.5px; }
+/* 点灯表示 (INSERT〜WAIT): 1.20.56 で 6.5px → 8px。.pl の指定はこの1か所にまとめた */
+.pl { min-width: 0; padding: 1px 2px; font-size: 8px; letter-spacing: .04em; text-align: center; white-space: nowrap; }
 .panel-lamps { gap: 3px 2px; }
 /* PAYOUT / MEDAL / TOTAL GET: すきまを詰めて数字を大きく */
 .cab-panel { gap: 6px; }

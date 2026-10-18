@@ -596,6 +596,7 @@
   window.czKeepClear = function () { const E = window.czKeep; window.czKeep = null; if (E) { E.classList.add('out'); setTimeout(() => E.remove(), 400); } };
 window.onCzSuccess = function () {
     if (isDebugRun || !stageEl) return;
+    window.czSevenColor = SEVENS[Math.floor(Math.random() * SEVENS.length)];   // 予告の7の色（揃えるときも同じ色を狙う）
     window.sideConfirm = true;   // 確定したら、以降サイドのGOGO!ランプは(ボーナス開始まで)光り続ける
     setTimeout(() => {   // 液晶に「BONUS 確定!」だけを
       window.panelUpDone = true;   // 確定画面が出たら下パネルを元に戻す、どどどどどん!と連打で大きく表示 (トーストなし)
@@ -604,7 +605,7 @@ window.onCzSuccess = function () {
       E.innerHTML = '<i class="cw-bg"></i><span class="cw-a">BONUS</span><b class="cw-b">確定!</b>';
       stageEl.appendChild(E);
       window.czKeep = E;   // 777が揃うまで液晶に残す
-      setTimeout(() => { if (window.czKeep !== E) return; E.classList.add('keep'); E.insertAdjacentHTML('beforeend', '<div class="cw-sev"><em>777を揃えろ！</em><div class="cw-imgs"><img src="assets/img/7red.png"><img src="assets/img/7red.png"><img src="assets/img/7red.png"></div></div>'); }, 2200);
+      setTimeout(() => { if (window.czKeep !== E) return; E.classList.add('keep'); const im = SYM_IMG[window.czSevenColor] || ASSET_DIR.img + window.czSevenColor + '.png'; E.insertAdjacentHTML('beforeend', `<div class="cw-sev"><div class="cw-imgs"><img src="${im}"><img src="${im}"><img src="${im}"></div></div>`); }, 2200);
       act('jump'); swoosh(3);
       window.sideRb = Date.now() + 3200;   // 確定表示の間は、サイドのGOGO!がちかちか虹色
       for (let i = 0; i < 9; i++) setTimeout(() => {
@@ -637,6 +638,7 @@ window.onCzSuccess = function () {
   /* サイドの PEKA RUSH / PEKA CHANCE ランプ: AT中 / ボーナス中だけ光る */
   const rlRush = [...document.querySelectorAll('.rl.rush')], rlChance = [...document.querySelectorAll('.rl.chance')];
   setInterval(() => {
+    if (document.hidden) return;   // 見えていない間は表示だけの更新を止める
     const rush = rushNow();   // PEKA CHANCE中は光らせない (RUSH突入から)
     const chance = !!bonusRun && !bonusRun.zone;
     rlRush.forEach(e => e.classList.toggle('lit', !!rush));
@@ -696,13 +698,13 @@ window.onCzSuccess = function () {
   capEl.className = 'lcd-cap';
   capEl.textContent = '最終GのJUDGEMENTに勝てばPEKA RUSH';
   if (stageEl) stageEl.appendChild(capEl);
-  setInterval(() => capEl.classList.toggle('on', !!(typeof bonusRun !== 'undefined' && bonusRun && !bonusRun.zone && !isDebugRun)), 200);
+  setInterval(() => { if (!document.hidden) capEl.classList.toggle('on', !!(typeof bonusRun !== 'undefined' && bonusRun && !bonusRun.zone && !isDebugRun)) }, 200);
   /* 筐体上部の表示(PEKARI-KUN)に、いまのゲーム種類を1行で出す */
   const mqText = document.querySelector('.cab-marquee > span');
   const MQ_BASE = mqText ? mqText.textContent : 'PEKARI-KUN';
   let mqLast = '';
   setInterval(() => {
-    if (!mqText) return;
+    if (!mqText || document.hidden) return;
     let t = MQ_BASE, c = '';
     if (typeof bonusRun !== 'undefined' && bonusRun) { t = bonusRun.zone ? 'PEKA PEKA MOUNTAIN!' : 'PEKA CHANCE!'; c = bonusRun.zone ? 'mq-zone' : 'mq-chance'; }
     else if (rushNow()) { t = ['PEKA RUSH', 'PEKA RUSH  HEAVEN', 'PEKA RUSH  DEATH'][atType] || 'PEKA RUSH'; c = ['mq-rush', 'mq-heaven', 'mq-death'][atType] || 'mq-rush'; }
@@ -715,6 +717,7 @@ window.onCzSuccess = function () {
   }, 200);
   let last = '';
   setInterval(() => {
+    if (document.hidden) return;
     const sc = scene();
     if (sc !== last) {
       last = sc; el.dataset.scene = sc;

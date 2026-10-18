@@ -282,7 +282,7 @@ function attemptBonus() {
     recordPoint();
     updateUI();
   }
-  startReels({ kind: 'seven', assist: true }, res => {
+  startReels({ kind: 'seven', assist: true, color: window.czSevenColor || null }, res => {
     if (res.success) {
       onBonusAligned();
     } else {

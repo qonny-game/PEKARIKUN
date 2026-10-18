@@ -119,7 +119,7 @@
 .cabinet > .stop-row { position: relative; }
 .lever-btn { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); width: 44px; padding: 3px 0 4px; border: 1px solid rgba(255, 255, 255, .2); border-radius: 10px; background: linear-gradient(#2a1f55, #120a2a); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; touch-action: manipulation; }
 .lever-btn i { width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fecaca, #ef4444 45%, #7f1d1d); box-shadow: 0 0 8px rgba(239, 68, 68, .7), 0 3px 0 #450a0a; }
-.lever-btn span { font-family: 'Orbitron', sans-serif; font-size: 7px; font-weight: 900; letter-spacing: .06em; color: #c7d2fe; }
+.lever-btn span { font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 900; letter-spacing: .06em; color: #c7d2fe; }
 .lever-btn:active i { transform: translateY(5px); box-shadow: 0 0 8px rgba(239, 68, 68, .7), 0 0 0 #450a0a; }
 
 /* CHANCE ZONE 成功: BONUS 確定! */

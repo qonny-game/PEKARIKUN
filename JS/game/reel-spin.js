@@ -36,7 +36,7 @@ function startReels(plan, onDone) {
     reelsEl.appendChild(el);
     return { c, el, cells: [...el.children], pos: Math.random() * STRIP_LEN, state: 'spin', ov: {}, T: 0, t: 0, final: null, shown: [null, null, null, null] };
   });
-  reelSpin = { plan, cols, onDone, last: performance.now(), raf: 0, color: null, timers: [], order: [] };
+  reelSpin = { plan, cols, onDone, last: performance.now(), raf: 0, color: plan.color || null, timers: [], order: [] };
   isReelSpinning = true;
   spinBtn.disabled = false;
   spinBtn.innerText = spinBtn.dataset.navi ? `ストップ ${spinBtn.dataset.navi}` : 'ストップ';
@@ -151,6 +151,7 @@ function stopCol(c, auto) {
     } else {
       let pool = cands.filter(x => c !== 0 || !windowOf(0, x).includes('cherry'));
       if (!pool.length) pool = cands;
+      if (want) { const same = pool.filter(x => stripSym(c, x) === want); if (same.length) pool = same; }   // 予告で出した7の色を優先して揃える
       const others = [0, 1, 2].filter(i => i !== c);
       if (others.every(i => rs.cols[i].state !== 'spin')) {
         const good = pool.filter(x => alignedLines(gridOf([0, 1, 2].map(i => (i === c ? mod(x) : rs.cols[i].t)))).length === 0);

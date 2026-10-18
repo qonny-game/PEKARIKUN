@@ -86,7 +86,8 @@ function syncPanel() {
   setOn(plIds.start, 'on', idle);
   setOn(plIds.wait, 'on', reelLocked || isCounting || isSuspense || isRushing || isPushing || window.leverWaiting);
 }
-setInterval(syncPanel, 50);
+setInterval(() => { if (!document.hidden) syncPanel(); }, 50);   // 見えていない間は表示の同期を止める
+document.addEventListener('visibilitychange', () => { if (!document.hidden) syncPanel(); });
 document.querySelectorAll('.stop-btn').forEach(b => {
   b.addEventListener('pointerdown', e => {
     e.preventDefault();
