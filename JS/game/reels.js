@@ -42,7 +42,7 @@ const leftCherries = g => [0, 3, 6].filter(i => g[i] === 'cherry').length;
 
 /* 役ごとに、成立する停止位置の組み合わせ (3リール分の中段位置) を全部数えておく。
    ハズレ・ベル・リプレイ・チェリーは、必ずこの中から選ぶ (配列どおりの図柄で止まる) */
-const ROLE_COMBOS = { mixed7: [], lose: [], replay: [], cherry: [], cherryW: [], cherryS: [], melonW: [], chanceW: [], chanceS: [], sand: [], bell0: [], bell1: [], bell2: [] };
+const ROLE_COMBOS = { bell15s: [], mixed7: [], lose: [], replay: [], cherry: [], cherryW: [], cherryS: [], melonW: [], chanceW: [], chanceS: [], sand: [], bell0: [], bell1: [], bell2: [] };
 /* 上段のスイカ（第1リール上段）は、スイカ系（弱=左上→右下の斜め / 強=上段横）か強チャンス目の確定のときだけ。それ以外の役・ハズレでは出さない
    強チャンス目: 第1リール上段スイカ・第2リール中段スイカ・第3リール中段スイカ（揃わない）/ 弱チャンス目: 中段リプレイ・リプレイ・ベル（揃わない） */
 
@@ -53,6 +53,7 @@ const ROLE_COMBOS = { mixed7: [], lose: [], replay: [], cherry: [], cherryW: [],
     const L = alignedLines(g);
     // 通常時には絶対に出ない目: 第1リールの 白7・スイカ・白7 / 色違いの7が一列に揃う目（どちらもボーナス確定の意味）。矛盾演出(mixed7)でだけ使う
     if (g[0] === '7white' && g[3] === 'melon' && g[6] === '7white') continue;
+    if (L.length === 0 && leftCherries(g) === 0 && isSeven(g[6]) && g[4] === 'bell' && g[2] === 'bell') ROLE_COMBOS.bell15s.push(ts);   // SUPER中の15枚役: 7・ベル・ベル(左下→右上の斜め)
     if (REEL_LINES.some(l => l.every(i => isSeven(g[i])))) { if (L.length === 0 && leftCherries(g) === 0) ROLE_COMBOS.mixed7.push(ts); continue; }
     const lc = leftCherries(g);
     const topMelon = g[0] === 'melon';   // 第1リール上段のスイカ
@@ -110,7 +111,7 @@ function pickMelonPlan() {
 }
 function planFor(kind) {
   if (kind === 'sand') return { kind: 'sand', ts: pickCombo('sand') };
-  if (kind === 'bell2' && typeof atSuper !== 'undefined' && atSuper && atGames > 0 && !bonusRun) return { kind: 'fixed', ts: pickCombo('mixed7') };   // SUPER中の15枚役: リールも7(色違い)が揃う
+  if (kind === 'bell2' && typeof atSuper !== 'undefined' && atSuper && atGames > 0 && !bonusRun) return { kind: 'fixed', ts: pickCombo('bell15s') };   // SUPER中の15枚役: 7・ベル・ベル
   if (kind === 'lose' && window.contraMixed) { window.contraMixed = false; return { kind: 'fixed', ts: pickCombo('mixed7') }; }   // 矛盾演出: 色違いの7が揃う
   if (kind === 'lose' && sandReachNow) return { kind: 'fixed', ts: pickCombo('sand') };   // 通常時のリーチ目（サンド目の形で止まる）
   if (kind === 'cherry' || kind === 'cherryW' || kind === 'cherryS') return { kind: 'cherry', ts: pickCombo(kind), strong: kind === 'cherryS' };

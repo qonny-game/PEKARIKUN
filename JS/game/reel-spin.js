@@ -321,7 +321,7 @@ function runRole(kind, done, navi) {
   omenThen(kind, () => {
     const plan = planFor(kind);
     plan.role = kind;
-    if (navi) { plan.navi = navi.order; showNavi(navi.order, navi.style); }
+    if (navi) { plan.navi = navi.order; showNavi(navi.order, navi.style, false, navi.seven); }
     if (window.LCDX && LCDX.spinStart) setTimeout(LCDX.spinStart, 0);
     startReels(plan, res => {
       omenOff();

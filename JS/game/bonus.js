@@ -162,14 +162,14 @@ function rareWarn(style) {
 }
 let naviVoiceIdx = -1;   // 押し順ボイス: 次に鳴らす番号 (止めるたびに次のリールの声)
 function naviVoice(c) { playVoice(['left', 'center', 'right'][c]); }
-function showNavi(order, style = '', partial = false) {
+function showNavi(order, style = '', partial = false, seven = false) {
   naviVoiceIdx = 0; naviVoice(order[0]);
   if (style === 'red' || style === 'purple') rareWarn(style);
   document.body.dataset.navi = style || 'y';
   naviOrder = order;
   naviPartial = !!partial;
   naviEl.className = 'navi on ' + style + (partial ? ' partial' : '');     // red: チェリー / purple: スイカ (上乗せ確定)
-  const sevenNavi = atSuper && atGames > 0 && !bonusRun;   // SUPER中: 第1停止の「1」を7の画像に（色もいろいろ）
+  const sevenNavi = !!seven && atSuper && atGames > 0 && !bonusRun;   // SUPERのベルのナビだけ。レア役・サンド目は 1-2-3 のまま   // SUPER中: 第1停止の「1」を7の画像に（色もいろいろ）
   const sevenImg = () => { const k = SEVENS[Math.floor(Math.random() * SEVENS.length)]; return `<img class="navi-7" src="${SYM_IMG[k] || ASSET_DIR.img + k + '.png'}" alt="1">`; };
   [...naviEl.children].forEach((el, c) => {
     el.textContent = partial ? (c === order[0] ? '1' : '') : (order.indexOf(c) + 1) + (style === 'purple' ? '!' : '');

@@ -626,9 +626,10 @@ function handleSpin() {
   } else if (role === 'bell') {
     // ベル揃い: 直線 / 斜め左上から1枚 / 斜め左下から15枚 (AT中は左下が出やすい)
     if (inAT && atRun) atRun.bells++;
-    const type = pickBellType(inAT);
+    let type = pickBellType(inAT);
     // AT中のベル: 揃いやすいが、ナビが出ないことがあり、ナビなしのときはハズレ目になることもある
     const atNavi = inAT && Math.random() < 0.85 ? naviFor('') : null;   // ベルのナビは黄
+    if (atNavi && atSuper) { atNavi.seven = true; type = 2; }   // SUPERのナビは第1停止が7。出目は 7・ベル・ベル の15枚役
     const atBellMiss = inAT && !atNavi && Math.random() < 0.1;
     runRole(atBellMiss ? 'lose' : 'bell' + type, () => {
       if (atBellMiss) { stopTension(); updateUI(); maybeShowAtResult(); return; }
