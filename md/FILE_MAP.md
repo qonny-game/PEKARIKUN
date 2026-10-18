@@ -16,7 +16,7 @@
 | 10 | `JS/game/bell.js` | ベル | 140 | BELL_TYPES, pickBellType, bellBadge, getPop, getRAF, rainCoins, playJaraJara, getRumbleLen …他6 |
 | 11 | `JS/game/cherry.js` | チェリー | 199 | cherryStatus, cherryRemain, updateCherry, CHERRY_AT_CHOICES, pickCherryAtG, setBoost, cherryEffects, ROLE_INFO …他16 |
 | 12 | `JS/game/at.js` | AT（ペカラッシュ）・PUSH演出 | 139 | atStatus, atRemain, atLabel, atToast, updateAT, updateAtGain, showAtToast, AT_CHOICES …他9 |
-| 13 | `JS/game/bonus.js` | ボーナス消化・押し順ナビ・ドンドンドン | 468 | AURA_NAMES, AURA_WIN_W, AURA_LOSE_W, auraEl, atEntryRateFor, pickAuraLevel, ZONE_G_CHOICES, ZONE_G_WEIGHTS …他35 |
+| 13 | `JS/game/bonus.js` | ボーナス消化・押し順ナビ・ドンドンドン | 477 | AURA_NAMES, AURA_WIN_W, AURA_LOSE_W, auraEl, atEntryRateFor, pickAuraLevel, ZONE_G_CHOICES, ZONE_G_WEIGHTS …他35 |
 | 14 | `JS/game/at-result.js` | ATリザルト・獲得枚数OVER・次回示唆 | 375 | atResultEl, atResultGain, arHintBar, arHintText, atResultRAF, MODES, HINT_LABELS, decideNextMode …他27 |
 | 15 | `JS/ui/display.js` | 電光掲示（LED・ランプ表示） | 221 | setOn, setLed, ledWinEl, ledCreditEl, ledTotalEl, ledWin, setLedWin, creditNow …他13 |
 | 16 | `JS/game/auto.js` | オートプレイ・サウンドボタン | 168 | autoBtn, AUTO_KEY, AUTO_SPEEDS, AUTO_STOPS, AUTO_OPT, saveAutoOpt, AUTOPLAY, autoIdle …他20 |

@@ -318,6 +318,13 @@ function bonusGameMain() {
   if (isFinal && !judgeEl.classList.contains('tense')) { startTension('JUDGEMENT'); if (chanceLogo) chanceLogo.classList.add('judge'); }   // デバッグ時や押し順ミスのやり直し時(通常は judgeIntro で表示済み)
   updateAT();
   if (!b.zone && !b.debug && !b.wmDone && ((b.atWin && !b.reg) || (b.reg && b.upgrade && b.played + 1 >= b.upAt)) && Math.random() < 0.12) { window.wmNext = true; b.wmDone = true; }   // 白7・スイカ・白7: AT当選確定 / REG中はBIG昇格確定
+  if (isFinal && !b.debug && !isDebugRun && !b.judgeStarted && window.LCDX && LCDX.judgeReveal) {   // レバーON直後(リールが回り出すと同時)に判定。リールを止める前に結果を出す
+    b.judgeStarted = true; b.judgeRunning = true;
+    setTimeout(() => LCDX.judgeReveal(b.atWin, () => {
+      b.judgeRunning = false; b.judgeShown = true;
+      if (b.judgeWaitFinish) { const f = b.judgeWaitFinish; b.judgeWaitFinish = null; f(); }
+    }), 250);
+  }
   runRole('bell2', res => {
     hideNavi();
     // 押し順を間違えた: ベルこぼし (1枚だけ。ゲーム数は消化されない)
@@ -432,9 +439,11 @@ function finishBonus() {
   if (b.zone) { finishZone(b); return; }
   isSuspense = true;
   /* 結果発表: 「レバーを叩け」のあとはカウントダウンなし。すぐにBONUS確定 / 失敗を出す */
-  const T = b.debug ? 900 : 250;
+  const T = b.debug ? 900 : 0;
   const timers = [];
-  const revealThen = fn => {   // 結果: AT当選=BONUS確定の画像 / 非当選=液晶が割れる
+  const revealThen = fn => {   // 結果: AT当選=BONUS確定の画像 / 非当選=液晶が割れる (レバーON直後に出し済みなら、そのまま次へ)
+    if (b.judgeShown) { fn(); return; }
+    if (b.judgeRunning) { b.judgeWaitFinish = fn; return; }
     if (b.debug || isDebugRun || !window.LCDX || !LCDX.judgeReveal) { fn(); return; }
     LCDX.judgeReveal(b.atWin, fn);
   };
