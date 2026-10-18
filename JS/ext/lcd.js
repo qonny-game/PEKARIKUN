@@ -133,12 +133,28 @@
     if (!normal) return;
     if (symHint.T >= 2 && symHint.T - 1 === n) {
       const h = symHint; symHint = null;
-      if (n === 3) { hintHoldUntil = Date.now() + 1800; setTimeout(() => symShow(h), 250); }   // 第3停止後は少し間を置いて出し、結果表示のあとも残す
+      if (n === 3) { if (window.hideGet) hideGet(); hintHoldUntil = Date.now() + 1800; setTimeout(() => symShow(h), 250); }   // 第3停止後は少し間を置いて出し、結果表示のあとも残す
       else symShow(h);
     }
   }
+  /* サンド目が揃った: BARの次にすごい役。スイカ・チェリーより豪華に */
+  function sandWin(n) {
+    if (isDebugRun || !stageEl) return;
+    if (window.hideGet) hideGet();
+    const E = document.createElement('div');
+    E.className = 'lcd-sandwin';
+    E.innerHTML = `<i class="sw-bg"></i><span class="sw-t">SAND</span><b class="sw-n">+${n}G</b><em class="sw-s">UP!!</em>`;
+    stageEl.appendChild(E);
+    setTimeout(() => E.remove(), 3600);
+    act('jump'); burst(); swoosh(3);
+    if (window.shakeMain) shakeMain(700);
+    [0, 350, 700, 1100].forEach((t, i) => setTimeout(() => { burst(); spawn(i % 2 ? 'star' : 'fire', 3); }, t));
+    for (let i = 0; i < 14; i++) setTimeout(() => spawn('coin', 3), i * 110);
+    if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; [523, 659, 784, 1047, 1319, 1568, 2093].forEach((f, i) => tone(f, t + i * 0.08, 0.35, 'triangle', 0.12)); tone(131, t, 0.9, 'sawtooth', 0.12); }
+  }
   /* 新しい回転の開始前: 直前の液晶演出をすべて消す */
   function clearAll() {
+    if (window.hideGet) hideGet();
     hintHoldUntil = 0; symHint = null; hintClear(true);
     clearTimeout(tagT); tagEl.classList.remove('on');
     wxPlan = null; wxClear();
@@ -146,7 +162,7 @@
     hold = 0; m1.textContent = ''; m2.textContent = ''; msg.classList.remove('pop');
     if (!(pushPlan && !pushPlan.done)) pushEl.className = 'lcd-push';
   }
-  window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0), pair, hintStop, clearAll, preHint, spinStart, hintClear, hint: hintShow, tag, miss: () => missMark(), story: (i, n, l) => story(i, n, l), don: n => { if (n >= 3) forceLv = 2; }, donWin: role => { forceLv = 2; const h = planHint(role || 'lose'); if (h) { hints.push(h); showHint(h); } } };
+  window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0), pair, hintStop, clearAll, sandWin, preHint, spinStart, hintClear, hint: hintShow, tag, miss: () => missMark(), story: (i, n, l) => story(i, n, l), don: n => { if (n >= 3) forceLv = 2; }, donWin: role => { forceLv = 2; const h = planHint(role || 'lose'); if (h) { hints.push(h); showHint(h); } } };
   let hold = 0;
   function say(a, b, ms, md, an) {
     m1.textContent = a || ''; m2.textContent = b || '';
@@ -164,7 +180,7 @@
     if (!box || !reelsEl) return;
     const w = box.clientWidth;
     if (!w) return;
-    const lcdH = Math.round(w * 1.02);                       // 液晶: ほぼ正方形で最大限大きく
+    const lcdH = Math.round(w * 1.02 * 2 / 3);               // 液晶: 高さを2/3に (下に5段目ラベルパネルを増設)
     const sc = Math.max(0.6, Math.min(w * 0.8 / 198, 2));    // リール: 従来(液晶幅いっぱい)の80%
     box.style.height = lcdH + 'px';
     box.style.setProperty('--lcd-h', lcdH + 'px');
@@ -552,10 +568,16 @@
   /* サイドの PEKA RUSH / PEKA CHANCE ランプ: AT中 / ボーナス中だけ光る */
   const rlRush = [...document.querySelectorAll('.rl.rush')], rlChance = [...document.querySelectorAll('.rl.chance')];
   setInterval(() => {
-    const rush = atGames > 0 || atEnding || (bonusRun && bonusRun.zone);
+    const rush = atGames > 0 || atEnding;
     const chance = !!bonusRun && !bonusRun.zone;
     rlRush.forEach(e => e.classList.toggle('lit', !!rush));
     rlChance.forEach(e => e.classList.toggle('lit', chance));
+    const inBonus = typeof bonusRun !== 'undefined' && bonusRun;
+    const cz = !inBonus && !rush && (czLeft > 0 || (window.czFrozen != null && zenchoLeft > 0));
+    document.querySelectorAll('.rl.cz').forEach(e => e.classList.toggle('lit', !!cz));
+    document.querySelectorAll('.rl.mtn').forEach(e => e.classList.toggle('lit', !!(inBonus && bonusRun.zone)));
+    document.querySelectorAll('.rl.gogo').forEach(e => e.classList.toggle('lit', !!window.pekaLit));
+    document.querySelectorAll('.rl.rush .rk').forEach(e => { const t = rush ? (['', 'HEAVEN', 'DEATH'][atType] || '') : ''; if (e.textContent !== t) e.textContent = t; e.className = 'rk' + (atType === 1 ? ' hv' : atType === 2 ? ' dt' : ''); });
   }, 200);
   /* PEKA CHANCE中、背景(オーラ)の色が昇格したら LEVEL UP! */
   const AURA_NAME = ['白', '青', '黄', '緑', '赤', '金', '虹'];

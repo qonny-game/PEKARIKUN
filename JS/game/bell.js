@@ -57,7 +57,7 @@ function showGet(coins) {
   cancelAnimationFrame(getRAF);
   const g0 = performance.now();
   const gfr = now => {
-    const pr = Math.min(1, (now - g0) / 420);
+    const pr = Math.min(1, (now - g0) / 300);
     getPop.firstChild.nodeValue = Math.round(coins * (1 - Math.pow(1 - pr, 3)));
     if (pr < 1) getRAF = requestAnimationFrame(gfr);
   };
@@ -66,6 +66,9 @@ function showGet(coins) {
   void getPop.offsetWidth;
   getPop.classList.add('show');
 }
+/* 獲得枚数表示を消す (次の回転開始時 / 第3停止後に演出が入る時) */
+function hideGet() { cancelAnimationFrame(getRAF); getPop.classList.remove('show'); }
+window.hideGet = hideGet;
 function showBellResult(coins, inAT) {
   bellBadge.classList.remove('show');
   if (inAT) {

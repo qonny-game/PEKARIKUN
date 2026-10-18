@@ -31,6 +31,7 @@ function startReels(plan, onDone) {
     const el = document.createElement('div');
     el.className = 'reel-ov';
     el.style.left = `${c * 66}px`;
+    el.dataset.c = c;
     el.innerHTML = '<div class="reel"></div><div class="reel"></div><div class="reel"></div><div class="reel"></div>';
     reelsEl.appendChild(el);
     return { c, el, cells: [...el.children], pos: Math.random() * STRIP_LEN, state: 'spin', ov: {}, T: 0, t: 0, final: null, shown: [null, null, null, null] };
@@ -311,7 +312,11 @@ function runRole(kind, done, navi) {
     });
   });
 }
-const naviFor = style => ({ order: [0, 1, 2].sort(() => Math.random() - 0.5), style });
+/* 押し順ナビ。first を指定すると、そのリールを必ず1番目にする(スイカ・チェリーは左から / サンド目は中から) */
+const naviFor = (style, first) => {
+  const rest = [0, 1, 2].filter(c => c !== first).sort(() => Math.random() - 0.5);
+  return { order: first === undefined ? [0, 1, 2].sort(() => Math.random() - 0.5) : [first, ...rest], style };
+};
 
 /* 揃ったマスを光らせる / ほかを暗くする */
 function markWin(winIdx, glow) {

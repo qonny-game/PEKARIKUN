@@ -68,7 +68,9 @@ const SAND_UP = [5, 10, 15, 20, 25, 30, 50];   // 揃えたときの上乗せG�
 function playSand() {
   const N = SAND_UP[Math.floor(Math.random() * SAND_UP.length)];
   if (window.FXBanner) window.FXBanner('サンド目をそろえろ！！！', '', 'red', true, 1700);   // 液晶いっぱいにあおる
+  reelsEl.classList.add('focus-mid');
   runRole('sand', res => {
+    reelsEl.classList.remove('focus-mid');
     stopTension();
     if (res.success) {
       atGames += N;
@@ -76,13 +78,14 @@ function playSand() {
       showAtToast(`サンド目 上乗せ +${N}G`);
       triggerFlash();
       sideLampFlash('heaven', 2000);   // 揃えたら虹色のランプ
+      if (window.LCDX && LCDX.sandWin) LCDX.sandWin(N);   // 液晶も豪華に
     } else {
       missEffect();
     }
     updateAT();
     updateUI();
     maybeShowAtResult();
-  });
+  }, naviFor('', 1));   // 中リールから押す。左右のリールは薄暗くして中リールに視線を集める
 }
 function roleEffects(role, inAT) {
   const R = ROLE_INFO[role];
@@ -104,7 +107,7 @@ function roleEffects(role, inAT) {
 function playRole(role, inAT) {
   const R = ROLE_INFO[role];
   const aimed = role === 'cherryW' || role === 'cherryS' || role === 'melon';
-  const navi = inAT ? (role === 'melon' || role === 'cherryS' ? naviFor('purple') : (role === 'cherryW' || role === 'melonW') ? naviFor('red') : null) : null;   // 赤=レア / 紫=強レア
+  const navi = inAT ? (role === 'melon' || role === 'cherryS' ? naviFor('purple', 0) : (role === 'cherryW' || role === 'melonW') ? naviFor('red', 0) : null) : null;   // 赤=レア / 紫=強レア
   runRole(role, res => {
     stopTension();
     if (!aimed || res.success) {

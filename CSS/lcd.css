@@ -268,3 +268,14 @@
 .cab-marquee > span.mq-zencho { color: #fb923c; text-shadow: 0 0 10px #f97316; }
 /* LCD内のPEKA CHANCE!ロゴは筐体上部に移したので出さない */
 #lcd-stage .chance-logo, .gogo-lamp .chance-logo { display: none !important; }
+
+/* サンド目成立: 液晶いっぱいの豪華演出 */
+.lcd-sandwin { position: absolute; inset: 0; z-index: 74; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; font-family: 'Orbitron', sans-serif; font-weight: 900; font-style: italic; animation: sw-life 3.6s ease-out both; }
+.lcd-sandwin .sw-bg { position: absolute; inset: 0; background: conic-gradient(from 0deg at 50% 50%, #ff2d55, #ff9d00, #fde047, #4ade80, #38bdf8, #a78bfa, #ff2d55); opacity: .55; mix-blend-mode: screen; animation: sw-spin 2.4s linear infinite; }
+.lcd-sandwin .sw-t { position: relative; font-size: 76px; line-height: 1; color: #fff; -webkit-text-stroke: 4px #b91c1c; paint-order: stroke fill; text-shadow: 0 0 18px #fde047, 0 0 36px #ff9d00; animation: sw-slam .7s cubic-bezier(.2, 1.6, .4, 1) both, sw-hue 1.2s linear .7s infinite; }
+.lcd-sandwin .sw-n { position: relative; margin-top: 6px; font-size: 48px; color: #fde047; -webkit-text-stroke: 3px #7c2d12; paint-order: stroke fill; text-shadow: 0 0 16px #ff9d00; animation: sw-slam .7s cubic-bezier(.2, 1.6, .4, 1) .25s both; }
+.lcd-sandwin .sw-s { position: relative; font-size: 26px; letter-spacing: .3em; color: #fff; text-shadow: 0 0 10px #f472b6; animation: sw-slam .6s ease-out .5s both; }
+@keyframes sw-life { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes sw-slam { 0% { transform: scale(3) rotate(-8deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+@keyframes sw-spin { to { transform: rotate(360deg) scale(1.6); } }
+@keyframes sw-hue { to { filter: hue-rotate(360deg); } }

@@ -34,3 +34,33 @@
 .cab-panel { padding: 4px 6px 8px; }
 @media (max-width: 400px) { .cab-panel { zoom: .9; } }
 .rl { font-size: clamp(9.5px, 2.7vw, 13px); padding: 4px 3px; border-radius: 8px; max-width: 100%; box-sizing: border-box; }
+
+/* サンド目を揃える間: 左右のリールを薄暗くして、中リールに視線を集める */
+.reels.focus-mid .reel-ov:not([data-c="1"]) { opacity: .3; filter: brightness(.45) saturate(.6); transition: opacity .3s, filter .3s; }
+.reels.focus-mid .reel-ov[data-c="1"] { filter: drop-shadow(0 0 6px #fde047) drop-shadow(0 0 12px #f59e0b); }
+
+/* 3段目の左右: モード表示(左=CHANCE ZONE/PEKA CHANCE/GOGOランプ、右=PEKA RUSH(HEAVEN/DEATH)/MOUNTAIN) */
+.rr-icon { flex-direction: column; gap: 5px; }
+.rl { font-size: clamp(7.5px, 2.2vw, 11px); padding: 3px 2px; line-height: 1.15; width: 100%; font-weight: 900; }
+.rl small.rk { display: block; font-size: .92em; min-height: 0; letter-spacing: 0; }
+.rl small.rk:empty { display: none; }
+.rl small.rk.hv { color: #fde68a; text-shadow: 0 0 6px #fbbf24; }
+.rl small.rk.dt { color: #fca5a5; text-shadow: 0 0 6px #ef4444; }
+.rl.cz.lit { color: #fff; -webkit-text-stroke: 0; border-color: #a3e635; background: rgba(132, 204, 22, .22); text-shadow: 0 0 6px #84cc16, 0 0 14px #facc15; animation: rl-chance .5s ease-in-out infinite alternate; }
+.rl.mtn.lit { color: #fff; -webkit-text-stroke: 0; border-color: #f0abfc; background: rgba(217, 70, 239, .24); text-shadow: 0 0 6px #e879f9, 0 0 14px #fde047; animation: rl-rush .35s ease-in-out infinite alternate; }
+.rl.gogo.lit { color: #fff; -webkit-text-stroke: 0; border-color: #fde047; background: rgba(250, 204, 21, .3); text-shadow: 0 0 6px #facc15, 0 0 16px #f97316; animation: rl-rush .3s ease-in-out infinite alternate; }
+
+/* 5段目: 筐体下部のラベルパネル */
+.cab-label { position: relative; border-top: 1px solid rgba(124, 92, 214, .7); padding: 10px 14px 12px; text-align: center; overflow: hidden; background: linear-gradient(180deg, #1b1240 0%, #0b0719 55%, #1a0f3a 100%); }
+.cab-label::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, transparent 0 14px, rgba(255, 255, 255, .035) 14px 16px); pointer-events: none; }
+.cl-screw { position: absolute; top: 8px; width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #e5e7eb, #6b7280 60%, #1f2937); box-shadow: 0 0 0 1px #0008; }
+.cl-screw.l { left: 8px; } .cl-screw.r { right: 8px; }
+.cl-line { display: flex; align-items: center; gap: 8px; margin: 0 22px 4px; }
+.cl-line s { flex: 1; height: 2px; background: linear-gradient(90deg, transparent, #f472b6, #fde047, #38bdf8, transparent); box-shadow: 0 0 8px #f472b6; }
+.cl-line em { font-style: normal; font-size: 9px; letter-spacing: 3px; color: #fde047; text-shadow: 0 0 8px #f59e0b; animation: cl-run 1.4s steps(1) infinite; }
+.cl-logo { position: relative; font-family: 'Orbitron', sans-serif; font-weight: 900; font-style: italic; font-size: clamp(26px, 9vw, 40px); letter-spacing: .06em; line-height: 1.1; background: linear-gradient(180deg, #fff 0%, #fde68a 38%, #f59e0b 50%, #b45309 52%, #fde68a 78%, #fff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 10px rgba(244, 114, 182, .7)) drop-shadow(0 2px 0 #4c1d95); }
+.cl-logo::after { content: ''; position: absolute; top: 0; bottom: 0; width: 30%; left: -40%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .85), transparent); mix-blend-mode: overlay; animation: cl-shine 3.6s ease-in-out infinite; }
+.cl-sub { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 2px; font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: .32em; color: #a5b4fc; }
+.cl-sub i { width: 4px; height: 4px; transform: rotate(45deg); background: #f472b6; box-shadow: 0 0 6px #f472b6; }
+@keyframes cl-shine { 0%, 55% { left: -40%; } 100% { left: 120%; } }
+@keyframes cl-run { 0% { opacity: .35; } 50% { opacity: 1; } }

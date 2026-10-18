@@ -857,7 +857,9 @@ main { overflow: visible !important; }
 .get-pop.g-big   { font-size: clamp(4rem, 22vw, 6rem); }
 .get-pop.g-mid   { font-size: clamp(3.2rem, 17vw, 4.6rem); color: #fff; }
 .get-pop.g-small { font-size: clamp(2.4rem, 12vw, 3.4rem); color: #e2e8f0; }
-.get-pop.show { animation: get-pop 1.1s cubic-bezier(0.2, 1, 0.4, 1) both; }
+.get-pop.show { opacity: 1; animation: get-in 0.26s cubic-bezier(0.2, 1.4, 0.4, 1) both, get-brr 0.05s linear 0.26s infinite alternate; }
+@keyframes get-in { 0% { opacity: 0; transform: translateY(-50%) scale(0.2) rotate(-6deg); } 100% { opacity: 1; transform: translateY(-50%) scale(1) rotate(-3deg); } }
+@keyframes get-brr { 0% { transform: translate(-5px, calc(-50% - 3px)) scale(1.04) rotate(-4deg); } 100% { transform: translate(5px, calc(-50% + 3px)) scale(1) rotate(-2deg); } }
 @keyframes get-pop {
   0%   { opacity: 0; transform: translateY(-50%) scale(0.2) rotate(-6deg); }
   18%  { opacity: 1; transform: translateY(-50%) scale(1.35) rotate(-3deg); }
@@ -1811,7 +1813,7 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 #lcd-stage > .cherry-status { position: absolute; top: 24px; left: 0; right: 0; z-index: 40; font-size: 11px; }
 #lcd-stage > .at-toast { top: 30px; font-size: 1.1rem; }
 #lcd-stage > .get-pop { top: 52%; }
-#lcd-stage .get-pop.g-big { font-size: 3.6rem; } #lcd-stage .get-pop.g-mid { font-size: 3rem; } #lcd-stage .get-pop.g-small { font-size: 2.4rem; }
+#lcd-stage .get-pop.g-big { font-size: 5.2rem; } #lcd-stage .get-pop.g-mid { font-size: 4.2rem; } #lcd-stage .get-pop.g-small { font-size: 3.2rem; }
 #lcd-stage > .over-pop { top: 30%; font-size: 2.4rem; } #lcd-stage > .over-pop.big { font-size: 2.8rem; }
 #lcd-stage > .navi { bottom: 8px; width: calc(100% - 12px); top: auto; transform: translateX(-50%); }
 #lcd-stage .navi b { width: 32px; height: 32px; font-size: 17px; }
