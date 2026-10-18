@@ -5,7 +5,7 @@
 | # | ファイル | 役割 | 行数 | 主な名前 |
 |---|---|---|---|---|
 | 1 | `JS/data/config.js` | 定数・確率・設定値の表（ゲームの数字はここで編集する） | 116 | BIG_TIERS, TIER_LABELS, BASE_COINS, DEFAULT_SETTINGS, APP_VERSION, SETTINGS_KEY, LEVEL_VALUES, LEVEL_TIER_WEIGHTS …他4 |
-| 2 | `JS/data/symimg.js` |  | 2 | SYM_IMG |
+| 2 | `JS/data/symimg.js` |  | 17 | SYM_IMG |
 | 3 | `JS/core/settings.js` | 遊び方モード・機械割・設定の適用/保存/読み込み | 141 | PLAY_MODES, MODE_HITDENOM, MODE_RATES, DEFAULT_PROFILES, PROFILES_BY_MODE, mergeProfile, loadSettings, saveSettings …他14 |
 | 4 | `JS/core/state.js` | ゲーム状態変数・UI要素の参照 | 85 | gameHistory, bonusLog, recordPoint, roleStat, totalGames, cumulativeGames, bigCount, atSuper …他61 |
 | 5 | `JS/core/audio.js` | 音声（効果音・ペカリ音・枚数表示のファンファーレ） | 282 | audioCtx, initAudio, SOUND_FILES, soundAudio, soundBuffers, VVV_MIN_COINS, SAMPLE_MAX_SEC, SAMPLE_FADE_SEC …他11 |
@@ -31,7 +31,7 @@
 | 25 | `JS/ext/lcd.js` | 演出液晶 | 877 | fitReels |
 | 26 | `JS/ext/trophy.js` | トロフィー / ミッション / ランキング | 218 |  |
 | 27 | `JS/ext/pushspoil.js` | 停止ボタンの右の常設PUSHボタン（先ばれ） | 53 |  |
-| 28 | `JS/ext/atpoint.js` |  | 114 |  |
+| 28 | `JS/ext/atpoint.js` |  | 160 |  |
 | 29 | `JS/ext/debug.js` | デバッグモード（設定ボタンを 3→2→3→3→1→2→3 の順に押すと開く／もう一度で閉じる） | 186 |  |
 
 ## その他

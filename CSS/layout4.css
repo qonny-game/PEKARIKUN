@@ -298,3 +298,25 @@
 .rr-icon .rl.gogo.lit { overflow: hidden; background: #05030f !important; }
 .rr-icon .rl.gogo::before { inset: 0; background: url(../assets/img/gogo_circle.jpg) center / cover no-repeat; }   /* GOGO!は丸いロゴを、パネルいっぱいに */
 .rr-icon .rl.gogo.lit::before { inset: 0; translate: none; rotate: none; width: auto; height: auto; background: #000 url(../assets/img/gogo_left.jpg) center / cover no-repeat; mix-blend-mode: normal; }   /* 左パネル全面: トリミングしたGOGO!画像 */
+
+/* 上乗せバトル: ? ボタン / 説明カード / 敵の表示 */
+.atp-helpbtn { position: absolute; left: -22px; top: -2px; width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .6); background: rgba(0, 0, 0, .55); color: #ffe27a; font-size: 12px; font-weight: 800; line-height: 1; padding: 0; cursor: pointer; pointer-events: auto; }
+.atp-helpcard { position: absolute; inset: 0; z-index: 45; display: flex; flex-direction: column; justify-content: center; padding: 8px 14px; background: rgba(6, 6, 24, .94); color: #fff; font-family: sans-serif; cursor: pointer; }
+.ah-t { text-align: center; font-size: 14px; font-weight: 900; letter-spacing: .15em; color: #ffd24a; margin-bottom: 4px; }
+.atp-helpcard ul { margin: 0; padding-left: 16px; font-size: 11px; line-height: 1.5; }
+.ah-c { text-align: center; font-size: 10px; color: #98a2bd; margin-top: 4px; }
+.atp-enemy { position: absolute; right: 27%; bottom: 40px; width: 64px; height: 64px; z-index: 3; pointer-events: none; filter: drop-shadow(0 0 6px rgba(0, 0, 0, .7)); animation: atpBob 1s ease-in-out infinite alternate; }
+.atp-enemy svg { width: 100%; height: 100%; display: block; }
+.atp-enemy.hit svg { animation: atpHit .4s steps(2) 1; }
+.atp-enemy.down { animation: atpDown .9s ease-in forwards; }
+.atp-enemy.gone { animation: atpGone .6s ease-out forwards; }
+.atp-dmg { position: absolute; left: 50%; top: -6px; transform: translateX(-50%); font-size: 20px; font-weight: 900; color: #ffe27a; text-shadow: 0 0 6px #f00, 0 0 2px #000, 2px 2px 0 #000; animation: atpDmg .9s ease-out forwards; white-space: nowrap; }
+.atp-dmg.big { font-size: 28px; color: #ff6a3a; }
+.atp-dmg.miss { font-size: 12px; color: #aab; text-shadow: 0 0 2px #000; }
+@keyframes atpHit { 0% { filter: brightness(3) saturate(0); transform: translateX(-6px); } 50% { transform: translateX(6px); } 100% { filter: none; transform: none; } }
+@keyframes atpDown { to { transform: translateY(40px) rotate(70deg); opacity: 0; } }
+@keyframes atpGone { to { opacity: 0; transform: scale(.6) translateX(30px); } }
+@keyframes atpDmg { 0% { opacity: 0; transform: translate(-50%, 6px) scale(.6); } 20% { opacity: 1; transform: translate(-50%, -6px) scale(1.15); } 100% { opacity: 0; transform: translate(-50%, -30px) scale(1); } }
+
+/* バトル中: ペカり君を中央寄りに。敵と向かい合って戦う */
+.atp-fighting .sl-actor { left: 27% !important; bottom: 40px !important; transition: left .5s ease-out, bottom .5s ease-out; }

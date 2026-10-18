@@ -27,6 +27,9 @@
   root.id = 'atp'; root.className = 'atp';
   root.innerHTML = '<div class="atp-row"><span class="atp-l" id="atp-l">POINT</span><span class="atp-c" id="atp-c"></span></div><div class="atp-hp" id="atp-hp"><i></i></div>';
   stage.appendChild(root);
+  const helpBtn = document.createElement('button');   // ? ボタン: バトルの説明をもう一度見る
+  helpBtn.type = 'button'; helpBtn.className = 'atp-helpbtn'; helpBtn.textContent = '?'; helpBtn.setAttribute('aria-label', '上乗せバトルの説明');
+  root.appendChild(helpBtn);
   const cells = root.querySelector('#atp-c');
   for (let i = 0; i < 10; i++) cells.appendChild(document.createElement('b'));
   const lab = root.querySelector('#atp-l'), hpEl = root.querySelector('#atp-hp');
@@ -34,8 +37,9 @@
   function render() {
     const on = inAT();
     root.classList.toggle('on', on);
-    if (!on) { if (pt || battle) { pt = 0; battle = null; } return; }
+    if (!on) { if (pt || battle) { pt = 0; battle = null; } removeEnemy(true); document.body.classList.remove('atp-fighting'); return; }
     root.classList.toggle('battle', !!battle);
+    document.body.classList.toggle('atp-fighting', !!battle);   // バトル中: ペカり君と敵を画面中央に寄せる
     [...cells.children].forEach((c, i) => c.classList.toggle('lit', battle ? i < battle.left : i < pt));
     lab.textContent = battle ? `${battle.e.n} ${stars(battle.e.s)} ${battle.left}G` : 'POINT';
     if (battle) hpEl.firstChild.style.width = Math.max(0, battle.hp / battle.max * 100) + '%';
@@ -47,7 +51,47 @@
     pt = Math.min(10, pt + n); render();
     if (pt >= 10) { pending = true; waitThenBattle(); }
   }
-  function intro(e, bg) {
+  /* バトルの説明 (タップで閉じる) */
+  function showHelp(ms) {
+    if (!stage || stage.querySelector('.atp-helpcard')) return;
+    const E = document.createElement('div');
+    E.className = 'atp-helpcard';
+    E.innerHTML = `<div class="ah-t">上乗せバトル</div>
+      <ul><li>ポイントが10個たまると開始</li><li>10G以内に敵のHPを0にすると、G数を上乗せ</li><li>役でダメージ: ベル・リプレイ 1 / 弱レア役 2 / 強レア役 3 / サンド目 4 / ハズレ 0</li><li>期待度(★)が高い敵ほど倒しやすい。背景色は 青 ＜ 黄 ＜ 緑 ＜ 赤 ＜ 紫 の順に期待大</li></ul>
+      <div class="ah-c">タップで閉じる</div>`;
+    const close = () => { E.remove(); clearTimeout(tm); };
+    const tm = ms ? setTimeout(close, ms) : 0;
+    E.addEventListener('click', close);
+    stage.appendChild(E);
+  }
+  helpBtn.addEventListener('click', e => { e.stopPropagation(); const c = stage.querySelector('.atp-helpcard'); if (c) c.click(); else showHelp(0); });
+  /* バトル中: 画面に敵を出して、ペカり君と戦っている感じにする */
+  let enemyEl = null;
+  function showEnemy(e) {
+    removeEnemy(true);
+    enemyEl = document.createElement('div');
+    enemyEl.className = 'atp-enemy';
+    enemyEl.innerHTML = SVG[e.n];
+    stage.appendChild(enemyEl);
+  }
+  function removeEnemy(now, down) {
+    const el = enemyEl; enemyEl = null;
+    if (!el) return;
+    if (now) { el.remove(); return; }
+    el.classList.add(down ? 'down' : 'gone');
+    setTimeout(() => el.remove(), 900);
+  }
+  function hitFx(dmg) {
+    if (window.LCDX && LCDX.act) LCDX.act('jump');   // ペカり君が攻撃
+    if (!enemyEl) return;
+    enemyEl.classList.remove('hit'); void enemyEl.offsetWidth; enemyEl.classList.add('hit');
+    const P = document.createElement('div');
+    P.className = 'atp-dmg' + (dmg === 0 ? ' miss' : dmg >= 3 ? ' big' : '');
+    P.textContent = dmg === 0 ? 'MISS' : '-' + dmg;
+    enemyEl.appendChild(P);
+    setTimeout(() => P.remove(), 900);
+  }
+  function intro(e, bg, withHelp) {
     if (!stage) return;
     const E = document.createElement('div');
     E.className = 'atp-intro bg-' + BG[bg];
@@ -55,6 +99,7 @@
     stage.appendChild(E);
     setTimeout(() => E.classList.add('out'), 2300);
     setTimeout(() => E.remove(), 2700);
+    if (withHelp) setTimeout(() => showHelp(4500), 2750);
   }
   /* 上乗せ演出(サンド目・PUSH表示など)が終わってから、順番にバトルを始める */
   let pending = false;
@@ -75,20 +120,22 @@
     else if (q < 0.26 && bg > 0) bg = Math.floor(Math.random() * bg);
     const eff = ENEMIES[Math.max(bg, e.s - 1)].hp;
     battle = { left: 10, hp: eff, max: eff, e }; pt = 0; render();
-    intro(e, bg);
+    showEnemy(e);
+    intro(e, bg, true);
   }
   function hit(kind) {
     if (!battle) return;
-    battle.left--; battle.hp -= DMG[kind] || 0;
+    const dmg = DMG[kind] || 0;
+    battle.left--; battle.hp -= dmg; hitFx(dmg);
     if (battle.hp <= 0) {
       const g = WIN_G[Math.floor(Math.random() * WIN_G.length)];
       const G = typeof scaleG === 'function' ? scaleG(g) : g;
-      battle = null; render();
+      battle = null; removeEnemy(false, true); render();
       banner('ENEMY DOWN', `+${G}G`, 'gold', 2200);
       atEnding = false;
       pushReveal(`+${G}G`, G >= 50, () => { atGames += G; updateAT(); });
     } else if (battle.left <= 0) {
-      battle = null; render();
+      battle = null; removeEnemy(false, false); render();
       banner('BATTLE LOSE', '', 'blue', 1500);
     } else render();
   }
