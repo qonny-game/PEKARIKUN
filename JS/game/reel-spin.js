@@ -85,7 +85,9 @@ function landCol(col) {
   col.final.forEach((k, r) => { cells[r * 3 + col.c].innerHTML = symbolHTML(k, ''); });
   // 白7・スイカ・白7 が第1リールに止まった直後: 当選確定。サンド目のように派手に
   if (col.c === 0 && reelSpin && reelSpin.plan.wm && col.final.join() === '7white,melon,7white') {
-    if (typeof sandFlash === 'function') sandFlash();
+    const F = document.createElement('div');   // 光るのは第1リールだけ
+    F.className = 'wm-colflash'; reelsEl.appendChild(F); setTimeout(() => F.remove(), 1800);
+    if (typeof sandSound === 'function') sandSound();
     if (window.LCDX && LCDX.wmWin) LCDX.wmWin();
   }
   // サンド目(中リールのバー・チェリー・バー)が止まった直後にビカビカ。上乗せなどは第3停止後

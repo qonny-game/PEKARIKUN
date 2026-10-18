@@ -264,7 +264,7 @@ function onBonusAligned() {
   window.sevenMiss = 0; window.czSevenColor = null;
   if (window.czKeepClear) czKeepClear();
   const tier = BIG_TIERS[pendingTierIndex];
-  if (pendingWhiteDiag) { markWin(pendingWhiteDiag[0] === 0 ? [0, 4, 8] : [6, 4, 2], 'sym-glow-gold'); if (window.LCDX) LCDX.say('白7 斜め揃い', 'BIG + AT 確定!!', 3000, 'happy', 'jump'); }
+  if (pendingWhiteDiag) { markWin(pendingWhiteDiag[0] === 0 ? [0, 4, 8] : [6, 4, 2], 'sym-glow-gold'); if (window.LCDX) LCDX.say('白7 斜め揃い', '', 3000, 'happy', 'jump'); }
   else markWin([3, 4, 5], tier.grand ? 'sym-glow-gold' : '');
   alignDisplay.classList.remove('show-lose');
   alignDisplay.classList.add('show-align');

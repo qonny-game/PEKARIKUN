@@ -43,9 +43,9 @@
   setInterval(render, 250);
   function banner(t, s, col, ms) { if (window.FXBanner) window.FXBanner(t, s || '', col || 'red', true, ms || 1800); }
   function addPt(n) {
-    if (!inAT() || battle || n <= 0) return;
+    if (!inAT() || battle || pending || n <= 0) return;
     pt = Math.min(10, pt + n); render();
-    if (pt >= 10) startBattle();
+    if (pt >= 10) { pending = true; waitThenBattle(); }
   }
   function intro(e, bg) {
     if (!stage) return;
@@ -55,6 +55,16 @@
     stage.appendChild(E);
     setTimeout(() => E.classList.add('out'), 2300);
     setTimeout(() => E.remove(), 2700);
+  }
+  /* 上乗せ演出(サンド目・PUSH表示など)が終わってから、順番にバトルを始める */
+  let pending = false;
+  function waitThenBattle() {
+    const busy = () => document.querySelector('.lcd-sandwin, .lcd-czwin, .lcd-bigintro') || (typeof isPushing !== 'undefined' && isPushing) || isSuspense || isCounting;
+    const iv = setInterval(() => {
+      if (!inAT()) { clearInterval(iv); pending = false; return; }
+      if (busy()) return;
+      clearInterval(iv); setTimeout(() => { pending = false; if (inAT() && !battle) startBattle(); }, 500);
+    }, 300);
   }
   function startBattle() {
     let r = Math.random() * 100, e = ENEMIES[0];
@@ -98,7 +108,7 @@
   };
   /* AT中のサンド目: 3〜4P */
   const sw = LCDX.sandWin;
-  LCDX.sandWin = function (n) { sw(n); if (!battle) setTimeout(() => addPt(3 + (Math.random() < 0.5 ? 1 : 0)), 1200); };
+  LCDX.sandWin = function (n) { sw(n); if (!battle && !pending) setTimeout(() => addPt(3 + (Math.random() < 0.5 ? 1 : 0)), 1200); };
   const sa = startAT;
   startAT = function () { pt = 0; battle = null; return sa.apply(this, arguments); };
 })();

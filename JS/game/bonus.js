@@ -226,6 +226,7 @@ function bonusRare(b) {
   const strong = Math.random() < 0.3, n = strong ? 2 : 1;
   const name = strong ? ['強チェリー', '強スイカ'][Math.floor(Math.random() * 2)] : ['弱チェリー', '弱スイカ'][Math.floor(Math.random() * 2)];
   b.aura = Math.min(6, b.aura + n);
+  if (b.aura >= 6) b.atWin = true;   // 虹オーラはAT確定 (レア役で虹になってもAT非当選にならない)
   setAura(b.aura, true);
   playAuraUp(b.aura);
   if (!b.atWin && Math.random() < 0.15 * n) b.atWin = true;
@@ -243,10 +244,9 @@ function bonusSand(b) {
       b.atWin = true; b.superP = 0.7; b.aura = 6;
       setAura(6, true); playAuraUp(6);
       markWin([1, 4, 7], '');
-      showAtToast('PEKA RUSH 確定');
       triggerFlash();
       sideLampFlash('heaven', 2000);
-      if (window.LCDX) { LCDX.say('RUSH確定!!', 'SUPER優遇', 2600, 'happy', 'jump'); LCDX.tag('PEKA RUSH 確定', 'f3', 2600); }
+      if (window.LCDX) { LCDX.say('サンド目!!', '', 2600, 'happy', 'jump'); }
     } else missEffect();
     updateAT(); updateUI();
   }, naviFor('', 1));
@@ -294,7 +294,6 @@ function judgeIntro(b, cb) {
 /* REG中のBIG昇格: BONUS確定画面を出す（ボーナス終了後にGOGO!ランプ→7揃え） */
 function regUpgradeShow() {
   if (window.onCzSuccess) { window.onCzSuccess(); setTimeout(() => { if (window.czKeepClear) czKeepClear(); }, 4200); }
-  else showAtToast('BONUS確定');
   triggerFlash();
 }
 function startUpgradeBig() {
@@ -348,7 +347,8 @@ function bonusGameMain() {
     setLedWin(pay);
     if ((pay > 0 || !b.zone) && !(!b.zone && b.played >= b.games)) showBellResult(pay, true);   // 最終G(ジャッジメント)は「枚 GET」を出さない（PAYOUTだけ）
     if (b.promo.includes(b.played)) {
-      b.aura++;
+      b.aura = Math.min(6, b.aura + 1);
+      if (b.aura >= 6) b.atWin = true;   // 虹オーラはAT確定
       setAura(b.aura, true);
       playAuraUp(b.aura);
       if (b.aura >= 4) triggerFlash();
@@ -431,23 +431,9 @@ function finishBonus() {
   const b = bonusRun;
   if (b.zone) { finishZone(b); return; }
   isSuspense = true;
-  /* 結果発表 (約6.4秒): 鼓動がだんだん速く → 揺れ → オーラが目まぐるしく点滅 → 一瞬の静寂 → 結果 */
-  const T = b.debug ? 900 : 6400;
-  startHeartbeat(T - 1200, 300);
+  /* 結果発表: 「レバーを叩け」のあとはカウントダウンなし。すぐにBONUS確定 / 失敗を出す */
+  const T = b.debug ? 900 : 250;
   const timers = [];
-  const at = (ms, f) => { if (!b.debug) timers.push(setTimeout(f, ms)); };
-  at(1800, () => { shakeMain(250); if (window.LCDX) LCDX.tag('JUDGEMENT...', 'f2', 1600); });
-  at(3000, () => shakeMain(350));
-  at(3600, () => {   // オーラ点滅
-    let n = 0;
-    const iv = setInterval(() => {
-      auraEl.className = `aura on lv${Math.floor(Math.random() * 7)}`;
-      if (soundEnabled && n % 2 === 0) { initAudio(); tone(500 + Math.random() * 900, audioCtx.currentTime, 0.06, 'square', 0.07); }
-      if (++n >= 14) { clearInterval(iv); }
-    }, 110);
-    timers.push(iv);
-  });
-  at(5200, () => { stopHeartbeat(); setAura(null); });   // 一瞬の静寂
   const revealThen = fn => {   // 結果: AT当選=BONUS確定の画像 / 非当選=液晶が割れる
     if (b.debug || isDebugRun || !window.LCDX || !LCDX.judgeReveal) { fn(); return; }
     LCDX.judgeReveal(b.atWin, fn);

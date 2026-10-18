@@ -110,6 +110,7 @@ function pickMelonPlan() {
 }
 function planFor(kind) {
   if (kind === 'sand') return { kind: 'sand', ts: pickCombo('sand') };
+  if (kind === 'bell2' && typeof atSuper !== 'undefined' && atSuper && atGames > 0 && !bonusRun) return { kind: 'fixed', ts: pickCombo('mixed7') };   // SUPER中の15枚役: リールも7(色違い)が揃う
   if (kind === 'lose' && window.contraMixed) { window.contraMixed = false; return { kind: 'fixed', ts: pickCombo('mixed7') }; }   // 矛盾演出: 色違いの7が揃う
   if (kind === 'lose' && sandReachNow) return { kind: 'fixed', ts: pickCombo('sand') };   // 通常時のリーチ目（サンド目の形で止まる）
   if (kind === 'cherry' || kind === 'cherryW' || kind === 'cherryS') return { kind: 'cherry', ts: pickCombo(kind), strong: kind === 'cherryS' };

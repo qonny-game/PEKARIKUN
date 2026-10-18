@@ -244,8 +244,8 @@
     if (typeof bonusRun !== 'undefined' && bonusRun && !bonusRun.zone) t = bonusRun.reg ? 'BIG昇格確定' : 'AT当選確定';
     else if (atGames > 0) t = 'MOUNTAIN当選確定';
     else if (window.czGameNow) t = 'BONUS確定';
-    say('白7 スイカ 白7', t, 3000, 'happy', 'jump');
-    tag(t, 'f3', 3000); burst(); swoosh(3); act('jump');
+    say('白7 スイカ 白7', '', 3000, 'happy', 'jump');
+    burst(); swoosh(3); act('jump');
     spawn('fire', 3); spawn('star', 3);
     for (let i = 0; i < 8; i++) setTimeout(() => spawn('coin', 3), 200 + i * 90);
     if (typeof sideLampFlash === 'function') sideLampFlash('heaven', 2400);
@@ -433,7 +433,7 @@ function fitReels() {
       wxEl.className = 'lcd-wx on w' + n;
       clearTimeout(wxT); wxT = setTimeout(() => { wxPlan = null; wxClear(); }, 3200);   // 念のため自動で消す
       void wxEl.offsetWidth;
-      tag(['', '雨 1/3', '豪雨 2/3', '雷! 3/3  ボーナスかCHANCE ZONE確定'][n], n >= 3 ? 'f3' : 'f' + n, 1500);
+      tag(['', '雨 1/3', '豪雨 2/3', '雷! 3/3'][n], n >= 3 ? 'f3' : 'f' + n, 1500);
       if (n === 1) noiseBurst(0.7, 0.07, 'highpass', 3500);
       if (n === 2) { noiseBurst(1, 0.14, 'highpass', 2500); noiseBurst(0.8, 0.12, 'lowpass', 300); }
       if (n === 3) {
