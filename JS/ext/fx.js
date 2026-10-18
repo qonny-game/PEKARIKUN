@@ -967,10 +967,6 @@
     });
   };
   let maxDiff = 0;
-  const pile = document.createElement('div');
-  pile.className = 'fx-pile';
-  pile.style.display = 'none';
-  layer.appendChild(pile);
   setInterval(() => {
     // 差枚マイルストーン (上向きだけ)
     if (diffCoins > maxDiff) {
@@ -983,9 +979,6 @@
         if (m >= 5000) unlock('diff5000');
       });
     }
-    // コインの山: ボーナス/AT中の獲得枚数に応じて下から積もる
-    const gain = (atRun && (bonusRun || atGames > 0 || atEnding)) ? diffCoins - atRun.startDiff : 0;
-    if (gain > 20) { pile.style.display = ''; pile.style.height = Math.min(46, 4 + Math.sqrt(gain) * 1.0) + 'px'; } else pile.style.display = 'none';
   }, 500);
 
   /* ---------- レバー: 演出中は受け付けない ---------- */

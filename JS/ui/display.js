@@ -184,5 +184,30 @@ if (leverBtn) leverBtn.addEventListener('pointerdown', e => {
   if (isReelSpinning) { stopNextReel(); return; }
   if (!spinBtn.disabled) handleSpin();
 });
+// 長押し = 自動でレバーON・リール停止を繰り返す (連打の代わり)。指を離すと止まる。PUSHボタンなどは自動では押さない
+(function () {
+  let t0 = 0, t1 = 0;
+  const HOLD_MS = 380, STEP_MS = 230;
+  const stop = () => { clearTimeout(t0); clearInterval(t1); t0 = t1 = 0; };
+  const step = () => {
+    if (document.querySelector('.modal.open')) { stop(); return; }
+    if (isPushing || isAtResult || window.leverWaiting) return;
+    if (isReelSpinning) { stopNextReel(); return; }
+    if (!spinBtn.disabled) handleSpin();
+  };
+  document.addEventListener('pointerdown', e => {
+    stop();
+    const t = e.target;
+    if (!(t instanceof Element)) return;
+    const play = t.closest('#gogo-box, .cab-reelrow, #lever-btn, .stop-btn');
+    if (!play) {
+      if (t.closest('button, a, input, select, textarea, label, .modal, .more-menu, .data-counter, #push-overlay, .at-result')) return;
+      const mm = document.getElementById('more-menu');
+      if (mm && !mm.hidden) return;
+    }
+    t0 = setTimeout(() => { step(); t1 = setInterval(step, STEP_MS); }, HOLD_MS);
+  });
+  ['pointerup', 'pointercancel', 'blur'].forEach(ev => (ev === 'blur' ? window : document).addEventListener(ev, stop));
+})();
 document.getElementById('reset-btn').addEventListener('click', resetData);
 
