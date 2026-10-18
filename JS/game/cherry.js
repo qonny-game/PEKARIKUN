@@ -104,7 +104,6 @@ function playSand() {
     if (res.success) {
       atGames += N;
       markWin([1, 4, 7], '');
-      sandFlash();
       showAtToast(`サンド目 上乗せ +${N}G`);
       triggerFlash();
       sideLampFlash('heaven', 2000);   // 揃えたら虹色のランプ

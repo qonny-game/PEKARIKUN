@@ -82,6 +82,9 @@ function landCol(col) {
   col.el.remove();
   const cells = reelsEl.querySelectorAll(':scope > .reel');
   col.final.forEach((k, r) => { cells[r * 3 + col.c].innerHTML = symbolHTML(k, ''); });
+  // サンド目(中リールのバー・チェリー・バー)が止まった直後にビカビカ。上乗せなどは第3停止後
+  const rs = reelSpin;
+  if (col.c === 1 && rs && (rs.plan.kind === 'sand' || sandReachNow) && col.final.join() === 'bar,cherry,bar' && typeof sandFlash === 'function') sandFlash();
 }
 
 /* c番目のリールを止める。引き込める範囲(4コマ)で、役に合う位置を選ぶ */
