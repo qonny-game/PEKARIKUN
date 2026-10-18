@@ -1,5 +1,7 @@
 # CHANGELOG
 
+- 1.20.36 停止ボタンの段の背景を画像(assets/img/stop_bg.jpg)に変更
+- 1.20.35 サイドのGOGO!ランプを画像(assets/img/gogo_panel.jpg)に変更。文字が最大に見えるようトリミングして少し斜めに配置。点灯までは暗く、点灯で明るく脈動、確定表示中は虹色
 - 1.20.34 下パネルの画像を差し替え(ネオンのPEKARI-KUN SLOT-SIMULATOR)。バージョン表記は明るい背景でも読めるよう白+黒縁に
 - 1.20.33 PEKA RUSH中(HEAVEN/DEATH以外)のBGMを High_Stakes_Finish(assets/sound/bgm_rush.mp3)、PEKA PEKA MOUNTAIN中のBGMを Golden_Ascent(assets/sound/bgm_mtn.mp3)に変更。CZと同じ、曲の終わりを頭に重ねるクロスフェードでループ。HEAVEN/DEATHは従来のシンセ曲
 - 1.20.32 筐体のデザインをネオン調に変更(CSS/neon.css 新規)。黒い筐体にシアン/マゼンタの発光ライン、マーキーはゴールドの発光文字、液晶はシアンのネオン枠、左右タイルは角丸の暗いパネル、PEKA RUSHタイルはオレンジ+シアンの二重枠、背景に多角形ワイヤー

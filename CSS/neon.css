@@ -17,3 +17,13 @@ body::before { content: ''; position: fixed; inset: 0; z-index: -1; pointer-even
 .cab-panel { background: linear-gradient(180deg, rgba(10, 6, 30, .95), rgba(4, 2, 14, .98)); border-top: 1px solid rgba(232, 121, 249, .55); }
 .cab-label { border-top: 1px solid rgba(34, 211, 238, .7); box-shadow: inset 0 0 14px rgba(0, 0, 0, .55); }
 .data-counter { border-color: rgba(34, 211, 238, .45); box-shadow: 0 0 10px rgba(34, 211, 238, .25); }
+/* GOGO!ランプ: 画像(assets/img/gogo_panel.jpg)を少し斜めに。点灯するまでは暗く、点灯でパッと明るく */
+.rl.gogo { position: relative; overflow: visible; }
+.rl.gogo .gogo-text { color: transparent !important; text-shadow: none !important; -webkit-text-stroke: 0 !important; animation: none !important; visibility: hidden; }
+.rl.gogo::before { content: ''; position: absolute; inset: -5px -6px; background: url(../assets/img/gogo_panel.jpg) center / contain no-repeat; mix-blend-mode: screen; transform: rotate(-8deg); filter: brightness(.28) saturate(.7); transition: filter .15s; pointer-events: none; }
+.rl.gogo.lit::before { filter: brightness(1.15) saturate(1.2) drop-shadow(0 0 6px rgba(244, 114, 182, .8)); animation: gogo-pulse .5s ease-in-out infinite alternate; }
+.rl.gogo.rb::before { animation: gogo-pulse .16s steps(2) infinite, gogo-hue .7s linear infinite; }
+@keyframes gogo-pulse { from { transform: rotate(-8deg) scale(1); } to { transform: rotate(-8deg) scale(1.08); } }
+@keyframes gogo-hue { to { filter: brightness(1.25) hue-rotate(360deg); } }
+/* 停止ボタンの段: 背景画像 */
+.cab-reelrow { background: #0a0618 url(../assets/img/stop_bg.jpg) center / cover no-repeat; box-shadow: inset 0 1px 0 rgba(232, 121, 249, .45), inset 0 -1px 0 rgba(34, 211, 238, .4), inset 0 0 18px rgba(0, 0, 0, .45); }
