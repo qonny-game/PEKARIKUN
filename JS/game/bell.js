@@ -51,8 +51,25 @@ function playJaraJara(len) {
   }
   tone(1568, t0 + len, 0.5, 'triangle', 0.07);   // 最後の余韻
 }
+/* GET時の低音「ドドドドドド!」: 枚数が多いほど長く・重く */
+function getRumble(coins) {
+  if (!soundEnabled) return;
+  initAudio();
+  const n = coins >= 15 ? 16 : coins >= 6 ? 11 : 7;      // 打つ回数
+  const gap = coins >= 15 ? 0.055 : 0.06;                // 間隔(秒)
+  const v = coins >= 15 ? 0.42 : coins >= 6 ? 0.34 : 0.26;
+  const t = audioCtx.currentTime;
+  for (let i = 0; i < n; i++) {
+    const f = 62 + (i % 2) * 8 + i * 1.5;                // ごくわずかに上がっていく
+    const k = 1 - i / (n * 1.4);                         // 後半ほど小さく
+    tone(f, t + i * gap, 0.11, 'sine', v * k);
+    tone(f * 2, t + i * gap, 0.05, 'triangle', v * k * 0.35);   // 打撃のアタック
+  }
+  tone(48, t, n * gap + 0.25, 'sine', v * 0.7);          // 下で鳴り続ける地鳴り
+}
 function showGet(coins) {
   playVoice('get');   // GET の声
+  getRumble(coins);
   if (coins >= 15) playJaraJara(2.6);
   getPop.innerHTML = `0<span>枚 GET</span>`;
   cancelAnimationFrame(getRAF);
