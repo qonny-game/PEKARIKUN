@@ -252,6 +252,7 @@ function showPayout() {
       shakeMain(350);
     }
   };
+  payoutNum.classList.toggle('no-unit', !!pendingZone);   // 「G UP!」のときは「枚」を付けない
   if (pendingZone) {
     // ラッシュ中: 枚数は出ない。G数の上乗せチャンスのみ
     payoutNum.style.setProperty('--fs', Math.min((PAY_BASE_PX[level] || 100) * 0.62, Math.max(120, lcdW() - 16) / 3.4) + 'px');

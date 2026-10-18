@@ -101,3 +101,7 @@
 .cab-label { height: 96px; padding: 0; background: #0b0719 url(../assets/img/panel_logo.jpg) center 49% / cover no-repeat; }
 .cab-label::before { display: none; }
 .cab-ver { color: #fff; text-shadow: 0 0 3px #000, 0 0 6px #000, 0 1px 2px #000; }
+
+/* 押し順ナビは、PEKA RUSH / MOUNTAIN のタイトル・確定表示などより手前に出す */
+#lcd-stage > .navi { z-index: 90 !important; }
+.payout-num.no-unit .payout-unit { display: none; }
