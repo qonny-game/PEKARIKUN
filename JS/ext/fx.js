@@ -42,11 +42,19 @@
   const layer = document.createElement('div');
   layer.id = 'fx-layer';
   lcd.appendChild(layer);
+  const TEMPO = 0.62;   // 演出の時間倍率 (小さいほど速い)
+  const pwait = (ms, fn) => setTimeout(fn, Math.round(ms * TEMPO));
+  function speedUp(e) {   // CSSアニメーションを 1/TEMPO 倍速にする (途中でクラスが変わっても維持)
+    const ap = () => e.getAnimations({ subtree: true }).forEach(a => { if (a.playbackRate !== 1 / TEMPO) a.playbackRate = 1 / TEMPO; });
+    ap();
+    if (window.MutationObserver) { const mo = new MutationObserver(ap); mo.observe(e, { attributes: true, subtree: true, childList: true }); setTimeout(() => mo.disconnect(), 5000); }
+  }
   function put(cls, html, ms) {
     const e = document.createElement('div');
     e.className = cls;
     e.innerHTML = html;
     layer.appendChild(e);
+    if (/^fx-(cutin|step|talk|dark|peek|whisper)\b/.test(cls)) { ms = ms ? Math.round(ms * TEMPO) : ms; speedUp(e); }   // 全体にテンポ良く
     if (window.TRO) {
       const m = /^fx-(cutin|step|talk|dark)\b(?: c-(\w+))?/.exec(cls);
       if (m) TRO.seen(m[1] === 'cutin' ? 'cutin:' + m[2] : m[1]);
@@ -229,8 +237,10 @@
 
   /* ---------- 予告: 通常時の追加演出 (パレード / ボタン / ルーレット / タイマー / 画面割れ / 雨 / コイン / メーター / おみくじ / ランプ) ---------- */
   function pvRun(name, html, T, tR, success, text, done) {
-    const el = put(`fx-pv fx-pv-${name}`, `${html}<b class="pv-res"></b>`, T + 300);
-    FX.hold(T + 150);
+    T = Math.round(T * TEMPO); tR = Math.round(tR * TEMPO);
+    const el = put(`fx-pv fx-pv-${name}`, `${html}<b class="pv-res"></b>`, T + 200);
+    speedUp(el);
+    FX.hold(T + 100);
     wait(tR, () => {
       el.classList.add(success ? 'ok' : 'ng');
       el.querySelector('.pv-res').textContent = text;
@@ -247,7 +257,7 @@
     parade(s, d) {
       const n = 5;
       pvRun('parade', Array.from({ length: n }, (_, i) => `<span class="pv-m${s && i === n - 1 ? ' big' : ''}" style="--d:${(i * 0.2).toFixed(2)}s">${mascotSVG(s && i === n - 1 ? 'happy' : 'happy', s && i === n - 1 ? '#ffd700' : '')}</span>`).join(''), 2400, 1600, s, '', d);
-      snd([392, 440, 494, 523], 0.2, 0.15, 'square', 0.06);
+      snd([392, 440, 494, 523], 0.12, 0.1, 'square', 0.06);
     },
     button(s, d) {
       // タップで押せる。押さなくても1.4秒で自動で押される
@@ -262,13 +272,13 @@
         el.classList.add(s ? 'ok' : 'ng');
         el.querySelector('.pv-res').textContent = s ? '' : '...';
         if (s) { triggerFlash(); sndUp(4); } else sndDown();
-        wait(900, finish);
+        pwait(900, finish);
       };
-      const press = () => { if (phase) return; phase = 1; el.classList.add('press'); snd([220], 0, 0.15, 'square', 0.12); wait(380, reveal); };
+      const press = () => { if (phase) return; phase = 1; el.classList.add('press'); snd([220], 0, 0.15, 'square', 0.12); pwait(380, reveal); };
       const b = el.querySelector('.pv-btn');
       b.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); press(); });
-      wait(1400, press);
-      wait(T, finish);
+      pwait(1400, press);
+      pwait(T, finish);
     },
     roulette(s, d) {
       // 通常時は結果の色で止まる。ごくまれに黄(ベル)の結果なのに緑で止まる（矛盾）
@@ -279,18 +289,18 @@
       const el = pvRun('roulette', `<i class="pv-roul" data-c="${SET[0]}">${LBL[SET[0]]}</i>`, 2100, 1300, s, '', d);
       const c = el.querySelector('.pv-roul');
       let k = 0;
-      const iv = setInterval(() => { k++; const j = k % SET.length; c.textContent = LBL[SET[j]]; c.dataset.c = SET[j]; snd([300 + j * 80], 0, 0.04, 'square', 0.05); }, 90);
-      wait(1250, () => { clearInterval(iv); c.textContent = LBL[SET[fin]]; c.dataset.c = SET[fin]; if (land !== pvColor) mujunSound(); });
+      const iv = setInterval(() => { k++; const j = k % SET.length; c.textContent = LBL[SET[j]]; c.dataset.c = SET[j]; snd([300 + j * 80], 0, 0.04, 'square', 0.05); }, Math.round(90 * TEMPO));
+      pwait(1250, () => { clearInterval(iv); c.textContent = LBL[SET[fin]]; c.dataset.c = SET[fin]; if (land !== pvColor) mujunSound(); });
     },
     timer(s, d) {
       const el = pvRun('timer', '<i class="pv-num">3</i>', 2000, 1500, s, s ? 'GET!' : '0', d);
       const n = el.querySelector('.pv-num');
-      [2, 1].forEach((v, i) => wait(450 * (i + 1), () => { n.textContent = v; snd([440 + (2 - v) * 110], 0, 0.1, 'square', 0.08); }));
-      wait(1350, () => { n.textContent = 0; });
+      [2, 1].forEach((v, i) => pwait(450 * (i + 1), () => { n.textContent = v; snd([440 + (2 - v) * 110], 0, 0.1, 'square', 0.08); }));
+      pwait(1350, () => { n.textContent = 0; });
     },
     crack(s, d) {
       pvRun('crack', '<svg viewBox="0 0 100 100" class="pv-cr"><path d="M50 0L46 22 56 36 44 54 54 70 48 100M46 22L26 30M56 36L78 32M44 54L22 62M54 70L76 78"/></svg>', 2100, 1200, s, s ? 'BREAK!' : '', d);
-      wait(500, () => snd([150, 120], 0, 0.2, 'sawtooth', 0.1));
+      pwait(500, () => snd([150, 120], 0, 0.2, 'sawtooth', 0.1));
     },
     rain(s, d) {
       // 虹は大きな当たりの色。通常時は虹が出るのは大きな当たりのときだけ
@@ -310,13 +320,13 @@
       const html = labels.map(c => `<em data-c="${c}">${LBL[c]}</em>`).join('');
       const el = pvRun('coin', `<i class="pv-coin"></i><span class="pv-slots">${html}</span>`, 2100, 1300, s, '', d);
       el.style.setProperty('--x', ((slot - 1) * 74) + 'px');
-      wait(1250, () => { const e = el.querySelectorAll('.pv-slots em')[slot]; if (e) e.classList.add('hit'); snd([880, 1175], 0, 0.15, 'triangle', 0.1); if (land !== pvColor) mujunSound(); });
+      pwait(1250, () => { const e = el.querySelectorAll('.pv-slots em')[slot]; if (e) e.classList.add('hit'); snd([880, 1175], 0, 0.15, 'triangle', 0.1); if (land !== pvColor) mujunSound(); });
     },
     meter(s, d) {
       const L = s ? 3 + Math.floor(rnd() * 2) : 1 + Math.floor(rnd() * 2);
       const el = pvRun('meter', '<span class="pv-mt"><i></i><i></i><i></i><i></i></span>', 1500 + L * 350, 400 + L * 350, s, s ? 'MAX' : '', d);
       const segs = el.querySelectorAll('.pv-mt i');
-      for (let i = 0; i < L; i++) wait(300 + i * 350, () => { segs[i].classList.add('on'); snd([392 * Math.pow(1.19, i)], 0, 0.15, 'triangle', 0.1); });
+      for (let i = 0; i < L; i++) pwait(300 + i * 350, () => { segs[i].classList.add('on'); snd([392 * Math.pow(1.19, i)], 0, 0.15, 'triangle', 0.1); });
     },
     omikuji(s, d) {
       const text = s ? pick(['大吉', '大吉', '中吉']) : pick(['小吉', '末吉', '凶']);
@@ -327,8 +337,8 @@
       const el = pvRun('lamp', '<span class="pv-lp"><i></i><i></i><i></i><i></i><i></i></span>', 2000, 1400, s, s ? 'PEKA' : '', d);
       const ls = [...el.querySelectorAll('.pv-lp i')];
       let k = 0;
-      const iv = setInterval(() => { ls.forEach((x, i) => x.classList.toggle('on', i === k % 5)); k++; snd([500 + (k % 5) * 90], 0, 0.04, 'square', 0.05); }, 110);
-      wait(1300, () => { clearInterval(iv); const n = s ? 5 : 2 + Math.floor(rnd() * 2); ls.forEach((x, i) => x.classList.toggle('on', i < n)); });
+      const iv = setInterval(() => { ls.forEach((x, i) => x.classList.toggle('on', i === k % 5)); k++; snd([500 + (k % 5) * 90], 0, 0.04, 'square', 0.05); }, Math.round(110 * TEMPO));
+      pwait(1300, () => { clearInterval(iv); const n = s ? 5 : 2 + Math.floor(rnd() * 2); ls.forEach((x, i) => x.classList.toggle('on', i < n)); });
     }
   };
   delete PV.rain; delete PV.crack;   // 雨・ひび割れは液晶の「天候ステップアップ」に統合
@@ -469,7 +479,10 @@
       if (k) TRO.seen(k);
     }
     if (color === 'red' && big) flashMarquee('hot', 2200);
-    return put(`fx-banner ${color || ''}${big ? ' big' : ''}`, `${text}${sub ? `<small>${sub}</small>` : ''}`, ms || 1750);
+    const dur = Math.round((ms || 1750) * 0.7);   // 全体にテンポ良く
+    const el = put(`fx-banner ${color || ''}${big ? ' big' : ''}`, `${text}${sub ? `<small>${sub}</small>` : ''}`, dur);
+    el.style.animationDuration = dur + 'ms';
+    return el;
   }
 
   /* ---------- ペカり: 逆転 / 消灯焦らし / 音のバリエーション ---------- */

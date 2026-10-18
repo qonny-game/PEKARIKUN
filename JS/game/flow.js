@@ -23,11 +23,11 @@ const sideL = document.getElementById('side-l');
 const sideR = document.getElementById('side-r');
 const SIDE_COLOR = LAMP_TABLE.color;   // 色は JS/data/config.js の LAMP_TABLE
 let sideTok = 0;   // 点灯のたびに変わる。古い消灯予約を無効にする
-function sideLampShow(kind, quiet) {
+function sideLampShow(kind, quiet, pat) {
   sideTok++;
   [sideL, sideR].forEach(el => {
-    el.classList.remove('on', 'heaven', 'lit', 'pat-chase', 'pat-sweep', 'pat-pulse', 'pat-solid'); void el.offsetWidth; el.classList.add('on');
-    if (kind !== 'heaven') el.classList.add('pat-' + (LAMP_TABLE.pattern[kind] || 'chase'));
+    el.classList.remove('on', 'heaven', 'lit', 'pat-chase', 'pat-sweep', 'pat-pulse', 'pat-solid', 'pat-strobe'); void el.offsetWidth; el.classList.add('on');
+    if (kind !== 'heaven') el.classList.add('pat-' + (pat || LAMP_TABLE.pattern[kind] || 'chase'));
     if (kind === 'heaven') el.classList.add('heaven');
     else { el.classList.add('lit'); el.style.setProperty('--sl', SIDE_COLOR[kind] || SIDE_COLOR.red); }
   });
@@ -39,8 +39,8 @@ function sideLampShow(kind, quiet) {
   }
 }
 /* 当たった役の色で一定時間だけ光らせる（ほかの点灯が来たら消さない） */
-function sideLampFlash(kind, ms) {
-  sideLampShow(kind, true);
+function sideLampFlash(kind, ms, pat) {
+  sideLampShow(kind, true, pat);
   const tok = sideTok;
   setTimeout(() => { if (tok === sideTok) sideLampOff(); }, ms);
 }

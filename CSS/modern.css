@@ -1,0 +1,38 @@
+/* ============================================================
+   演出のスタイル刷新 (1.20.19): スピーディー / モダン / 高揚感
+   - 役が揃ったときのサイドランプ高速点滅
+   - バナー: 斜めにカットした帯がスッと走り、文字が一気に切り込む
+   ============================================================ */
+
+/* 役が揃ったときのサイドランプ: 高速点滅 (奇数・偶数の文字が交互に) */
+.side-lamp.on.lit.pat-strobe i { animation: sl-strobe .08s steps(1) infinite; animation-delay: 0s; }
+.side-lamp.on.lit.pat-strobe i:nth-child(even) { animation-delay: .04s; }
+@keyframes sl-strobe {
+  0%   { color: #fff; -webkit-text-stroke: 0; text-shadow: 0 0 6px var(--sl), 0 0 16px var(--sl), 0 0 30px var(--sl); }
+  50%  { color: #2a2058; -webkit-text-stroke: .6px rgba(120, 100, 200, .35); text-shadow: none; }
+}
+
+/* バナー */
+.fx-banner { top: 36%; padding: 7px 0 6px; line-height: 1.05; letter-spacing: .06em; font-size: 28px; transform-origin: 50% 50%;
+  background: linear-gradient(90deg, transparent 0, rgba(8, 6, 30, .86) 9%, rgba(8, 6, 30, .86) 91%, transparent 100%);
+  border-top: 2px solid var(--bn, #fde047); border-bottom: 2px solid var(--bn, #fde047);
+  box-shadow: 0 0 16px var(--bn, #fde047), inset 0 0 18px rgba(255, 255, 255, .07);
+  text-shadow: 0 0 8px var(--bn, #fde047), 0 0 20px var(--bn, #fde047);
+  animation-name: fx-banner-m; animation-timing-function: cubic-bezier(.16, 1, .3, 1); animation-fill-mode: both; }
+.fx-banner.big { font-size: 38px; }
+.fx-banner.red { --bn: #ff2d6f; color: #fff; text-shadow: 0 0 8px #ff2d6f, 0 0 22px #ff0055; }
+.fx-banner.blue { --bn: #22d3ee; color: #fff; text-shadow: 0 0 8px #22d3ee, 0 0 22px #0ea5e9; }
+.fx-banner { color: #fff; }
+.fx-banner small { color: var(--bn, #fde047); letter-spacing: .32em; font-size: 11px; margin-top: 2px; text-shadow: 0 0 6px #000; }
+.fx-banner.rainbow, .fx-banner.redbow { background-color: transparent; border: none; box-shadow: none; }
+@keyframes fx-banner-m {
+  0%   { opacity: 0; clip-path: inset(0 100% 0 0); transform: skewX(-12deg) scale(1.25); }
+  10%  { opacity: 1; clip-path: inset(0 0 0 0); transform: skewX(-8deg) scale(1); }
+  14%  { transform: skewX(-8deg) scale(1.05); }
+  18%, 84% { opacity: 1; clip-path: inset(0 0 0 0); transform: skewX(-8deg) scale(1); }
+  100% { opacity: 0; clip-path: inset(0 0 0 100%); transform: skewX(-8deg) scale(1); }
+}
+
+/* 予告の背景(モーダル風)を軽く: 暗幕を薄くして、角を立てて液晶いっぱいに */
+.fx-pv { left: 0; right: 0; border-radius: 0; background: linear-gradient(rgba(5, 8, 30, .28), rgba(5, 8, 30, .5)); }
+.fx-pv.ok { background: radial-gradient(circle, rgba(253, 224, 71, .3), rgba(5, 8, 30, .4) 70%); }

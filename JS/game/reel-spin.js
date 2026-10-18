@@ -262,7 +262,7 @@ function omenThen(kind, go) {
     reelLocked = true;
     sideLampPair(OMEN_PAIR_COLOR[ord[0]], OMEN_PAIR_COLOR[ord[1]]);
     if (window.LCDX && LCDX.pair) LCDX.pair(ord[0], ord[1]);
-    pekaLater(() => { reelLocked = false; go(); }, 850);
+    pekaLater(() => { reelLocked = false; go(); }, 600);
     return;
   }
   omenThen2(kind, go);
@@ -281,10 +281,10 @@ function omenThen2(kind, go) {
     initAudio();
     const t = audioCtx.currentTime;
     const notes = melon ? [392, 494, 587, 784, 988, 1175, 1568] : [880, 1109, 1319];
-    notes.forEach((f, i) => tone(f, t + 0.08 + i * (melon ? 0.16 : 0.2), 0.2, 'triangle', 0.1));
+    notes.forEach((f, i) => tone(f, t + 0.06 + i * (melon ? 0.1 : 0.12), 0.16, 'triangle', 0.1));
     if (melon) tone(98, t, 1.2, 'sine', 0.18);
   }
-  pekaLater(() => { reelLocked = false; go(); }, melon ? 950 : 650);   // ランプはリールが止まるまで点灯したまま
+  pekaLater(() => { reelLocked = false; go(); }, melon ? 640 : 440);   // ランプはリールが止まるまで点灯したまま
 }
 
 /* 役の抽選結果を持って回転開始。止まったら done(結果) */

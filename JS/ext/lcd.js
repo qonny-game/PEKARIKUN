@@ -28,7 +28,7 @@
   function runAnim(frames, ms, ease, done) {
     actor.classList.remove('hop', 'spin', 'shake');
     actor.getAnimations().forEach(a => a.cancel());
-    const a = actor.animate(frames, { duration: ms, easing: ease || 'ease-in-out' });
+    const a = actor.animate(frames, { duration: Math.round(ms * 0.6), easing: ease || 'ease-in-out' });   // ペカり君の動きも速く
     const id = ++actId;
     a.onfinish = () => { if (id === actId && done) done(); };
     return a;
@@ -117,7 +117,7 @@
   }
   const symShow = h => hintShow([h.sym], 0, h.big);
   function preHint() {   // 回転前: 図柄を見せてから回転を始める(待ち時間を返す)
-    if (symHint && symHint.T === 0 && !hintPair && !(pushPlan && !pushPlan.done)) { const h = symHint; symHint = null; symShow(h); return 1100; }
+    if (symHint && symHint.T === 0 && !hintPair && !(pushPlan && !pushPlan.done)) { const h = symHint; symHint = null; symShow(h); return 780; }
     return 0;
   }
   /* 下パネル消灯演出: 回転中にパネルが消えたら確定 (CZ/PEKA CHANCE=当選確定 / RUSH中=100G以上の上乗せ確定) */
@@ -193,6 +193,7 @@
   window.LCDX = { act, say: (a, b, ms, md) => say(a, b, ms, md), spawn: (t, l) => spawn(t, l || 0), pair, hintStop, clearAll, sandWin, zoneIntro, preHint, spinStart, hintClear, hint: hintShow, tag, miss: () => missMark(), story: (i, n, l) => story(i, n, l), don: n => { if (n >= 3) forceLv = 2; }, donWin: role => { forceLv = 2; const h = planHint(role || 'lose'); if (h) { hints.push(h); showHint(h); } } };
   let hold = 0;
   function say(a, b, ms, md, an) {
+    ms = ms ? Math.round(ms * 0.72) : ms;   // 全体にテンポ良く
     m1.textContent = a || ''; m2.textContent = b || '';
     msg.classList.remove('pop'); void msg.offsetWidth; msg.classList.add('pop');
     hold = Date.now() + (ms || 1800);
@@ -483,7 +484,7 @@
       if (!isDebugRun && !bonusRun && luckyOf(kind) === LUCKY[0] && (!aimedRole || (res && res.success) || kind === 'chanceW' || kind === 'chanceS')) {
         setTimeout(() => { say('LUCKY!', `今日のラッキー役 ${LUCKY[1]}`, 2200, 'happy', 'jump'); spawn('fire', 1); for (let i = 0; i < 5; i++) setTimeout(() => spawn('coin', 2), i * 100); }, 350);
       }
-      if (WIN_LAMP[kind] && (!aimedRole || (res && res.success))) sideLampFlash(WIN_LAMP[kind], 1500);   // 当たった役の色
+      if (WIN_LAMP[kind] && (!aimedRole || (res && res.success))) { const rareK = /^(cherry|melon|chance)/.test(kind); sideLampFlash(WIN_LAMP[kind], rareK ? 1700 : 1100, 'strobe'); }   // 当たった役の色で高速点滅(レア役は長め)
       if (!isDebugRun) {
         const r = ROLE_MSG[kind];
         if (r) { const strong = kind === 'cherryS' || kind === 'melon' || kind === 'chanceS'; say(r[1], r[0], 1700, strong ? 'shock' : 'happy', strong ? 'jump' : null); }
