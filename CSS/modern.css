@@ -36,3 +36,56 @@
 /* 予告の背景(モーダル風)を軽く: 暗幕を薄くして、角を立てて液晶いっぱいに */
 .fx-pv { left: 0; right: 0; border-radius: 0; background: linear-gradient(rgba(5, 8, 30, .28), rgba(5, 8, 30, .5)); }
 .fx-pv.ok { background: radial-gradient(circle, rgba(253, 224, 71, .3), rgba(5, 8, 30, .4) 70%); }
+
+/* ============================================================
+   図柄が揃ったときの演出 (令和スタイル): ポップ → 超高速ネオン脈動 + 光のスイープ + 波紋
+   旧: 0.42秒周期のON/OFF点滅
+   ============================================================ */
+.reels .reel.win, .show-lose .reels .reel.win, .show-align .reels .reel.win {
+  animation: win-pop .22s cubic-bezier(.2, 1.8, .4, 1) both, win-neon .13s ease-in-out .22s infinite alternate;
+}
+@keyframes win-pop { 0% { transform: scale(.8); } 100% { transform: scale(1.12); } }
+@keyframes win-neon {
+  0%   { filter: brightness(1.15) saturate(1.1) drop-shadow(0 0 3px #7dd3fc) drop-shadow(0 0 8px #38bdf8); }
+  100% { filter: brightness(1.85) saturate(1.5) drop-shadow(0 0 6px #fff) drop-shadow(0 0 16px #e879f9) drop-shadow(0 0 26px #22d3ee); }
+}
+.reel.win::before, .reel.win::after { content: ''; position: absolute; left: 2px; right: 2px; top: 2px; bottom: 2px; pointer-events: none; border-radius: 6px; }
+/* 波紋: 揃った瞬間に1回だけ外へ広がる */
+.reel.win::before { border: 2px solid #67e8f9; box-shadow: 0 0 10px #22d3ee, inset 0 0 8px #67e8f9; animation: win-ring .5s cubic-bezier(.1, .8, .3, 1) both; }
+@keyframes win-ring { 0% { transform: scale(.7); opacity: 1; } 100% { transform: scale(1.7); opacity: 0; } }
+/* 光のスイープ: 斜めの光が素早く走り続ける */
+.reel.win::after { background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .95) 50%, transparent 65%); background-size: 280% 100%; mix-blend-mode: overlay; animation: win-sweep .55s linear infinite; }
+@keyframes win-sweep { from { background-position: 130% 0; } to { background-position: -30% 0; } }
+.reel.dim { transition: opacity .15s, filter .15s; }
+
+/* ============================================================
+   ロゴ画像 (1.20.25): サイドパネルは当選するまで薄暗く、当選時は液晶にロゴを大きく表示
+   ============================================================ */
+.rr-icon .rl.rush, .rr-icon .rl.mtn { position: relative; padding: 0; border: none; border-radius: 6px; overflow: hidden;
+  background: #05030f center / 205% auto no-repeat; filter: brightness(.3) saturate(.35); transition: filter .25s; animation: none; text-shadow: none; }
+.rr-icon .rl.rush { background-image: url(../assets/img/logo_rush.jpg); }
+.rr-icon .rl.mtn  { background-image: url(../assets/img/logo_mountain.jpg); }
+.rr-icon .rl.rush.lit, .rr-icon .rl.mtn.lit { filter: none; background-color: #05030f; animation: logo-lit .5s ease-in-out infinite alternate; }
+.rr-icon .rl.rush.lit { box-shadow: 0 0 10px #ff4fd8, 0 0 18px #22d3ee; }
+.rr-icon .rl.mtn.lit  { box-shadow: 0 0 10px #4ade80, 0 0 18px #f0abfc; }
+@keyframes logo-lit { from { filter: brightness(1) saturate(1.05); } to { filter: brightness(1.45) saturate(1.3); } }
+.rl small.rk { position: absolute; left: 0; right: 0; bottom: 1px; font-size: 7px; font-weight: 900; letter-spacing: .02em; text-shadow: 0 0 4px #000, 0 0 2px #000; }
+.rl.rush .rk.hv { filter: hue-rotate(0); }
+
+/* PEKA RUSH 突入: 液晶いっぱいにロゴ(上下を軽くトリミング) */
+.rush-overlay { background: #04020c; }
+.rush-overlay .rush-logo { position: absolute; inset: 0; background: url(../assets/img/logo_rush.jpg) center / cover no-repeat; }
+.rush-overlay.show .rush-logo { animation: logo-slam .42s cubic-bezier(.16, 1.2, .3, 1) both, logo-breath .3s ease-in-out .42s infinite alternate; }
+.rush-overlay.t-heaven .rush-logo { filter: hue-rotate(-30deg) saturate(1.25) brightness(1.15); }
+.rush-overlay.t-death .rush-logo { filter: hue-rotate(-75deg) saturate(1.5) brightness(.85) contrast(1.15); }
+.rush-overlay .rush-text { display: none; }
+.rush-overlay.t-heaven .rush-text, .rush-overlay.t-death .rush-text { display: block; position: absolute; left: 0; right: 0; bottom: 6px; transform: none; }
+.rush-overlay.t-heaven .rush-line:nth-child(1), .rush-overlay.t-death .rush-line:nth-child(1) { display: none; }
+.rush-overlay.t-heaven .rush-line:nth-child(2), .rush-overlay.t-death .rush-line:nth-child(2) { font-size: 26px; animation: none; }
+@keyframes logo-slam { 0% { transform: scale(1.9); opacity: 0; filter: brightness(3); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes logo-breath { from { transform: scale(1); } to { transform: scale(1.035); } }
+
+/* PEKA PEKA MOUNTAIN 開始: ロゴ画像をどどーんと */
+.lcd-zoneintro { background: #04120c; }
+.lcd-zoneintro .zi-img { position: absolute; inset: 0; background: url(../assets/img/logo_mountain.jpg) center / cover no-repeat; animation: logo-slam .45s cubic-bezier(.16, 1.2, .3, 1) .08s both, logo-breath .3s ease-in-out .55s infinite alternate; }
+.lcd-zoneintro .zi-glint { position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .85) 50%, transparent 65%); background-size: 300% 100%; mix-blend-mode: overlay; animation: win-sweep .7s linear .5s 3; }

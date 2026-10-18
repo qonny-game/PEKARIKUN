@@ -154,7 +154,7 @@
     if (isDebugRun || !stageEl) return;
     const E = document.createElement('div');
     E.className = 'lcd-zoneintro';
-    E.innerHTML = '<i class="zi-bg"></i><i class="zi-rays"></i><i class="zi-rays b"></i><span class="zi-a">PEKA PEKA</span><b class="zi-b">MOUNTAIN!</b><em class="zi-c">SPECIAL ZONE</em>';
+    E.innerHTML = '<i class="zi-img"></i><i class="zi-glint"></i>';
     stageEl.appendChild(E);
     setTimeout(() => E.remove(), 3500);
     const at = (ms, f) => setTimeout(f, ms);

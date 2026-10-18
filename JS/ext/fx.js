@@ -892,6 +892,7 @@
     if (BGM.mode === mode && BGM.lvl === lvl) return;
     const restart = BGM.mode !== mode || BGM.lvl !== lvl;
     BGM.mode = mode; BGM.lvl = lvl;
+    if (window.BGM2) { BGM2.set(mode, lvl); return; }   // 新BGMエンジン(JS/ext/bgm.js)
     clearInterval(BGM.timer); BGM.timer = null;
     if (mode && restart) BGM.timer = setInterval(bgmStep, Math.round(60000 / (112 + lvl * 14) / 2));
   }
