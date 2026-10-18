@@ -230,6 +230,7 @@
     if (slotEl) { slotEl.style.width = (198 * sc).toFixed(1) + 'px'; slotEl.style.height = (102 * sc).toFixed(1) + 'px'; }
     window.REEL_SC = sc * (window.devicePixelRatio || 1);
     document.documentElement.style.setProperty('--side-h2', Math.floor(lcdH / 2) + 'px');
+    document.documentElement.style.setProperty('--side-fs', Math.max(18, Math.min(34, Math.floor((lcdH - 8) / 9 / 0.8))) + 'px');   // サイドのPEKARIKUN: 9文字が液晶の高さにぴったり収まる大きさ(行間を詰める)
     document.documentElement.style.setProperty('--reel-w', (198 * sc).toFixed(1) + 'px');   // STOPボタンをリールの真下に合わせる
     document.documentElement.style.setProperty('--reel-h', (102 * sc).toFixed(1) + 'px');
   }

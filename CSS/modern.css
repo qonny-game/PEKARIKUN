@@ -105,3 +105,6 @@
 /* 押し順ナビは、PEKA RUSH / MOUNTAIN のタイトル・確定表示などより手前に出す */
 #lcd-stage > .navi { z-index: 90 !important; }
 .payout-num.no-unit .payout-unit { display: none; }
+
+/* ミッション表示は非表示 (内部では動作し、称号『ミッション3回』のカウントは進む) */
+.fx-mission { display: none !important; }

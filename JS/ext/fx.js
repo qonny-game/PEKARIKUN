@@ -734,8 +734,7 @@
     if (s.got >= s.m.need) {
       missionEl.className = 'fx-mission clear';
       missionEl.textContent = 'MISSION CLEAR';
-      showBanner('MISSION CLEAR', '', '', false, 1500);
-      rainCoins(30); sndUp(6);
+      // ミッションは非表示(内部では動いて称号のカウントだけ進める): バナー・コイン雨・効果音は出さない
       count('mission', 1, 3, 'mission3');
       st.mission = null;
       wait(1800, () => { if (atGames > 0) startMission(); else renderMission(); });
