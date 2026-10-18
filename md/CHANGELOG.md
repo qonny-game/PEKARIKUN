@@ -1,5 +1,6 @@
 # CHANGELOG
 
+- 1.20.31 下パネルの中身を画像(assets/img/panel_logo.jpg)に差し替え。横長にトリミングしてロゴを中央表示。消灯演出・バージョン表示は従来どおり
 - 1.20.30 PEKA RUSH(HEAVEN/DEATH含む)突入ロゴを、PUSHボタンを押すまで液晶に出したままに変更(PUSHは手前に表示)。HEAVEN中でもメダル情報の段は通常の暗い背景のままにして見やすく
 - 1.20.29 RUSHに入らなかったPEKA CHANCE(ボーナスのみ)の終了リザルトでPEKA RUSHランプ・RUSH表示・RUSH BGMになってしまう不具合を修正(rushNowで判定を一本化)
 - 1.20.28 PEKA CHANCE中にサイドのPEKA RUSHが光ってしまう不具合を修正。RUSH突入(ボーナス終了後)から点灯
