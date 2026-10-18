@@ -158,19 +158,23 @@
 
   /* ---------- リールを枠いっぱいに拡大 (液晶の下の余白をなくす) ---------- */
   const box = document.getElementById('gogo-box'), reelsEl = document.getElementById('reels');
+  /* 4段構成: 液晶(幅いっぱい・上下すき間なし) / リール(液晶幅の80%) をそれぞれ幅から計算する */
+  const slotEl = document.getElementById('align-display');
   function fitReels() {
     if (!box || !reelsEl) return;
-    const w = box.clientWidth, h = box.clientHeight;
-    if (!w || !h) return;
-    // リールは幅いっぱいに拡大 (高さ102px×倍率)。残りの高さはすべて演出液晶に回す
-    const sc = Math.max(1, Math.min(w / 198, 2));
-    const lcdH = Math.max(150, Math.round(h - 4 - 2 - 102 * sc - 4));
+    const w = box.clientWidth;
+    if (!w) return;
+    const lcdH = Math.round(w * 1.02);                       // 液晶: ほぼ正方形で最大限大きく
+    const sc = Math.max(0.6, Math.min(w * 0.8 / 198, 2));    // リール: 従来(液晶幅いっぱい)の80%
+    box.style.height = lcdH + 'px';
     box.style.setProperty('--lcd-h', lcdH + 'px');
     reelsEl.style.transform = `scale(${sc.toFixed(3)})`;
+    reelsEl.style.marginTop = '0px';
+    if (slotEl) { slotEl.style.width = (198 * sc).toFixed(1) + 'px'; slotEl.style.height = (102 * sc).toFixed(1) + 'px'; }
     window.REEL_SC = sc * (window.devicePixelRatio || 1);
-    reelsEl.style.marginTop = (lcdH + 6) + 'px';
-    document.documentElement.style.setProperty('--side-h2', Math.floor(h / 2) + 'px');   // サイドランプは上半分。下半分はRUSH/CHANCEランプ
+    document.documentElement.style.setProperty('--side-h2', Math.floor(lcdH / 2) + 'px');
     document.documentElement.style.setProperty('--reel-w', (198 * sc).toFixed(1) + 'px');   // STOPボタンをリールの真下に合わせる
+    document.documentElement.style.setProperty('--reel-h', (102 * sc).toFixed(1) + 'px');
   }
   fitReels();
   window.addEventListener('resize', fitReels);

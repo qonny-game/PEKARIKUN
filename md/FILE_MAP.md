@@ -10,14 +10,14 @@
 | 4 | `JS/core/state.js` | ゲーム状態変数・UI要素の参照 | 82 | gameHistory, bonusLog, recordPoint, roleStat, totalGames, cumulativeGames, bigCount, atCount …他58 |
 | 5 | `JS/core/audio.js` | 音声（効果音・ペカリ音・枚数表示のファンファーレ） | 269 | audioCtx, initAudio, SOUND_FILES, soundAudio, soundBuffers, VVV_MIN_COINS, SAMPLE_MAX_SEC, SAMPLE_FADE_SEC …他7 |
 | 6 | `JS/core/effects.js` | 画面演出（フラッシュ・パーティクル・シェイク） | 136 | flashTimer, triggerFlash, tripleFlash, shakeMain, particles, particleMode, particleRAF, resizeCanvas …他7 |
-| 7 | `JS/game/flow.js` | ゲーム進行の中心（レバーON・当選処理・ペカ演出・枚数表示） | 545 | PEKA_FX, pickPekaFx, pekaLater, clearPekaTimers, sideL, sideR, SIDE_COLOR, sideTok …他33 |
-| 8 | `JS/game/reels.js` | リール表示・リール配列・役の組み合わせ | 131 | REEL_LINES, EMOJI, SYM_FALLBACK, symbolHTML, lineOf, STRIP_LEN, STRIPS, SEVENS …他14 |
-| 9 | `JS/game/reel-spin.js` | リール回転・目押し停止・予告・役の結果 | 382 | OPT_KEY, AUTO_STOP, saveOpt, SPIN_SPEED, SLIP_MAX, CELL_H, reelSpin, isReelSpinning …他32 |
+| 7 | `JS/game/flow.js` | ゲーム進行の中心（レバーON・当選処理・ペカ演出・枚数表示） | 562 | PEKA_FX, pickPekaFx, pekaLater, clearPekaTimers, sideL, sideR, SIDE_COLOR, sideTok …他35 |
+| 8 | `JS/game/reels.js` | リール表示・リール配列・役の組み合わせ | 132 | REEL_LINES, EMOJI, SYM_FALLBACK, symbolHTML, lineOf, STRIP_LEN, STRIPS, SEVENS …他14 |
+| 9 | `JS/game/reel-spin.js` | リール回転・目押し停止・予告・役の結果 | 386 | OPT_KEY, AUTO_STOP, saveOpt, SPIN_SPEED, SLIP_MAX, CELL_H, reelSpin, isReelSpinning …他32 |
 | 10 | `JS/game/bell.js` | ベル | 99 | BELL_TYPES, BELL_LINES, pickBellType, bellBadge, getPop, getRAF, rainCoins, playJaraJara …他4 |
 | 11 | `JS/game/cherry.js` | チェリー | 142 | cherryStatus, cherryRemain, updateCherry, CHERRY_AT_CHOICES, pickCherryAtG, setBoost, cherryEffects, ROLE_INFO …他14 |
 | 12 | `JS/game/at.js` | AT（ペカラッシュ）・PUSH演出 | 131 | atStatus, atRemain, atLabel, atToast, updateAT, updateAtGain, showAtToast, AT_CHOICES …他9 |
-| 13 | `JS/game/bonus.js` | ボーナス消化・押し順ナビ・ドンドンドン | 368 | AURA_NAMES, AURA_WIN_W, AURA_LOSE_W, auraEl, atEntryRateFor, pickAuraLevel, ZONE_G_CHOICES, ZONE_G_WEIGHTS …他26 |
-| 14 | `JS/game/at-result.js` | ATリザルト・獲得枚数OVER・次回示唆 | 368 | atResultEl, atResultGain, arHintBar, arHintText, atResultRAF, MODES, HINT_LABELS, decideNextMode …他27 |
+| 13 | `JS/game/bonus.js` | ボーナス消化・押し順ナビ・ドンドンドン | 400 | AURA_NAMES, AURA_WIN_W, AURA_LOSE_W, auraEl, atEntryRateFor, pickAuraLevel, ZONE_G_CHOICES, ZONE_G_WEIGHTS …他28 |
+| 14 | `JS/game/at-result.js` | ATリザルト・獲得枚数OVER・次回示唆 | 369 | atResultEl, atResultGain, arHintBar, arHintText, atResultRAF, MODES, HINT_LABELS, decideNextMode …他27 |
 | 15 | `JS/ui/display.js` | 電光掲示（LED・ランプ表示） | 162 | setLed, ledWinEl, ledCreditEl, ledTotalEl, ledWin, setLedWin, creditNow, totalGetNow …他9 |
 | 16 | `JS/game/auto.js` | オートプレイ・サウンドボタン | 168 | autoBtn, AUTO_KEY, AUTO_SPEEDS, AUTO_STOPS, AUTO_OPT, saveAutoOpt, AUTOPLAY, autoIdle …他20 |
 | 17 | `JS/ui/settings-panel.js` | 確率設定パネル | 165 | settingsModal, settingsBody, displayRate, SETTING_ROWS, formLevel, secretBuf, buildSettingsForm, setMode …他6 |
@@ -26,8 +26,8 @@
 | 20 | `JS/ui/modal.js` | モーダル共通・版の表示 | 26 | openModal, closeModal, versionEl |
 | 21 | `JS/ui/reel-view.js` | リール配列の表示 | 26 | reelModal, reelView, miniSym, buildReelView |
 | 22 | `JS/ui/boot.js` | 起動時の初期化（iOS対策・画面スリープ防止） | 29 | lastTouchEnd |
-| 23 | `JS/ext/fx.js` | 追加演出 | 998 |  |
-| 24 | `JS/ext/lcd.js` | 演出液晶 | 535 |  |
+| 23 | `JS/ext/fx.js` | 追加演出 | 1008 |  |
+| 24 | `JS/ext/lcd.js` | 演出液晶 | 689 |  |
 | 25 | `JS/ext/trophy.js` | トロフィー / ミッション / ランキング | 217 |  |
 
 ## その他

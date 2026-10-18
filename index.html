@@ -6,10 +6,11 @@
   <title>ペカり君 - パチスロ エンタメシミュレーター</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+JP:wght@700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="CSS/style.css?v=1.19.47">
-  <link rel="stylesheet" href="CSS/fx.css?v=1.19.47">
-  <link rel="stylesheet" href="CSS/lcd.css?v=1.19.47">
-  <link rel="stylesheet" href="CSS/trophy.css?v=1.19.47">
+  <link rel="stylesheet" href="CSS/style.css?v=1.20.0">
+  <link rel="stylesheet" href="CSS/fx.css?v=1.20.0">
+  <link rel="stylesheet" href="CSS/lcd.css?v=1.20.0">
+  <link rel="stylesheet" href="CSS/trophy.css?v=1.20.0">
+  <link rel="stylesheet" href="CSS/layout4.css?v=1.20.0">
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-5 select-none">
 
@@ -47,7 +48,7 @@
       <div class="cab-marquee"><i class="mq-dot"></i><i class="mq-dot"></i><span>PEKARI-KUN</span><i class="mq-dot"></i><i class="mq-dot"></i></div>
 
       <div class="cab-body">
-        <div id="side-l" class="side-lamp"><i style="--i:0">P</i><i style="--i:1">E</i><i style="--i:2">K</i><i style="--i:3">A</i><i style="--i:4">R</i><i style="--i:5">I</i><i style="--i:6">K</i><i style="--i:7">U</i><i style="--i:8">N</i><span class="rl-box"><b class="rl chance">PEKA CHANCE</b></span></div>
+        <div id="side-l" class="side-lamp"><i style="--i:0">P</i><i style="--i:1">E</i><i style="--i:2">K</i><i style="--i:3">A</i><i style="--i:4">R</i><i style="--i:5">I</i><i style="--i:6">K</i><i style="--i:7">U</i><i style="--i:8">N</i></div>
 
         <div class="cab-lcd">
 
@@ -117,15 +118,20 @@
               </div>
             </div>
 
-            <!-- 揃い図柄表示レイヤー -->
-            <div id="align-display" class="align-display absolute inset-0 z-20 flex flex-col items-center justify-center">
-              <div id="reels" class="reels"></div>
-            </div>
 
           </div>
         </div>
 
-        <div id="side-r" class="side-lamp"><i style="--i:0">P</i><i style="--i:1">E</i><i style="--i:2">K</i><i style="--i:3">A</i><i style="--i:4">R</i><i style="--i:5">I</i><i style="--i:6">K</i><i style="--i:7">U</i><i style="--i:8">N</i><span class="rl-box"><b class="rl rush">PEKA RUSH</b></span></div>
+        <div id="side-r" class="side-lamp"><i style="--i:0">P</i><i style="--i:1">E</i><i style="--i:2">K</i><i style="--i:3">A</i><i style="--i:4">R</i><i style="--i:5">I</i><i style="--i:6">K</i><i style="--i:7">U</i><i style="--i:8">N</i></div>
+      </div>
+
+      <!-- 中部の下: 左右にゲーム種類アイコン / 中央にリール -->
+      <div class="cab-reelrow">
+        <div class="rr-icon l"><b class="rl chance">PEKA<br>CHANCE</b></div>
+        <div id="align-display" class="align-display">
+          <div id="reels" class="reels"></div>
+        </div>
+        <div class="rr-icon r"><b class="rl rush">PEKA<br>RUSH</b></div>
       </div>
 
       <div class="stop-row">
@@ -218,30 +224,30 @@
   </div>
 
 
-  <script src="JS/data/config.js?v=1.19.47"></script>
-  <script src="JS/data/symimg.js?v=1.19.47"></script>
-  <script src="JS/core/settings.js?v=1.19.47"></script>
-  <script src="JS/core/state.js?v=1.19.47"></script>
-  <script src="JS/core/audio.js?v=1.19.47"></script>
-  <script src="JS/core/effects.js?v=1.19.47"></script>
-  <script src="JS/game/flow.js?v=1.19.47"></script>
-  <script src="JS/game/reels.js?v=1.19.47"></script>
-  <script src="JS/game/reel-spin.js?v=1.19.47"></script>
-  <script src="JS/game/bell.js?v=1.19.47"></script>
-  <script src="JS/game/cherry.js?v=1.19.47"></script>
-  <script src="JS/game/at.js?v=1.19.47"></script>
-  <script src="JS/game/bonus.js?v=1.19.47"></script>
-  <script src="JS/game/at-result.js?v=1.19.47"></script>
-  <script src="JS/ui/display.js?v=1.19.47"></script>
-  <script src="JS/game/auto.js?v=1.19.47"></script>
-  <script src="JS/ui/settings-panel.js?v=1.19.47"></script>
-  <script src="JS/ui/graph.js?v=1.19.47"></script>
-  <script src="JS/ui/more-menu.js?v=1.19.47"></script>
-  <script src="JS/ui/modal.js?v=1.19.47"></script>
-  <script src="JS/ui/reel-view.js?v=1.19.47"></script>
-  <script src="JS/ui/boot.js?v=1.19.47"></script>
-  <script src="JS/ext/fx.js?v=1.19.47"></script>
-  <script src="JS/ext/lcd.js?v=1.19.47"></script>
-  <script src="JS/ext/trophy.js?v=1.19.47"></script>
+  <script src="JS/data/config.js?v=1.20.0"></script>
+  <script src="JS/data/symimg.js?v=1.20.0"></script>
+  <script src="JS/core/settings.js?v=1.20.0"></script>
+  <script src="JS/core/state.js?v=1.20.0"></script>
+  <script src="JS/core/audio.js?v=1.20.0"></script>
+  <script src="JS/core/effects.js?v=1.20.0"></script>
+  <script src="JS/game/flow.js?v=1.20.0"></script>
+  <script src="JS/game/reels.js?v=1.20.0"></script>
+  <script src="JS/game/reel-spin.js?v=1.20.0"></script>
+  <script src="JS/game/bell.js?v=1.20.0"></script>
+  <script src="JS/game/cherry.js?v=1.20.0"></script>
+  <script src="JS/game/at.js?v=1.20.0"></script>
+  <script src="JS/game/bonus.js?v=1.20.0"></script>
+  <script src="JS/game/at-result.js?v=1.20.0"></script>
+  <script src="JS/ui/display.js?v=1.20.0"></script>
+  <script src="JS/game/auto.js?v=1.20.0"></script>
+  <script src="JS/ui/settings-panel.js?v=1.20.0"></script>
+  <script src="JS/ui/graph.js?v=1.20.0"></script>
+  <script src="JS/ui/more-menu.js?v=1.20.0"></script>
+  <script src="JS/ui/modal.js?v=1.20.0"></script>
+  <script src="JS/ui/reel-view.js?v=1.20.0"></script>
+  <script src="JS/ui/boot.js?v=1.20.0"></script>
+  <script src="JS/ext/fx.js?v=1.20.0"></script>
+  <script src="JS/ext/lcd.js?v=1.20.0"></script>
+  <script src="JS/ext/trophy.js?v=1.20.0"></script>
 </body>
 </html>

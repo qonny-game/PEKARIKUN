@@ -1,0 +1,36 @@
+/* ============================================================
+   4段構成の筐体レイアウト (1.20)
+   1段目: 筐体上部 PEKARI-KUN(ゲーム種類) / 2段目: サイドランプ+液晶 / 3段目: 左右アイコン+リール / 4段目: STOPボタン+メダル状況
+   各段は区切り線で分ける。液晶は角丸なし・枠なし・上下すき間なし
+   ============================================================ */
+.cabinet { padding: 0; overflow: hidden; }
+.cab-marquee { padding: 6px 0 6px; }
+
+/* 2段目 */
+.cab-body { gap: 0; border-top: 1px solid rgba(124, 92, 214, .7); align-items: stretch; }
+.cab-lcd { padding: 0; border: none; border-radius: 0; box-shadow: none; background: #000; }
+#gogo-box.gogo-lamp { height: auto; min-height: 0; border-radius: 0; }
+.sub-lcd, #lcd-stage, .lcd-stage { border-radius: 0 !important; }
+.sub-lcd { left: 0 !important; right: 0 !important; top: 0 !important; }
+#lcd-stage { left: 0; right: 0; top: 0; }
+.side-lamp { width: 26px; padding: 4px 0; border-radius: 0; border: none; border-left: 1px solid rgba(124, 92, 214, .5); border-right: 1px solid rgba(124, 92, 214, .5); box-sizing: border-box; padding-bottom: 4px !important; justify-content: space-around; }
+.side-lamp i { font-size: min(21px, calc(var(--side-h2, 200px) / 5.6)); }
+
+/* 3段目 */
+.cab-reelrow { display: flex; align-items: center; justify-content: space-between; gap: 0; border-top: 1px solid rgba(124, 92, 214, .7); padding: 8px 0; background: linear-gradient(rgba(23, 16, 47, .82), rgba(11, 7, 25, .82)); }
+.cab-reelrow .align-display { position: relative; flex: none; opacity: 1; transform: none; transition: none; margin: 0; inset: auto; }
+.cab-reelrow .reels { position: absolute; left: 0; top: 0; margin: 0; transform-origin: 0 0; }
+.rr-icon { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; }
+.rl { writing-mode: horizontal-tb; text-orientation: mixed; font-size: clamp(11px, 3.4vw, 15px); line-height: 1.12; text-align: center; letter-spacing: .02em; padding: 7px 6px; }
+
+/* 4段目 */
+.cabinet > .stop-row { border-top: 1px solid rgba(124, 92, 214, .7); margin: 0; }
+.cab-panel { border-top: 0; padding: 4px 8px 8px; }
+.cab-panel { padding: 4px 10px 8px; gap: 4px; }
+.led-row { min-width: 0; flex: 1; }
+.led-row .led { min-width: 0; }
+.rr-icon { padding: 0 3px; }
+.rl { font-size: clamp(10px, 2.9vw, 14px); padding: 5px 4px; }
+.cab-panel { padding: 4px 6px 8px; }
+@media (max-width: 400px) { .cab-panel { zoom: .9; } }
+.rl { font-size: clamp(9.5px, 2.7vw, 13px); padding: 4px 3px; border-radius: 8px; max-width: 100%; box-sizing: border-box; }

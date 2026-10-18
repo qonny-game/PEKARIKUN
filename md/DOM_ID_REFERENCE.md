@@ -67,9 +67,9 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `payout-label` | `JS/core/state.js` |  |
 | `payout-num` | `JS/core/state.js` |  |
 | `payout-value` | `JS/core/state.js` |  |
-| `align-display` | `JS/core/state.js` |  |
-| `reels` | `JS/core/state.js`, `JS/ext/lcd.js` |  |
 | `side-r` | `JS/game/flow.js` |  |
+| `align-display` | `JS/core/state.js`, `JS/ext/lcd.js` |  |
+| `reels` | `JS/core/state.js`, `JS/ext/lcd.js` |  |
 | `pl-insert` | （HTMLのみ） |  |
 | `pl-bet` | （HTMLのみ） |  |
 | `pl-replay` | （HTMLのみ） |  |
