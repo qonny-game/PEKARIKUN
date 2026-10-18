@@ -158,12 +158,12 @@ gogoBox.addEventListener('pointerdown', e => {
   if (isReelSpinning) { stopNextReel(); return; }   // タップは左から順に止まる
   if (!spinBtn.disabled) handleSpin();
 });
-// リールの段(リール・左右のモード表示)をタップしても、回転中ならリールが止まる (横位置で左/中/右のリール)
+// リールの段(リール・左右のモード表示)をタップしても、回転中ならリールが止まる (左から順に。ナビ等の順番指定があればその順)
 const reelRowEl = document.querySelector('.cab-reelrow');
 if (reelRowEl) reelRowEl.addEventListener('pointerdown', e => {
   if (!isReelSpinning) return;
   e.preventDefault();
-  stopByPointer(e);
+  stopNextReel();   // 位置に関わらず左から順に止まる(押し順ナビなど順番指定があるときはその順番どおり)
 });
 // 画面のどこをタップしても、レバーON / リール停止ができる (ボタン・メニュー・モーダル・上部のデータ表示は除く。液晶とリール段は専用の処理)
 document.addEventListener('pointerdown', e => {
