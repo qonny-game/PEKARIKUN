@@ -54,12 +54,16 @@ const pushResult = document.getElementById('push-result');
 
 function pushReveal(text, premium, onDone) {
   isPushing = true;
+  if (window.hideGet) hideGet();   // 背面の「15枚 GET」は消す
   pushResult.textContent = text;
-  pushOverlay.className = 'push-overlay show waiting' + (premium ? ' premium' : '');
+  // 虹色PUSH / 超特大PUSH: 100G以上の上乗せが確定しているときだけ出る(期待大のサイン)
+  const num = parseInt(String(text).replace(/[^0-9]/g, ''), 10) || 0;
+  const vc = (num >= 100 && !isDebugRun && Math.random() < 0.6) ? (Math.random() < 0.5 ? ' pv-rainbow' : ' pv-huge') : '';
+  pushOverlay.className = 'push-overlay show waiting' + (premium ? ' premium' : '') + vc;
   if (soundEnabled) {
     initAudio();
     const t = audioCtx.currentTime;
-    [988, 1319].forEach((f, i) => tone(f, t + i * 0.09, 0.2, 'triangle', 0.14));
+    (vc ? [784, 988, 1319, 1568, 2093] : [988, 1319]).forEach((f, i) => tone(f, t + i * 0.09, vc ? 0.3 : 0.2, 'triangle', vc ? 0.18 : 0.14));
   }
   const handler = () => {
     pushBtn.removeEventListener('click', handler);

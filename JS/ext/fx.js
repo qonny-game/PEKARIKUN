@@ -631,6 +631,7 @@
     const num = parseInt(String(text).replace(/[^0-9]/g, ''), 10) || 0;
     if (num >= 50 && !isDebugRun && rnd() < 0.5 * freqMul()) {
       isPushing = true;
+      if (window.hideGet) hideGet();
       const decoy = `+${pick([5, 10, 10, 20])}G`;
       pushResult.textContent = decoy;
       pushOverlay.className = 'push-overlay show waiting';
