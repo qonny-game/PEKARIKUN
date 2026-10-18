@@ -294,4 +294,5 @@
 .rr-icon .rl.rush.lit, .rr-icon .rl.mtn.lit { background-size: cover; background-position: center; }
 .rr-icon .rl.cz.lit, .rr-icon .rl.chance.lit { font-size: clamp(12px, 3.6vw, 17px); }
 .rr-icon .rl.gogo.lit { overflow: hidden; background: #05030f !important; }
-.rr-icon .rl.gogo.lit::before { inset: auto; left: 50%; top: 50%; width: 100cqh; height: 100cqw; translate: -50% -50%; rotate: -90deg; background-size: contain; }
+.rr-icon .rl.gogo::before { inset: 0; background: url(../assets/img/gogo_circle.jpg) center / cover no-repeat; }   /* GOGO!は丸いロゴを、パネルいっぱいに */
+.rr-icon .rl.gogo.lit::before { inset: 0; translate: none; rotate: none; width: auto; height: auto; background: #000 url(../assets/img/gogo_left.jpg) center / cover no-repeat; mix-blend-mode: normal; }   /* 左パネル全面: トリミングしたGOGO!画像 */
