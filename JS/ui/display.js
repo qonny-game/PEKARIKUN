@@ -165,5 +165,16 @@ if (reelRowEl) reelRowEl.addEventListener('pointerdown', e => {
   e.preventDefault();
   stopByPointer(e);
 });
+// 画面のどこをタップしても、レバーON / リール停止ができる (ボタン・メニュー・モーダル・上部のデータ表示は除く。液晶とリール段は専用の処理)
+document.addEventListener('pointerdown', e => {
+  const t = e.target;
+  if (!(t instanceof Element)) return;
+  if (t.closest('button, a, input, select, textarea, label, .modal, .more-menu, .data-counter, .cab-reelrow, #gogo-box, .stop-row, #push-overlay, .at-result')) return;
+  if (document.querySelector('.modal.open')) return;
+  const mm = document.getElementById('more-menu');
+  if (mm && !mm.hidden) return;   // メニューを開いているときは、閉じるだけ
+  if (isReelSpinning) { stopNextReel(); return; }
+  if (!spinBtn.disabled) handleSpin();
+});
 document.getElementById('reset-btn').addEventListener('click', resetData);
 

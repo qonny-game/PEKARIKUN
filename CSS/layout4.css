@@ -129,3 +129,10 @@
 .lcd-cz .cz-l, .lcd-cz .cz-g { font-size: 11px; }
 .gogo-lamp:has(.at-status.on) .lcd-tag { top: 46px; }
 .gogo-lamp:has(.lcd-cap.on) .lcd-tag { top: 56px; }
+
+/* GOGO!ランプは枠なし / MOUNTAINは枠からはみ出さない */
+.rl.gogo, .rl.gogo.lit { border: none !important; background: transparent !important; box-shadow: none; }
+.rl.mtn { overflow: hidden; letter-spacing: -.03em; font-size: clamp(6px, 1.85vw, 8.5px); }
+
+/* バージョン表示: 筐体右下に小さく */
+.cab-ver { position: absolute; right: 22px; bottom: 4px; z-index: 2; font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: .08em; color: rgba(165, 180, 252, .65); pointer-events: none; }

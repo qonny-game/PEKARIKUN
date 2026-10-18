@@ -23,4 +23,6 @@ refreshRateLabel();
 
 const versionEl = document.getElementById('app-version');
 if (versionEl) versionEl.textContent = `v${APP_VERSION}`;
+const cabVerEl = document.getElementById('cab-version');
+if (cabVerEl) cabVerEl.textContent = `v${APP_VERSION}`;
 
