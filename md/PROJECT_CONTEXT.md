@@ -17,7 +17,7 @@ JS/game/          flow（ゲーム進行の中心） / reels / reel-spin / bell 
 JS/ui/            display（電光掲示） / settings-panel / graph / modal / reel-view / boot（起動処理）
 JS/ext/           bgm / fx / lcd / trophy … 本体の関数を包んで拡張する追加層（本体の後に読む）
 assets/img/       7red / 7blue / 7white / bar / bell / cherry / replay / melon（図柄 360x180。本体は JS/data/symimg.js に埋め込み済み）
-assets/img/guide/ 攻略ガイドの画像
+assets/img/guide/ 攻略ガイドの画像 (md/tools/guide_shots.py で撮り直せる。仕様を変えたらガイドの文章と画像も更新する)
 assets/sound/     gako.mp3 / vvv.mp3
 md/               このフォルダ
 ```

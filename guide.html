@@ -7,384 +7,191 @@
 <style>
 :root{--bg:#0b0f1a;--card:#141a2b;--line:#27314d;--tx:#e6e9f2;--sub:#98a2bd;--acc:#ffd23f;--blue:#38a8ff;--red:#ff5a5a}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.8;font-size:15px}
-.wrap{max-width:720px;margin:0 auto;padding:0 16px 48px}
-header{padding:28px 0 12px;text-align:center}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.7;font-size:14.5px}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 40px}
+header{padding:22px 0 8px;text-align:center}
 header .kicker{display:inline-block;background:var(--red);color:#fff;font-weight:800;font-size:11px;letter-spacing:.15em;padding:2px 10px;border-radius:2px}
-header h1{margin:10px 0 4px;font-size:30px;font-weight:900;color:var(--acc);letter-spacing:.04em}
-header p{margin:0;color:var(--sub);font-size:13px}
-nav{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px 0 8px}
-nav a{color:var(--tx);text-decoration:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 14px;font-size:13px;font-weight:700}
-.back{display:block;text-align:center;margin:6px 0 0}
+header h1{margin:8px 0 2px;font-size:28px;font-weight:900;color:var(--acc);letter-spacing:.04em}
+header p{margin:0;color:var(--sub);font-size:12.5px}
+nav{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:12px 0 6px}
+nav a,nav button{color:var(--tx);text-decoration:none;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:3px 12px;font-size:12.5px;font-weight:700;font-family:inherit;cursor:pointer}
+nav button{color:var(--sub)}
+.back{display:block;text-align:center;margin:4px 0 0}
 .back a{color:var(--blue);font-size:13px;font-weight:700}
-section{margin-top:36px}
-h2{font-size:20px;margin:0 0 12px;padding:6px 12px;border-left:6px solid var(--acc);background:linear-gradient(90deg,#222a44,transparent);font-weight:900}
-h3{font-size:16px;margin:22px 0 6px;color:var(--acc);font-weight:800}
-p{margin:8px 0}
-.tbl{overflow-x:auto;margin:10px 0;border:1px solid var(--line);border-radius:8px}
-table{border-collapse:collapse;width:100%;min-width:480px;font-size:13px}
-th,td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+details.sec{margin-top:12px;border:1px solid var(--line);border-radius:10px;background:#0f1424;overflow:hidden}
+details.sec>summary{list-style:none;cursor:pointer;font-size:17px;font-weight:900;padding:9px 12px 9px 14px;border-left:6px solid var(--acc);background:linear-gradient(90deg,#222a44,transparent);display:flex;align-items:center;justify-content:space-between}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary::after,details.tip>summary::after,details.sub>summary::after{content:"+";color:var(--sub);font-weight:700;font-size:18px;line-height:1;margin-left:8px}
+details[open]>summary::after{content:"\2212"}
+.body{padding:2px 14px 12px}
+h3{font-size:15px;margin:16px 0 4px;color:var(--acc);font-weight:800}
+p{margin:6px 0}
+.tbl{overflow-x:auto;margin:8px 0;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:460px;font-size:12.5px}
+th,td{padding:5px 7px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
 th{background:#1c2440;color:var(--sub);font-weight:700}
 td:first-child,th:first-child{text-align:left;position:sticky;left:0;background:#171e35}
 tr:last-child td{border-bottom:0}
 .note{font-size:12px;color:var(--sub)}
-.fig{margin:14px 0;text-align:center}
-.fig img{max-width:100%;max-height:340px;border:1px solid var(--line);border-radius:8px;background:#000}
-.fig.pair{display:flex;gap:8px;justify-content:center}
-.fig.pair img{width:calc(50% - 4px);max-height:none;object-fit:contain}
-.fig figcaption{font-size:12px;color:var(--sub);margin-top:4px}
-.tip{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:14px 0}
-.tip b.t{display:block;color:var(--acc);font-size:15px}
-.tip .lbl{display:inline-block;background:var(--blue);color:#06101c;font-weight:900;font-size:11px;padding:0 8px;border-radius:3px;margin-right:6px}
-.tip.hot .lbl{background:var(--red);color:#fff}
-.tip.cool .lbl{background:#7b86a8;color:#06101c}
-.rank{color:var(--acc);letter-spacing:.1em}
-ul{margin:6px 0;padding-left:20px}
-li{margin:3px 0}
-.flow{display:flex;flex-direction:column;gap:6px;margin:10px 0}
-.flow div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:14px}
+.fig{margin:10px 0;text-align:center}
+.fig img{max-width:100%;max-height:230px;border:1px solid var(--line);border-radius:8px;background:#000}
+.fig.pair,.fig.trio{display:flex;gap:6px;justify-content:center;align-items:flex-start}
+.fig.pair img{width:calc(50% - 3px);max-height:none;object-fit:contain}
+.fig.trio img{width:calc(33.3% - 4px);max-height:none;object-fit:contain}
+.fig.tall img{max-height:300px}
+.fig figcaption,.cap{font-size:11.5px;color:var(--sub);margin-top:3px;text-align:center}
+details.tip,details.sub{background:var(--card);border:1px solid var(--line);border-radius:8px;margin:8px 0}
+details.tip>summary,details.sub>summary{list-style:none;cursor:pointer;padding:7px 12px;font-weight:800;font-size:14px;display:flex;align-items:center}
+details.tip>summary::-webkit-details-marker,details.sub>summary::-webkit-details-marker{display:none}
+details.tip>summary .lbl{flex:none}
+details.tip>summary .tt{flex:1}
+details.tip>.in{padding:0 12px 10px;font-size:13.5px}
+details.sub>summary{color:var(--acc);font-size:14.5px;background:#10162a;border-radius:8px}
+details.sub>.in{padding:2px 8px 6px}
+.lbl{display:inline-block;background:var(--blue);color:#06101c;font-weight:900;font-size:10.5px;padding:0 7px;border-radius:3px;margin-right:7px;white-space:nowrap}
+.hot>summary .lbl{background:var(--red);color:#fff}
+.cool>summary .lbl{background:#7b86a8}
+ul{margin:4px 0;padding-left:19px}
+li{margin:2px 0}
+.flow{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:8px 0}
+.flow div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-size:12.5px}
 .flow div b{color:var(--acc)}
-.flow i{align-self:center;color:var(--sub);font-style:normal;line-height:1}
-.col{border:2px dashed var(--line);border-radius:10px;padding:10px 14px;margin:16px 0;font-size:13.5px;color:var(--sub)}
+.flow i{color:var(--sub);font-style:normal}
+.col{border:2px dashed var(--line);border-radius:10px;padding:8px 12px;margin:12px 0 0;font-size:13px;color:var(--sub)}
 .col b{color:var(--tx)}
-footer{text-align:center;color:var(--sub);font-size:12px;margin-top:40px}
+footer{text-align:center;color:var(--sub);font-size:12px;margin-top:26px}
 </style>
 </head>
 <body>
 <div class="wrap">
-
 <header>
   <span class="kicker">PEKARIKUN GUIDE</span>
   <h1>ペカり君 攻略ガイド</h1>
-  <p>設定差・ゲーム性・演出の楽しみ方をまとめた読み物</p>
+  <p>設定差・ゲーム性・演出の楽しみ方 (見出しをタップで開閉)</p>
   <nav>
-    <a href="#system">ゲーム性</a>
-    <a href="#table">設定表</a>
-    <a href="#bonus">ボーナス</a>
-    <a href="#at">AT</a>
-    <a href="#roles">小役とAT</a>
-    <a href="#hints">設定示唆</a>
-    <a href="#fx">演出</a>
-    <a href="#tips">立ち回り</a>
-  </nav>
+<a href="#system">流れ</a><a href="#table">設定表</a><a href="#bonus">ボーナス</a><a href="#at">AT</a><a href="#roles">小役</a><a href="#hints">設定示唆</a><a href="#fx">演出</a><a href="#tips">立ち回り</a>
+<button type="button" id="open-all">すべて開く</button><button type="button" id="close-all">すべて閉じる</button>
+</nav>
   <div class="back"><a href="index.html">ゲームに戻る</a></div>
 </header>
 
-<section id="system">
-  <h2>ゲーム性</h2>
-  <p>ペカり君は、GOGOランプの点灯(ペカ)を待つ、ノーマルタイプ寄りのパチスロ。通常時はレバーを叩いてリールを止めるだけ。ランプが光ったら、そこからボーナス、そして AT へとつながっていく。</p>
-  <div class="flow">
-    <div><b>通常時</b> 小役を引きながらペカを待つ</div><i>▼</i>
-    <div><b>ペカ</b> ランプ点灯。次のゲームで 7 を揃える</div><i>▼</i>
-    <div><b>ボーナス</b> ベル 15 枚獲得を続け、最終ゲームでジャッジメント</div><i>▼</i>
-    <div><b>AT</b> 突入すれば PEKA RUSH。上乗せを重ねて伸ばしていく</div><i>▼</i>
-    <div><b>終了</b> 結果画面。次回モードの気配に注目</div>
-  </div>
-  <figure class="fig"><img src="assets/img/guide/main.png" alt="通常時の画面"><figcaption>通常時の画面。左右のサイドランプやデータカウンタにも注目</figcaption></figure>
-
-  <h3>小役とチェリー、スイカ</h3>
-  <p>チェリーとスイカは、取りこぼさず狙うのが基本。チェリーは左リール、スイカは中リールを意識すると拾いやすいはず。チェリーを引いたあとは、しばらくペカりやすい期間に入るという噂もある。</p>
-  <p class="note">7 は自動で揃う仕様なので、目押しは不要。ペカったらレバーを叩くだけ。</p>
-</section>
-
-<section id="table">
-  <h2>設定表</h2>
-  <p>まずは「本気」モードの数字。設定は 1〜6 の 6 段階。高いほどボーナスが軽く、ATにも入りやすい…とされている。下の数値は、perfect な打ち方をしたときのシミュレーション値。実戦では多少ブレるので、目安として眺めてほしい。</p>
-  <div class="tbl"><table>
-    <tr><th></th><th>設定1</th><th>設定2</th><th>設定3</th><th>設定4</th><th>設定5</th><th>設定6</th></tr>
-    <tr><td>機械割</td><td>約100%</td><td>約103%</td><td>約106%</td><td>約110%</td><td>約115%</td><td>約120%</td></tr>
-    <tr><td>ボーナス(基本)※</td><td>1/772</td><td>1/745</td><td>1/724</td><td>1/673</td><td>1/639</td><td>1/623</td></tr>
-    <tr><td>AT突入率(150枚)</td><td>20%</td><td>21%</td><td>22%</td><td>23%</td><td>24%</td><td>25%</td></tr>
-    <tr><td>AT突入率(400枚)</td><td>76%</td><td>77%</td><td>79%</td><td>80%</td><td>82%</td><td>84%</td></tr>
-    <tr><td>ATタイプ:HEAVEN※</td><td>12%</td><td>13%</td><td>14%</td><td>15%</td><td>17%</td><td>20%</td></tr>
-    <tr><td>ATタイプ:DEATH※</td><td>4%</td><td>4%</td><td>5%</td><td>6%</td><td>7%</td><td>8%</td></tr>
-    <tr><td>次回:通常</td><td>56%</td><td>55%</td><td>54%</td><td>52%</td><td>50%</td><td>48%</td></tr>
-    <tr><td>次回:好調</td><td>29%</td><td>29%</td><td>29%</td><td>30%</td><td>30%</td><td>30%</td></tr>
-    <tr><td>次回:絶好調</td><td>11%</td><td>12%</td><td>12%</td><td>13%</td><td>14%</td><td>15%</td></tr>
-    <tr><td>次回:天国</td><td>4%</td><td>4%</td><td>5%</td><td>5%</td><td>6%</td><td>7%</td></tr>
-    <tr><td>222 OVER</td><td>出ない</td><td colspan="5">出る可能性あり</td></tr>
-    <tr><td>444 OVER</td><td colspan="3">出ない</td><td colspan="3">出る可能性あり</td></tr>
-    <tr><td>456 OVER</td><td colspan="4">出ない</td><td colspan="2">出る可能性あり</td></tr>
-    <tr><td>666 OVER</td><td colspan="5">出ない</td><td>出る可能性あり</td></tr>
-  </table></div>
-  <p class="note">※ 基本確率は、チェリー・スイカ・チャンス目で当たりやすくなる前の数字。実際の体感は 1/260G 前後になる。<br>※ ボーナスは獲得枚数が 150〜400 枚の間で変動。多いほどATに入りやすい。<br>※ 「ランダム」を選ぶと、設定は内部でこっそり決まる。この表が頼りになる場面かも。</p>
-  <h3>遊び方のモード</h3>
-  <p>設定画面の上のボタンで、モードを切り替えられる。どのモードも、遊んでいて負けにくいように作ってある…はず。</p>
-  <div class="tbl"><table>
-    <tr><th></th><th>設定1</th><th>設定2</th><th>設定3</th><th>設定4</th><th>設定5</th><th>設定6</th></tr>
-    <tr><td>本気</td><td>約100%</td><td>約103%</td><td>約106%</td><td>約110%</td><td>約115%</td><td>約120%</td></tr>
-    <tr><td>極楽</td><td>約110%</td><td>約114%</td><td>約118%</td><td>約122%</td><td>約126%</td><td>約130%</td></tr>
-    <tr><td>遊本気</td><td>約100%</td><td>約103%</td><td>約106%</td><td>約110%</td><td>約115%</td><td>約120%</td></tr>
-    <tr><td>遊極楽</td><td>約110%</td><td>約114%</td><td>約118%</td><td>約122%</td><td>約126%</td><td>約130%</td></tr>
-  </table></div>
-  <ul>
-    <li><b>本気</b> ふつうの遊び方。出玉の波を楽しみたい人に</li>
-    <li><b>極楽</b> ATに入りやすく、HEAVEN や DEATH も多め。出玉感をたっぷり味わいたい人に</li>
-    <li><b>遊</b> 当たりやすさが約2.5倍。そのかわり、ボーナスの枚数もATのG数も半分。演出をたくさん見たい人に</li>
-  </ul>
-  <p class="note">※ 極楽モードは、ATタイプの HEAVEN / DEATH の割合も上がる。遊モードは「本気」「極楽」と同じ機械割になるよう調整してある。</p>
-  <p>設定差は、ボーナスの軽さよりも、むしろ AT 突入率と次回モードの引きに表れる印象。1 回では分からなくても、通算で眺めると、じわじわと差が見えてくる…かもしれない。</p>
-</section>
-
-<section id="bonus">
-  <h2>ボーナス中の楽しみ方</h2>
-  <p>ボーナス中は、ベルを押し順どおりに押して 15 枚ずつ獲得。画面の押し順ナビには素直に従っておくのが無難。</p>
-  <figure class="fig pair">
-    <img src="assets/img/guide/chance.png" alt="PEKA CHANCE">
-    <img src="assets/img/guide/result.png" alt="結果画面">
-  </figure>
-  <p class="note" style="text-align:center">左: ボーナス中のロゴ / 右: 結果画面</p>
-
-  <h3>画面のふちのオーラに注目</h3>
-  <p>ボーナス中は、画面のふちが色づく。白 → 青 → 黄 → 緑 → 赤 → 金 → 虹の順に、期待が高まっていくらしい。</p>
-  <ul>
-    <li>白のまま終われば、残念…と思いきや、意外と AT に入ることもあるとか</li>
-    <li>赤以上が出てくると、ちょっと期待してもいいかもしれない</li>
-    <li>虹は、拝んでおきたい色</li>
-  </ul>
-
-  <h3>最終ゲームのジャッジメント</h3>
-  <p>最終ゲームは JUDGEMENT。ここから心臓の鼓動が聞こえてきたら、そのあとの展開は…各自の目で確かめてほしい。</p>
-</section>
-
-<section id="at">
-  <h2>ATの楽しみ方</h2>
-  <p>AT 中は、ベル・チェリー・スイカでゲーム数の上乗せが狙える。PUSH ボタンが出たら、迷わず押したくなるはず。</p>
-  <figure class="fig pair">
-    <img src="assets/img/guide/navi_red.png" alt="赤ナビ">
-    <img src="assets/img/guide/navi_purple.png" alt="紫ナビ">
-  </figure>
-  <p class="note" style="text-align:center">赤のナビ / 紫のナビ</p>
-  <ul>
-    <li><b>赤いナビ</b> チェリー絡み。成立するかは、まだ分からない</li>
-    <li><b>紫のナビ</b> スイカ絡み。ここは期待していいかも</li>
-    <li>ベルは押し順を守るだけ。コツコツ積むのが吉</li>
-  </ul>
-
-  <h3>PEKA! PEKA! MOUNTAIN!</h3>
-  <p>AT 中に当たると、ゾーンに突入。5〜10 ゲームのあいだ、毎ゲーム PUSH のチャンス。ロゴの色(青 / 緑 / 金 / 虹)が、勝負どころを知らせてくれるらしい。</p>
-  <figure class="fig"><img src="assets/img/guide/aura.png" alt="ゾーン画面"><figcaption>ゾーン中。毎ゲームの上乗せに期待</figcaption></figure>
-  <figure class="fig"><img src="assets/img/guide/push.png" alt="PUSHボタン"><figcaption>PUSH ボタン。押した瞬間に結果が分かる</figcaption></figure>
-</section>
-
-<section id="roles">
-  <h2>小役と ATタイプ</h2>
-  <h3>強弱のある小役</h3>
-  <p>チェリー、スイカ、チャンス目には、それぞれ弱と強がある。強いほど、そのあとのボーナスにつながりやすい…とされている。</p>
-  <ul>
-    <li><b>弱チェリー</b> 左リールの上段か下段にチェリー</li>
-    <li><b>強チェリー</b> 左リール中段にチェリー。出たら、ちょっと期待してもいいかもしれない</li>
-    <li><b>弱スイカ</b> 左上から右下の斜めに揃うスイカ。第1リール上段に止まったときだけ</li>
-    <li><b>強スイカ</b> 上段に横に揃うスイカ。第1リール上段に止まったときだけで、中リールを狙う必要がある</li>
-    <li><b>弱チャンス目</b>(この形だけが弱チャンス目) 中段にリプレイ・リプレイ・ベル。揃わない形</li>
-    <li><b>強チャンス目</b>(この形だけが「目」) 第1リール上段・第2リール中段・第3リール中段にスイカ。揃わない形で、ボーナスへの期待が大きい</li>
-  </ul>
-  <p class="note">AT中は、強チェリーと強スイカで上乗せが決まりやすい…らしい。弱でも、うまくいくことはある。</p>
-  <h3>ATのタイプは3種類</h3>
-  <p>ボーナスからATに入るとき、出玉のタイプがいくつかに分かれる。どれになるかは、入ってみてのお楽しみ。</p>
-  <ul>
-    <li><b>PEKA RUSH!!!</b> ふつうのAT。平均で 350 枚前後を目安に</li>
-    <li><b>PEKA RUSH! HEAVEN!</b> 天国的な出玉。ゾーンに入りやすく、平均は 2 倍以上になるかも</li>
-    <li><b>PEKA RUSH! DEATH!</b> 悪魔的な出玉。ごく稀だが、とんでもない枚数になることがある</li>
-  </ul>
-  <p class="note">設定が高いほど、HEAVEN や DEATH に入りやすい傾向があるとされる。ただし、1回では分からない。</p>
-</section>
-
-<section id="hints">
-  <h2>設定示唆 攻略メモ</h2>
-  <p>ここからは、攻略雑誌風の「言い切らない」情報。確証はない。でも、気になってしまうのが人情というもの。</p>
-
-  <div class="tip hot">
-    <b class="t"><span class="lbl">OVER</span>「222」が出たら…</b>
-    ボーナスから結果画面までの獲得枚数が、ある数字に届いた瞬間に出る OVER 表示。もし <b>222</b> が出たなら、設定 1 ではない可能性が高まる…のかもしれない。ただし出る頻度は少なめ。そもそも見られたらラッキー、くらいの気持ちで。
-  </div>
-  <div class="tip hot">
-    <b class="t"><span class="lbl">OVER</span>「444」「456」なら…</b>
-    <b>444</b> は設定 4 以上に期待。<b>456</b> が出たら、設定 5 以上がグッと近づく気がする。ここまで来ると、そろそろ腰を据えて打ちたくなるところ。
-  </div>
-  <div class="tip hot">
-    <b class="t"><span class="lbl">OVER</span>「666」が出現したら…</b>
-    もし見られたら、それは設定 6 の可能性が…。ただし、ごく稀。出会えたら、その日はいい日になるかもしれない。
-  </div>
-  <p class="note">※ 250 / 500 / 750 / 1000 などの数字は、ただの通過点。設定とは関係ないはず。</p>
-
-  <div class="tip">
-    <b class="t"><span class="lbl">結果画面</span>トロフィーの色</b>
-    結果画面に出る「ペカり君トロフィー」。銅・銀・金・青・赤・虹と色が変わり、おおむね設定 1〜6 に対応しているとされる。
-    <ul>
-      <li>銅は、設定 1 の可能性が高いが…低設定を決めつけるのはまだ早い</li>
-      <li>金以上は、設定 3 以上に期待してもいいかもしれない</li>
-      <li>赤なら設定 5 以上、虹なら設定 6 の香り</li>
-      <li>見せかけの低い色が出ることもあるので、1 回だけで判断しないのがコツ</li>
-    </ul>
-    <span class="note">回転数が増えるほど、トロフィーは本当の設定に寄ってくるという噂も。</span>
-  </div>
-
-  <div class="tip">
-    <b class="t"><span class="lbl">サイドランプ</span>左右のペカランプ</b>
-    ボーナスや AT の終了後、すぐにペカると、筐体の左右のランプが光ることがある。これは「連チャン」のサインかもしれない。逆に、光らないからといって落ち込むことはない。
-  </div>
-
-  <div class="tip">
-    <b class="t"><span class="lbl">次回示唆</span>AT終了後の「弱・中・強・激アツ」</b>
-    AT が終わると、結果画面で次回モードを匂わせてくれる。激アツなら、次回に期待してもいいはず。ただし、全面的に信じすぎると痛い目を見ることも。3 割くらいは、ちょっとだけ意地悪なのかもしれない。
-  </div>
-</section>
-
-<section id="fx">
-  <h2>演出の楽しみ方</h2>
-
-  <div class="tip">
-    <b class="t"><span class="lbl">前兆</span>キャビネットのランプが点いたら</b>
-    スイカやチェリーが成立する前に、キャビネットのランプが点灯することがある。リールが止まるまで光り続けたなら、何かあるかもしれない。…が、ハズレでも光ることがある。ここは気持ちを高めるスパイスくらいに。
-  </div>
-
-  <div class="tip">
-    <b class="t"><span class="lbl">取りこぼし</span>小役を外してしまったら</b>
-    チェリーやスイカをうっかり外すと、画面に取りこぼし演出が出る。実は、ちょっぴり悔しい気持ちになるための演出。次は拾えるように、リールをよく見て。
-  </div>
-
-  <div class="tip hot">
-    <b class="t"><span class="lbl">ペカり方</span>ランプの光り方にバリエーション</b>
-    ペカりには、通常・遅れ・ガクンなどのパターンがある。派手な光り方ほど、いいことがあるかも…と思いたいところ。中には、ごく稀に画面が止まる「フリーズ」も。もし出たなら、その日の運を使い切るかもしれない。
-  </div>
-
-  <div class="tip">
-    <b class="t"><span class="lbl">コイン</span>ベルに合わせて降るコイン</b>
-    ボーナスや AT 中にベルが揃うと、コインが降る。押し順を守れていれば、しっかり降ってくれる。ちょっとした自己満足がここにある。
-  </div>
-
-  <div class="tip">
-    <b class="t"><span class="lbl">ペカり君ロゴ</span>ゾーン中のロゴの色</b>
-    ロゴが青から虹に近づくほど、期待が高まるとされる。ただし、虹は滅多に出ない。出てくれたら、大きく喜んでいいと思う。
-  </div>
-
-  <div class="tip hot">
-    <b class="t"><span class="lbl">逆転</span>ガッカリのあとに…</b>
-    カットインが灰色になったり、ステップが途中で止まったり。残念…と思わせておいて、リールが止まったあとに画面が暗転して、いきなり PEKA!! と光ることがある。ガッカリ予告のあとに起こりやすい、という話もあるが、確かなことは分からない。ボーナス終了と思いきや AT に入る「どんでん返し」や、PUSH で小さな数字が出たあとに急上昇する演出もある。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">予告</span>カットイン・ステップアップ・会話・暗転</b>
-    ペカり君のカットインは青、赤、金の順に期待が高まる…ように見える。ステップアップは、最後まで進めば金のカットインが出る。会話や暗転は、気分を盛り上げるだけの場合もある。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">連続演出</span>リールが止まったと思ったら</b>
-    止まったはずのリールがもう一度回り出すことがある。2連、3連と続くと、期待が高まるかも。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">ボーナス・AT中</span>コンボとミッション</b>
-    AT中、ベルが続くとコンボが積み上がり、5、10、20…と節目で画面が盛り上がる。小さなミッションが出ることもあり、達成するとコインが降る。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">マウンテン</span>山を登るゲージ</b>
-    PEKA! PEKA! MOUNTAIN! の間は、画面の下で小さな光が山を登っていく。山頂に着いたときは、きっと気持ちがいい。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">通常時の予告</span>パレード、ボタン、ルーレット…</b>
-    通常時の予告は、カットインやステップアップのほかに、キャラのパレード、PUSHボタン、ルーレット、タイマー、画面割れ、雨と虹、コインの落下、メーター、おみくじ、ランプの点灯などがある。金や赤、「大吉」が出たら、期待していいのかも。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">AT中</span>レア役と上乗せ</b>
-    AT中のレア役は、上乗せのチャンス。強い役ほど、上乗せのゲーム数も多くなりやすい…ような気がする。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">演出液晶</span>リールの上の小さな画面</b>
-    昼から夕方、夜へと空の色が移り変わり、流れ星やUFO、ロケット、気球、虹などが通り過ぎることがある。色が青から緑、赤、金へ変わるほど、何かが起こる気配…かもしれない。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">ドンドンドン</span>揺れの回数</b>
-    停止ボタンを押すたびに1回ずつ「DON」と揺れる。第1停止から連続して出て、<b>第3停止でも出たら成功(発展)</b>。途中で止まったら発展せず。<br>通常時は発展すると強い示唆が出る。ボーナス中は、3回そろうとオーラ昇格が確定(昇格するゲームは必ず3回そろう)。<br>
-    1回=ボーナス示唆(弱) / 2回=ボーナス示唆(中) / 3回=「発展」。3回揺れると、そのあとに強めのボーナス示唆(★★以上)が必ず出る。<br>
-    ボーナス示唆はハズレのこともあり、その場合は灰色のペカり君マーク「ハズレ」が出る。ボーナス中なら、オーラが上がるサインに…なるかもしれない。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">液晶の示唆</span>飛来物の意味</b>
-    液晶に出てくる飛来物は、すべて何かの示唆。背景として勝手には出ない。上に何の示唆かが表示される。<br>
-    <b>役の示唆</b>(その役 or ハズレ): クジラ=スイカ / 風船=ベル / 雲=リプレイ / 鳥=チェリー / UFO=チャンス目<br>
-    <b>HEAVEN / DEATH</b>: HEAVEN中は金と空色の天国カラー、DEATH中は赤黒の地獄カラーに画面全体が変わる<br>
-    <b>PEKA CHANCE</b>(ボーナス中)<b>→PEKA RUSHの条件</b>: ボーナスの最終ゲーム「JUDGEMENT」に勝つとPEKA RUSH突入。最終ゲームの前に演出が順番に出て、押し順を成功させたあとは鼓動→点滅→静寂のあとに結果が出る。ドンドンドン(3回揺れ)はオーラ昇格のサインで、背景の色が変わって「LEVEL UP!」と出る。色が 青→黄→緑→赤→金→虹 と進むほど期待大、虹なら突入確定<br>
-    <b>図柄の示唆</b>: 液晶に図柄が出たら、その役が成立している(ボーナス確定中はハズレ目でも出ることがある)。出るタイミングは5通り: 回転前 / 回転中(停止前) / 第1停止 / 第2停止 / 第3停止後<br>
-    <b>GOGOランプ</b>: ボーナス当選時のランプは、レバーON / 演出のあと / 第2停止 / 第3停止 / 全停止後のいずれかで点灯する<br>
-    <b>筐体上部の表示</b>: いまのゲーム種類(PEKA CHANCE!・CHANCE ZONE・PEKA PEKA MOUNTAIN!・PEKA RUSH・HEAVEN・DEATH)が出る。CHANCE ZONEの前兆中は、液晶左上の残りGに「HOLD」と「前兆中」が付く<br>
-    <b>押し順ナビ</b>: スイカ・チェリー確定のナビは必ず左リールから。サンド目をそろえるときは中リールから押す(左右のリールは薄暗くなる)<br>
-    <b>天候ステップアップ</b>: 停止ボタンを押すたびに 雨 → 豪雨 → 雷+ひび割れ と発展。<b>雷まで行ったらボーナスかCHANCE ZONE確定</b>。雨・豪雨で止まったら何も確定しない(ボーナス/CZ中は発展しやすい、通常のレア役でも雨までは出る)<br>
-    <b>ボーナス示唆</b>(ボーナス・チャンスゾーン or ハズレ): 流れ星=★ / ロケット・花火=★★ / 目・宝箱・虹=★★★(集中線が走る)<br>
-    外れたときは、灰色のペカり君マーク「ハズレ」が出る。矛盾のないよう、サイドランプや第1・第2停止の図柄は必ず役と一致する(ボーナス確定中だけ例外)。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">PUSH</span>第2停止から押せる</b>
-    ときどき液晶にPUSHボタンが出る。第2リールを止めると押せるようになり、押すと結果が出る。成立した役の図柄、CHANCE ZONE突入、ボーナス濃厚のどれか。何も無ければ灰色の「ハズレ」。PUSHが出るゲームは、押すまで図柄や示唆は出ない。押さなくても、リールが止まると自動で結果が出る。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">CHANCE ZONE</span>レア役のあとの6G</b>
-    強レア役はほぼ確実に、弱レア役もときどき、6Gのチャンスゾーンに入る。ボーナスに当たりやすく、そのあいだは示唆の演出が増える。液晶に「CHANCE ZONE 残りG」と出るのが目印。<br><b>成功</b>＝6G以内にボーナスに当選する(前兆に入った時点でボーナス確定)。「CHANCE ZONE 成功 ボーナス確定」と出たら確定。6G消化しても当選しなければ「ゾーン終了…」。<br><b>HOLD</b>＝チャンスゾーン中に連続演出が出ると、そのゲームはゾーンのゲーム数を消化しない。残りGの横に「HOLD」と出る。連続演出はゾーン中に出やすい。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">連続演出</span>ストーリーが進むほど熱い</b>
-    前兆の連続演出は、「連続演出 ●●○」と何話目かが表示され、話が進むほど示唆が派手になる。本物でも偽物でも同じ流れ。ガセの最後は灰色の「ハズレ」が出る。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">ナビ</span>1だけナビ</b>
-    ボーナス中の押し順ナビは、3つ全部が出る日もあれば、最初の1つだけの日もある。最初の1つさえ合っていれば、残りは自由に押してよさそう。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">ハズレ矛盾</span>気づく人だけが気づく</b>
-    ハズレなのに、強い予告と弱い予告がちぐはぐに出ることがある。もしかすると、それは何かが決まっているサインかも。ランプが光るのは、そこから数ゲーム先になる…こともあるようだ。見逃さないように。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">ベル・リプレイ</span>通常時の小さな楽しみ</b>
-    通常時でもベルやリプレイが続くと、液晶がにぎやかになる。3連続、6連続で、ちょっと特別な表示が出ることがある。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">ZONE END</span>上乗せの合計</b>
-    PEKA! PEKA! MOUNTAIN! が終わると、ゾーンで上乗せしたゲーム数の合計が画面いっぱいに出る。数字が大きいほど、色も派手になる。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">記録</span>トロフィー・ミッション・ランキング</b>
-    演出や称号を見た回数に応じて、銅、銀、金のトロフィーがもらえる。経験値がたまるとレベルが上がり、毎日のミッションや連続プレイ日数も楽しめる。ランキングはこの端末内の記録。画面の「記録」ボタンから見られる。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">称号</span>集める楽しみ</b>
-    いろいろな出来事で称号が獲得できる。画面の「称号」ボタンから一覧が見られる。コンプリートを目指すのもいい。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">小ネタ</span>キリ番、ささやき、衣装</b>
-    ゲーム数がゾロ目になったり、100G刻みになったりすると、ちょっとした表示が出る。ごくまれに、小さな声が聞こえたり、画面がモノクロになったり。ペカり君の衣装は、曜日で変わるらしい。設定が高いと、隅っこから顔を出しやすい…かもしれない。
-  </div>
-
-  <div class="tip">
-    <b class="t"><span class="lbl">前兆</span>ステージと連続演出</b>
-    ボーナスに当選しても、すぐには光らないことがある。そのあいだ、液晶は橙色の前兆ステージになり、毎ゲーム「STORY 1/5」のように演出が進む。ただし、当選しないガセ前兆もある。本物かガセかは、最後のゲームまで分からない。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">ステージ</span>昼・夕・夜</b>
-    通常時の背景は、昼・夕・夜と変わる。ボーナスやATのあとの当たりやすさをにおわせる…ことがあるが、たまにハズレもある。ガセで夕や夜になることも。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">救済</span>ハマり中のサポート</b>
-    通常時にボーナスが250G以上当たらないと、当選確率が少しずつ上がっていく（最大4倍）。液晶のペカり君も、ハマりに合わせて励ましてくれる。
-  </div>
-  <div class="tip">
-    <b class="t"><span class="lbl">ウェイト</span>回転の間隔</b>
-    レバーを続けて叩いても、1ゲームは約4.1秒ぶん待たされる。設定の「演出」から、短縮やなしにも変えられる。振動、通常時のBGM、軽量モードもここで選べる。
-  </div>
-
-  <div class="col"><b>編集部より</b><br>演出の濃さや示唆は、あくまで「そうかもしれない」の積み重ね。1 回の結果で一喜一憂せず、長く遊ぶなかで、ふと気づく楽しさを味わってほしい。</div>
-</section>
-
-<section id="tips">
-  <h2>立ち回りのヒント</h2>
-  <ul>
-    <li>まずは設定 4 前後(初期設定)で、ひととおりの流れを体験してみる</li>
-    <li>慣れたら「ランダム」にして、示唆を頼りに設定を推理してみると面白いかも</li>
-    <li>チェリー後は、ペカりやすい時間帯に入るかもしれない。ここは丁寧に</li>
-    <li>OVER やトロフィーは、1 回ではなく複数回の傾向で見るのがおすすめ</li>
-    <li>ナビが出たら素直に従う。押し順のミスは意外と痛い</li>
-  </ul>
-  <p class="note">※ 本ガイドは非公式の遊び心ある読み物です。数値や挙動は、バージョンアップで変わる場合があります。</p>
-</section>
+<details class="sec" id="system" open><summary>ゲームの流れ</summary><div class="body">
+<p>ペカり君は、GOGOランプの点灯(ペカ)を待つパチスロ。通常時はレバーを叩いてリールを止めるだけ。ランプが光ったら 7 を揃えてボーナス、そして AT へ。</p>
+<div class="flow"><div><b>通常</b></div><i>›</i><div><b>前兆</b></div><i>›</i><div><b>CHANCE ZONE</b></div><i>›</i><div><b>BIG</b> (PEKA CHANCE)</div><i>›</i><div><b>AT</b> (PEKA RUSH)</div><i>›</i><div><b>MOUNTAIN</b></div></div>
+<p class="note">前兆に入る契機は、スイカ・チェリー・チャンス目。ごくまれに、通常時から直CZ・直BIG・直AT・直MOUNTAINへ飛ぶことがある。</p>
+<figure class="fig tall"><img loading="lazy" src="assets/img/guide/main.png" alt="通常時の画面"><figcaption>通常時の画面</figcaption></figure>
+<h3>目押しのこと</h3>
+<p>チェリーは左リール、スイカは中リールを意識すると拾いやすい。7 はふつうは自動で揃うので目押し不要。ただし <b>7 と別の絵の 2 択</b>が出たときは、7 を狙って揃えると<b>直BIG</b>。</p>
+<h3>通常時には出ない目</h3>
+<ul>
+<li><b>第1リールに 白7・スイカ・白7</b> が止まる: その場で当選確定。派手な演出が入る(AT中・ボーナス中・CZ中でも同じ)</li>
+<li><b>白7の斜め揃い</b>: BIG と AT が同時に確定</li>
+<li><b>色違いの7が揃う</b>: ボーナス確定と同じ意味。通常時の外れ目としては出ない</li>
+</ul>
+<p class="note">これらが通常時に見えたら、ボーナス確定のサイン。ふつうの外れ目としては絶対に出ないので、安心して喜んでいい。</p>
+</div></details>
+<details class="sec" id="table"><summary>設定表</summary><div class="body">
+<p>設定は 1〜6 の 6 段階。高いほどボーナスが軽く、ATにも入りやすい。数値はシミュレーション上の目安。「ランダム」を選ぶと設定は内部で決まる。</p>
+<div class="tbl"><table>
+<tr><th></th><th>設定1</th><th>設定2</th><th>設定3</th><th>設定4</th><th>設定5</th><th>設定6</th></tr>
+<tr><td>機械割</td><td>約100%</td><td>約103%</td><td>約106%</td><td>約110%</td><td>約115%</td><td>約120%</td></tr>
+<tr><td>ボーナス(基本)※</td><td>1/772</td><td>1/745</td><td>1/724</td><td>1/673</td><td>1/639</td><td>1/623</td></tr>
+<tr><td>AT突入率(低ランク)※</td><td>20%</td><td>21%</td><td>22%</td><td>23%</td><td>24%</td><td>25%</td></tr>
+<tr><td>AT突入率(高ランク)※</td><td>76%</td><td>77%</td><td>79%</td><td>80%</td><td>82%</td><td>84%</td></tr>
+<tr><td>ATタイプ:HEAVEN</td><td>12%</td><td>13%</td><td>14%</td><td>15%</td><td>17%</td><td>20%</td></tr>
+<tr><td>ATタイプ:DEATH</td><td>4%</td><td>4%</td><td>5%</td><td>6%</td><td>7%</td><td>8%</td></tr>
+<tr><td>次回:通常</td><td>56%</td><td>55%</td><td>54%</td><td>52%</td><td>50%</td><td>48%</td></tr>
+<tr><td>次回:好調</td><td>29%</td><td>29%</td><td>29%</td><td>30%</td><td>30%</td><td>30%</td></tr>
+<tr><td>次回:絶好調</td><td>11%</td><td>12%</td><td>12%</td><td>13%</td><td>14%</td><td>15%</td></tr>
+<tr><td>次回:天国</td><td>4%</td><td>4%</td><td>5%</td><td>5%</td><td>6%</td><td>7%</td></tr>
+<tr><td>222 OVER</td><td>出ない</td><td colspan="5">出る可能性あり</td></tr>
+<tr><td>444 OVER</td><td colspan="3">出ない</td><td colspan="3">出る可能性あり</td></tr>
+<tr><td>456 OVER</td><td colspan="4">出ない</td><td colspan="2">出る可能性あり</td></tr>
+<tr><td>666 OVER</td><td colspan="5">出ない</td><td>出る可能性あり</td></tr>
+</table></div>
+<p class="note">※ ボーナス確率は、前兆やチェリー・スイカ・チャンス目で当たりやすくなる前の数字。実際の体感は 1/260G 前後。<br>※ BIGは200枚、REGは100枚で固定。AT突入率は枚数ではなく、内部の「当選ランク」で決まる(高ランクほど高い)。ランクが高いと、虹オーラ・白7・SUPER も出やすい。</p>
+<details class="sub"><summary>遊び方のモード</summary><div class="in">
+<div class="tbl"><table>
+<tr><th></th><th>設定1</th><th>設定2</th><th>設定3</th><th>設定4</th><th>設定5</th><th>設定6</th></tr>
+<tr><td>本気 / 遊本気</td><td>約100%</td><td>約103%</td><td>約106%</td><td>約110%</td><td>約115%</td><td>約120%</td></tr>
+<tr><td>極楽 / 遊極楽</td><td>約110%</td><td>約114%</td><td>約118%</td><td>約122%</td><td>約126%</td><td>約130%</td></tr>
+</table></div>
+<ul><li><b>本気</b> ふつうの遊び方</li><li><b>極楽</b> ATに入りやすく、HEAVEN や DEATH も多め</li><li><b>遊</b> 当たりやすさが約2.5倍。そのかわりボーナスの枚数もATのG数も半分。演出をたくさん見たい人に</li></ul>
+<p class="note">設定画面の上のボタンで切り替え。遊モードは、本気・極楽と同じ機械割になるよう調整してある。</p></div></details>
+</div></details>
+<details class="sec" id="bonus"><summary>ボーナス</summary><div class="body">
+<ul>
+<li><b>BIG BONUS(PEKA CHANCE)</b> 7 が揃う。200枚固定。突入時に液晶へ大きく「BIG BONUS」。実質ここがATの入口</li>
+<li><b>REG</b> 7・7・BAR が揃う。100枚固定。REG後の約30Gは BIG に当選しやすい。まれに REG 中に BIG へ昇格(BONUS確定画面が出る)</li>
+<li>AT に入らなかった(スルー)回数が増えるほど次回の AT 突入率が上がる。3 スルーで約3倍</li>
+</ul>
+<figure class="fig pair"><img loading="lazy" src="assets/img/guide/big.png" alt="BIG BONUS"><img loading="lazy" src="assets/img/guide/result.png" alt="結果画面"></figure>
+<p class="cap">左: BIG BONUS 突入 / 右: 結果画面</p>
+<figure class="fig tall"><img loading="lazy" src="assets/img/guide/chance.png" alt="ボーナス中"><figcaption>ボーナス中。押し順ナビに従ってベルを揃える</figcaption></figure>
+<h3>画面のふちのオーラ</h3>
+<p>ボーナス中は、ふちが 白 → 青 → 黄 → 緑 → 赤 → 金 → 虹 の順に色づき、期待が高まる。白のまま終わっても AT に入ることはある。赤以上なら期待、虹は AT 確定。</p>
+<h3>BIG中のレア役とサンド目</h3>
+<ul><li>レア役: 無条件でオーラ LEVEL UP。強いレア役は 2 段階 UP</li><li>サンド目(バー・チェリー・バー)を揃える: 一発で PEKA RUSH 確定。SUPER にも優遇される</li></ul>
+<h3>最終ゲームの JUDGEMENT</h3>
+<p>最終ゲームは「レバーを叩け！！！」。レバーを叩いた結果で、AT 当選かハズレかが決まる。文字の色が期待度。</p>
+<div class="tbl"><table><tr><th>白</th><th>赤</th><th>金</th><th>虹</th></tr><tr><td>通常</td><td>80%以上</td><td>96%以上・AT性能良</td><td>100%・AT性能最高</td></tr></table></div>
+<figure class="fig"><img loading="lazy" src="assets/img/guide/judge.png" alt="JUDGEMENT"><figcaption>レバーを叩け。当選なら BONUS 確定の画像、ハズレなら液晶が割れる</figcaption></figure>
+</div></details>
+<details class="sec" id="at"><summary>AT(PEKA RUSH)</summary><div class="body">
+<p>AT 中は、ベル・チェリー・スイカでゲーム数の上乗せが狙える。PUSH ボタンが出たら押したくなるはず。</p>
+<ul>
+<li><b>PEKA RUSH</b> ふつうのAT。<b>HEAVEN</b> は出玉も上乗せも多め、<b>DEATH</b> はごく稀にとんでもない枚数になる</li>
+<li><b>SUPER</b> PEKA RUSH SUPER / HEAVEN SUPER / DEATH SUPER。純増が多い。押し順ナビの第1停止が 7(色もタイプに合わせる)。ふつうの AT はベル 11 枚、SUPER は 15 枚</li>
+<li>白7・虹オーラ・高ランク・サンド目などが SUPER の出やすい条件</li>
+</ul>
+<figure class="fig pair"><img loading="lazy" src="assets/img/guide/navi_red.png" alt="赤ナビ"><img loading="lazy" src="assets/img/guide/navi_purple.png" alt="紫ナビ"></figure>
+<p class="cap">赤のナビ(チェリー絡み) / 紫のナビ(スイカ絡み。ここは期待大)</p>
+<h3>ポイントメーターと上乗せバトル</h3>
+<p>AT 中は、液晶の右上に 10 個のメーター。レア役で必ず +1P、強レア役で +2P 以上。AT 中にサンド目を揃えると、G数の上乗せに加えて +3P 以上。10 個たまると<b>上乗せバトル</b>が始まる。</p>
+<ul><li>10G 以内に敵を倒せば、G数を上乗せ。役ごとにダメージが入り、レア役ほど大きい</li><li>敵は 5 種類。期待度は ★1〜★5 で、高いほど倒しやすい</li><li>開始時の背景色でも期待度が分かる。青 ＜ 黄 ＜ 緑 ＜ 赤 ＜ 紫</li><li>星と背景色が食い違うことがある。★1なのに紫背景なら熱い</li></ul>
+<figure class="fig pair"><img loading="lazy" src="assets/img/guide/meter.png" alt="ポイントメーター"><img loading="lazy" src="assets/img/guide/battle.png" alt="上乗せバトル"></figure>
+<p class="cap">左: ポイントメーター / 右: バトル開始(★1なのに紫背景)</p>
+<h3>PEKA! PEKA! MOUNTAIN!</h3>
+<p>AT 中に当たると、ゾーンに突入。5〜10 ゲームのあいだ毎ゲーム PUSH のチャンス。ロゴの色(青 / 緑 / 金 / 虹)が勝負どころを知らせる。終了時には、上乗せの合計がでかでかと出る。</p>
+<figure class="fig pair"><img loading="lazy" src="assets/img/guide/aura.png" alt="ゾーン"><img loading="lazy" src="assets/img/guide/push.png" alt="PUSH"></figure>
+<p class="cap">左: ゾーン中 / 右: PUSH ボタン。押した瞬間に結果が分かる</p>
+</div></details>
+<details class="sec" id="roles"><summary>小役</summary><div class="body">
+<p>チェリー、スイカ、チャンス目には、それぞれ弱と強がある。強いほど、ボーナスにつながりやすく、AT 中の上乗せも多くなりやすい。</p>
+<ul>
+<li><b>弱チェリー</b> 左リール上段か下段にチェリー</li>
+<li><b>強チェリー</b> 左リール中段にチェリー</li>
+<li><b>弱スイカ</b> 左上から右下の斜めに揃うスイカ。第1リール上段に止まったときだけ</li>
+<li><b>強スイカ</b> 上段に横に揃うスイカ。第1リール上段に止まったときだけで、中リールを狙う必要がある</li>
+<li><b>弱チャンス目</b> 中段にリプレイ・リプレイ・ベル。揃わない形</li>
+<li><b>強チャンス目</b> 第1リール上段・第2リール中段・第3リール中段にスイカ。揃わない形で、期待が大きい</li>
+</ul>
+<p class="note">AT 中は、強チェリーと強スイカで上乗せが決まりやすい。弱でもうまくいくことはある。</p>
+</div></details>
+<details class="sec" id="hints"><summary>設定示唆</summary><div class="body"><details class="tip hot"><summary><span class="lbl">OVER</span><span class="tt">「222」が出たら</span></summary><div class="in">ボーナスから結果画面までの獲得枚数が、ある数字に届いた瞬間に出る OVER 表示。<b>222</b> が出たなら、設定 1 ではない可能性が高まる。出る頻度は少なめ。</div></details><details class="tip hot"><summary><span class="lbl">OVER</span><span class="tt">「444」「456」なら</span></summary><div class="in"><b>444</b> は設定 4 以上に期待。<b>456</b> が出たら、設定 5 以上がグッと近づく。</div></details><details class="tip hot"><summary><span class="lbl">OVER</span><span class="tt">「666」が出現したら</span></summary><div class="in">設定 6 の可能性が。ごく稀。<span class="note">250 / 500 / 750 / 1000 などは、ただの通過点で設定とは関係ない。</span></div></details><details class="tip "><summary><span class="lbl">結果画面</span><span class="tt">トロフィーの色</span></summary><div class="in">結果画面のトロフィーは、銅・銀・金・青・赤・虹と色が変わり、おおむね設定 1〜6 に対応。金以上は設定 3 以上に期待、赤なら設定 5 以上、虹なら設定 6 の香り。見せかけの低い色が出ることもあるので、1 回だけで判断しないのがコツ。回転数が増えるほど本当の設定に寄ってくる。</div></details><details class="tip "><summary><span class="lbl">サイドランプ</span><span class="tt">左右のペカランプ</span></summary><div class="in">ボーナスや AT の終了後、すぐにペカると、筐体の左右のランプが光ることがある。「連チャン」のサインかもしれない。</div></details><details class="tip "><summary><span class="lbl">次回示唆</span><span class="tt">AT終了後の「弱・中・強・激アツ」</span></summary><div class="in">AT が終わると、結果画面で次回モードを匂わせる。激アツなら次回に期待。ただし、3 割くらいは少し意地悪。</div></details></div></details>
+<details class="sec" id="fx"><summary>演出の楽しみ方</summary><div class="body"><details class="sub"><summary>前兆・CHANCE ZONE・潜伏</summary><div class="in"><details class="tip "><summary><span class="lbl">前兆</span><span class="tt">ランプ・ステージ・連続演出</span></summary><div class="in">ボーナスに当選しても、すぐには光らないことがある。そのあいだ液晶は橙色の前兆ステージになり、毎ゲーム「STORY 1/5」のように進む。ガセ前兆もあるので、本物かどうかは最後まで分からない。前兆はスイカ・チェリー・チャンス目から始まる。</div></details><details class="tip hot"><summary><span class="lbl">潜伏</span><span class="tt">前兆に行かないボーナス</span></summary><div class="in">前兆なしでボーナスに当選すると、すぐにはランプが光らず、8〜12G のあいだ「通常時には出ない矛盾した目」が出ることがある。2 択なのに 2 択以外が揃う / 白7・スイカ・白7 / サンド目 / 色違いの7揃い。この矛盾が続いたら、ボーナス確定のサイン。最後のゲームでランプが光る。</div></details><details class="tip "><summary><span class="lbl">サンド目</span><span class="tt">通常時はほとんど出ない</span></summary><div class="in">通常時のサンド目は、ボーナスフラグが立っていて、まだランプが光る前のときだけ。GOGO ランプが光ったあとは、サンド目も液晶の GOGO 演出も出ない。7 を何ゲームも揃えられないときは、液晶に 7(色つき)が出て教えてくれる。</div></details><details class="tip "><summary><span class="lbl">CHANCE ZONE</span><span class="tt">レア役のあとの6G</span></summary><div class="in">強レア役はほぼ確実に、弱レア役もときどき、6G のチャンスゾーンに入る。ボーナスに当たりやすく、液晶に「CHANCE ZONE 残りG」。<br><b>成功</b>＝6G 以内に当選(前兆に入った時点でボーナス確定)。<b>HOLD</b>＝連続演出が出たゲームはゾーンのゲーム数を消化しない。まれに CZ 0G で当たっていなければ「LOOP!!!!」と出て最初からやり直し、当たるまで繰り返す「むげんLOOP」になる。</div></details><details class="tip "><summary><span class="lbl">連続演出</span><span class="tt">ストーリーが進むほど熱い</span></summary><div class="in">「連続演出 ●●○」と何話目かが表示され、話が進むほど示唆が派手になる。本物でも偽物でも同じ流れ。ガセの最後は灰色の「ハズレ」。</div></details><details class="tip "><summary><span class="lbl">ハズレ矛盾</span><span class="tt">気づく人だけが気づく</span></summary><div class="in">ハズレなのに強い予告と弱い予告がちぐはぐに出ることがある。何かが決まっているサインかも。ランプが光るのは、数ゲーム先になることもある。</div></details><details class="tip "><summary><span class="lbl">救済</span><span class="tt">ハマり中のサポート</span></summary><div class="in">通常時にボーナスが 250G 以上当たらないと、当選確率が少しずつ上がる(最大4倍)。</div></details><details class="tip "><summary><span class="lbl">ステージ</span><span class="tt">昼・夕・夜</span></summary><div class="in">通常時の背景は昼・夕・夜と変わる。ボーナスや AT のあとの当たりやすさをにおわせることがあるが、ガセもある。</div></details></div></details><details class="sub"><summary>液晶と示唆</summary><div class="in"><details class="tip "><summary><span class="lbl">PUSH</span><span class="tt">常設PUSH ボタンと液晶のPUSH</span></summary><div class="in">停止ボタンの右にいつもあるPUSHボタンは、特定の場面で押すと、液晶左右のランプが虹色に光ってボーナス系が先ばれする。特に CZ・BIG 中、LEVEL UP のときに効く。液晶に出るPUSHは、第2停止から押せる。押すと結果が出る(役の図柄 / CHANCE ZONE / ボーナス濃厚 / 灰色のハズレ)。</div></details><details class="tip "><summary><span class="lbl">液晶</span><span class="tt">リールの上の小さな画面</span></summary><div class="in">昼から夕方、夜へと空の色が移り、流れ星や UFO、ロケット、気球、虹などが通り過ぎる。色が青から緑、赤、金へ変わるほど期待。飛来物はすべて何かの示唆で、勝手には出ない。</div></details><details class="tip "><summary><span class="lbl">役の示唆</span><span class="tt">飛来物と図柄</span></summary><div class="in">クジラ=スイカ / 風船=ベル / 雲=リプレイ / 鳥=チェリー / UFO=チャンス目。図柄が出たら、その役が成立している(ボーナス確定中はハズレ目でも出る)。出る場面は 回転前 / 回転中 / 第1停止 / 第2停止 / 第3停止後 の 5 通り。</div></details><details class="tip "><summary><span class="lbl">ボーナス示唆</span><span class="tt">星・ロケット・宝箱</span></summary><div class="in">流れ星=★ / ロケット・花火=★★ / 目・宝箱・虹=★★★(集中線)。ボーナスか CHANCE ZONE の示唆。ハズレのときは灰色のペカり君マーク「ハズレ」。</div></details><details class="tip "><summary><span class="lbl">天候</span><span class="tt">雨 → 豪雨 → 雷</span></summary><div class="in">停止ボタンを押すたびに発展。<b>雷+ひび割れまで行ったらボーナスか CHANCE ZONE 確定</b>。雨・豪雨で止まったら何も確定しない。</div></details><details class="tip "><summary><span class="lbl">ドンドンドン</span><span class="tt">揺れの回数</span></summary><div class="in">停止ボタンごとに 1 回ずつ「DON」と揺れる。第1停止から連続し、第3停止でも出たら発展。1 回=示唆(弱) / 2 回=示唆(中) / 3 回=発展(強い示唆が必ず出る)。ボーナス中は、3 回そろうとオーラ昇格が確定。</div></details><details class="tip "><summary><span class="lbl">サイドランプ</span><span class="tt">虹色</span></summary><div class="in">ランプが虹色に光ると、BONUS 系の先ばれ。PUSH ボタンで光らせることもできる。</div></details><details class="tip "><summary><span class="lbl">押し順ナビ</span><span class="tt">先頭だけ・スイカチェリー</span></summary><div class="in">ボーナス中のナビは、3 つ全部が出る日も、最初の 1 つだけの日もある。1 つ目さえ合っていれば残りは自由。スイカ・チェリー確定のナビは必ず左リールから。サンド目は中リールから(左右は薄暗くなる)。</div></details><details class="tip "><summary><span class="lbl">演出液晶</span><span class="tt">筐体上部の表示</span></summary><div class="in">いまのゲーム種類(PEKA CHANCE!・CHANCE ZONE・PEKA PEKA MOUNTAIN!・PEKA RUSH・HEAVEN・DEATH)が出る。HEAVEN 中は金と空色、DEATH 中は赤黒に画面全体が変わる。</div></details></div></details><details class="sub"><summary>予告</summary><div class="in"><details class="tip "><summary><span class="lbl">通常時の予告</span><span class="tt">カットイン・ステップ・会話・暗転</span></summary><div class="in">ペカり君のカットインは青、赤、金の順に期待が高まる。ステップアップは最後まで進めば金のカットイン。会話や暗転は、気分を盛り上げるだけの場合もある。</div></details><details class="tip "><summary><span class="lbl">子役の予告</span><span class="tt">たくさんの種類</span></summary><div class="in">通常時の予告は、パレード、ボタン、ルーレット、タイマー、画面割れ、雨と虹、コインの落下、メーター、おみくじ、ランプの点灯など。金や赤、「大吉」が出たら期待していい。レア役の前にも出る。</div></details><details class="tip "><summary><span class="lbl">ペカり方</span><span class="tt">ランプの光り方</span></summary><div class="in">通常・遅れ・ガクンなどのパターン。派手なほど良いことがあるかも。ごく稀に画面が止まる「フリーズ」も。</div></details><details class="tip "><summary><span class="lbl">連続演出</span><span class="tt">リールが止まったと思ったら</span></summary><div class="in">止まったはずのリールがもう一度回り出すことがある。2 連、3 連と続くと期待が高まる。</div></details><details class="tip hot"><summary><span class="lbl">逆転</span><span class="tt">ガッカリのあとに</span></summary><div class="in">カットインが灰色になったり、ステップが途中で止まったり。残念…と思わせて、リールが止まったあとに画面が暗転して、いきなり PEKA!! と光ることがある。ボーナス終了と思いきや AT に入る「どんでん返し」もある。</div></details><details class="tip "><summary><span class="lbl">取りこぼし</span><span class="tt">小役を外したら</span></summary><div class="in">チェリーやスイカを外すと取りこぼし演出。ちょっぴり悔しくなるための演出。</div></details><details class="tip "><summary><span class="lbl">2択</span><span class="tt">7とほかの絵</span></summary><div class="in">「7 と BELL」のように 2 つの絵が出る 2 択がある。結果は 2 つのうちどちらか。7 が揃えば直 BIG。ただし、出た 2 つのどちらでもない目が止まることもある(その場合は潜伏のサインかも)。</div></details></div></details><details class="sub"><summary>ボーナス・AT 中の演出</summary><div class="in"><details class="tip "><summary><span class="lbl">ボーナス・AT中</span><span class="tt">コンボとミッション</span></summary><div class="in">AT中、ベルが続くとコンボが積み上がり、5、10、20…と節目で画面が盛り上がる。小さなミッションが出ることもあり、達成するとコインが降る。</div></details><details class="tip "><summary><span class="lbl">マウンテン</span><span class="tt">山を登るゲージ</span></summary><div class="in">PEKA! PEKA! MOUNTAIN! の間は、画面の下で小さな光が山を登っていく。</div></details><details class="tip "><summary><span class="lbl">ZONE END</span><span class="tt">上乗せの合計</span></summary><div class="in">MOUNTAIN が終わると、ゾーンで上乗せしたゲーム数の合計が画面いっぱいに出る。数字が大きいほど色も派手。</div></details><details class="tip "><summary><span class="lbl">ベル・リプレイ</span><span class="tt">通常時の小さな楽しみ</span></summary><div class="in">ベルやリプレイが続くと液晶がにぎやかになる。3 連続、6 連続で特別な表示。</div></details><details class="tip "><summary><span class="lbl">コイン</span><span class="tt">ベルに合わせて降るコイン</span></summary><div class="in">ボーナスや AT 中にベルが揃うとコインが降る。押し順を守れていれば、しっかり降る。</div></details><details class="tip "><summary><span class="lbl">AT中</span><span class="tt">レア役と上乗せ</span></summary><div class="in">レア役は上乗せのチャンス。強いほど上乗せも多くなりやすい。ポイントもたまる(AT の項を参照)。</div></details></div></details><details class="sub"><summary>記録・設定まわり</summary><div class="in"><details class="tip "><summary><span class="lbl">記録</span><span class="tt">トロフィー・ミッション・ランキング</span></summary><div class="in">演出や称号を見た回数に応じて、銅・銀・金のトロフィー。経験値でレベルが上がり、毎日のミッションや連続プレイ日数も。ランキングはこの端末内の記録。「記録」ボタンから。</div></details><details class="tip "><summary><span class="lbl">称号</span><span class="tt">集める楽しみ</span></summary><div class="in">いろいろな出来事で称号が獲得できる。「称号」ボタンから一覧が見られる。</div></details><details class="tip "><summary><span class="lbl">小ネタ</span><span class="tt">キリ番、ささやき、衣装</span></summary><div class="in">ゲーム数がゾロ目や 100G 刻みになると表示が出る。ごくまれに小さな声が聞こえたり、画面がモノクロになったり。衣装は曜日で変わるらしい。設定が高いと隅から顔を出しやすいかも。</div></details><details class="tip "><summary><span class="lbl">ウェイト</span><span class="tt">回転の間隔</span></summary><div class="in">レバーを続けて叩いても、1 ゲームは約 4.1 秒ぶん待たされる。設定の「演出」から短縮やなしにも変えられる。振動、通常時の BGM、軽量モードもここで選べる。</div></details></div></details><div class="col"><b>編集部より</b><br>演出の濃さや示唆は「そうかもしれない」の積み重ね。1 回の結果で一喜一憂せず、長く遊ぶなかで気づく楽しさを味わってほしい。</div></div></details>
+<details class="sec" id="tips"><summary>立ち回りのヒント</summary><div class="body">
+<ul>
+<li>まずは設定 4 前後(初期設定)で、ひととおりの流れを体験する</li>
+<li>慣れたら「ランダム」にして、示唆を頼りに設定を推理してみる</li>
+<li>OVER やトロフィーは、1 回ではなく複数回の傾向で見る</li>
+<li>矛盾した目や、通常時に出ない目が出たら、ボーナス確定のサイン</li>
+<li>ナビが出たら素直に従う。押し順のミスは意外と痛い</li>
+</ul>
+<p class="note">※ 本ガイドは非公式の遊び心ある読み物です。数値や挙動は、バージョンアップで変わる場合があります。</p>
+</div></details>
 
 <footer>&copy; ペカり君 - GOGO! SIMULATOR 攻略ガイド<br><a href="index.html" style="color:var(--blue)">ゲームに戻る</a></footer>
 </div>
+<script>
+(function(){
+  var secs=[].slice.call(document.querySelectorAll('details'));
+  function openHash(){var h=location.hash.slice(1); if(!h) return; var el=document.getElementById(h); if(el&&el.tagName==='DETAILS'){el.open=true; el.scrollIntoView();}}
+  [].forEach.call(document.querySelectorAll('nav a'),function(a){a.addEventListener('click',function(){var el=document.querySelector(a.getAttribute('href')); if(el){el.open=true; setTimeout(function(){el.scrollIntoView({behavior:'smooth'});},0);}});});
+  document.getElementById('open-all').onclick=function(){secs.forEach(function(d){d.open=true;});};
+  document.getElementById('close-all').onclick=function(){secs.forEach(function(d){d.open=false;});};
+  window.addEventListener('hashchange',openHash); openHash();
+})();
+</script>
 </body>
 </html>

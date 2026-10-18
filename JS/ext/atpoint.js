@@ -83,6 +83,7 @@
     } else render();
   }
   window.atpAddPt = addPt;
+  window.atpIntro = (i, bg) => intro(ENEMIES[i], bg);   // ガイド用スクリーンショット・確認用
   /* 役の結果: AT中のゲーム終了時 */
   const rr = runRole;
   runRole = function (kind, done, navi) {
