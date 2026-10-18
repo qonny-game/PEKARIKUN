@@ -645,6 +645,7 @@ window.onCzSuccess = function () {
     const cz = !inBonus && !rush && (czLeft > 0 || (window.czFrozen != null && zenchoLeft > 0));
     document.querySelectorAll('.rl.cz').forEach(e => e.classList.toggle('lit', !!cz));
     document.querySelectorAll('.rl.mtn').forEach(e => e.classList.toggle('lit', !!(inBonus && bonusRun.zone)));
+    const cabEl = document.querySelector('.cabinet'); if (cabEl) cabEl.classList.toggle('in-zone', !!(inBonus && bonusRun.zone));   // PEKA PEKA MOUNTAIN中は筐体を緑ベースに
     /* サイドのGOGO!ランプ: 液晶のGOGO!と同じ見た目・同じ色。液晶より先に光ることもある(ボーナス確定のゲームだけ) */
     const gl = !!(gogoBox.classList.contains('peka') || window.sideGogo || window.sideConfirm);
     const rb = Date.now() < (window.sideRb || 0);
