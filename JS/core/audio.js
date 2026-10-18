@@ -87,11 +87,13 @@ function playSampleOnce(name) {
 /* ボイス (押し順ナビ LEFT/CENTER/RIGHT・GET・CHANCE): 同じ声が重なったら頭から鳴らし直す */
 const VOICE_FILES = { left: 'v_left', center: 'v_center', right: 'v_right', get: 'v_get', chance: 'v_chance' };
 const voiceAudio = {};
+const EXCLUSIVE_VOICES = ['left', 'center', 'right', 'get'];   // CHANCE は対象外
 Object.keys(VOICE_FILES).forEach(k => { const a = new Audio(ASSET_DIR.sound + VOICE_FILES[k] + '.mp3'); a.preload = 'auto'; a.volume = 0.9; voiceAudio[k] = a; });
 function playVoice(name) {
   if (!soundEnabled) return;
   const a = voiceAudio[name];
   if (!a) return;
+  if (EXCLUSIVE_VOICES.includes(name)) EXCLUSIVE_VOICES.forEach(k => { if (k !== name) { const o = voiceAudio[k]; if (o && !o.paused) { o.pause(); o.currentTime = 0; } } });   // ナビ(LEFT/CENTER/RIGHT)とGETは、次の声が鳴ったら前の声を止める
   try { a.currentTime = 0; const p = a.play(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* 再生できなくても進行には影響しない */ }
 }
 

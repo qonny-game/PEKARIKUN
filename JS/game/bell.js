@@ -51,26 +51,48 @@ function playJaraJara(len) {
   }
   tone(1568, t0 + len, 0.5, 'triangle', 0.07);   // 最後の余韻
 }
-/* GET時の低音「ドドドドドド!」: 枚数が多いほど長く・重く */
-function getRumble(coins) {
-  if (!soundEnabled) return;
+/* GET時の低音「ドゴドゴドゴドゴ!!」: キックを連打してゴロゴロ迫ってくる。枚数が多いほど長く・重く。長さは getRumbleLen (ジャラジャラも同じ長さに合わせる) */
+function getRumbleLen(coins) { return coins >= 15 ? 1.5 : coins >= 6 ? 1.0 : 0.7; }
+function getRumble(coins, ctx) {
+  if (!soundEnabled && !ctx) return;
   initAudio();
-  const n = coins >= 15 ? 16 : coins >= 6 ? 11 : 7;      // 打つ回数
-  const gap = coins >= 15 ? 0.055 : 0.06;                // 間隔(秒)
-  const v = coins >= 15 ? 0.42 : coins >= 6 ? 0.34 : 0.26;
-  const t = audioCtx.currentTime;
+  const ac = ctx || audioCtx;
+  const len = getRumbleLen(coins);
+  const n = coins >= 15 ? 19 : coins >= 6 ? 12 : 8;       // 打つ回数
+  const peak = coins >= 15 ? 0.78 : coins >= 6 ? 0.68 : 0.56;
+  const t0 = ac.currentTime + 0.01;
+  const nb = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.06), ac.sampleRate);
+  const nd = nb.getChannelData(0);
+  for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * (1 - i / nd.length);
   for (let i = 0; i < n; i++) {
-    const f = 62 + (i % 2) * 8 + i * 1.5;                // ごくわずかに上がっていく
-    const k = 1 - i / (n * 1.4);                         // 後半ほど小さく
-    tone(f, t + i * gap, 0.11, 'sine', v * k);
-    tone(f * 2, t + i * gap, 0.05, 'triangle', v * k * 0.35);   // 打撃のアタック
+    const k = i / (n - 1);
+    const t = t0 + len * Math.pow(k, 0.85) * (1 - 1 / n);      // 少しずつ間隔が詰まる = ゴロゴロと転がる
+    const amp = peak * (0.55 + 0.45 * Math.sin(Math.min(1, k * 1.15) * Math.PI * 0.5)) * (k > 0.85 ? 1 - (k - 0.85) * 2.2 : 1);   // だんだん大きく、最後に少し引く
+    // キックの胴: 高いところから一気に下がる
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(170 + (i % 2) * 18, t);
+    o.frequency.exponentialRampToValueAtTime(42, t + 0.11);
+    g.gain.setValueAtTime(amp, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.19);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t); o.stop(t + 0.2);
+    // 打撃のアタック(ドゴッの「ゴ」): 短いノイズ
+    const src = ac.createBufferSource(); src.buffer = nb;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900;
+    const ng = ac.createGain(); ng.gain.setValueAtTime(amp * 0.55, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+    src.connect(lp); lp.connect(ng); ng.connect(ac.destination); src.start(t);
   }
-  tone(48, t, n * gap + 0.25, 'sine', v * 0.7);          // 下で鳴り続ける地鳴り
+  // 下で鳴り続ける地鳴り
+  const o2 = ac.createOscillator(), g2 = ac.createGain();
+  o2.type = 'sine'; o2.frequency.value = 46;
+  g2.gain.setValueAtTime(0.0001, t0); g2.gain.linearRampToValueAtTime(peak * 0.5, t0 + 0.1); g2.gain.linearRampToValueAtTime(0.0001, t0 + len + 0.3);
+  o2.connect(g2); g2.connect(ac.destination); o2.start(t0); o2.stop(t0 + len + 0.35);
 }
 function showGet(coins) {
   playVoice('get');   // GET の声
   getRumble(coins);
-  if (coins >= 15) playJaraJara(2.6);
+  if (coins >= 15) playJaraJara(getRumbleLen(coins));   // ドゴドゴと同じ長さに合わせる
   getPop.innerHTML = `0<span>枚 GET</span>`;
   cancelAnimationFrame(getRAF);
   const g0 = performance.now();
