@@ -217,22 +217,29 @@
   const box = document.getElementById('gogo-box'), reelsEl = document.getElementById('reels');
   /* 4段構成: 液晶(幅いっぱい・上下すき間なし) / リール(液晶幅の80%) をそれぞれ幅から計算する */
   const slotEl = document.getElementById('align-display');
-  function fitReels() {
+  const LCD_BLEED_T = 3, LCD_BLEED_B = 2;   // 液晶と上下の段区切り線の間にあった余白(px)
+  const REEL_PAD = 16;   // 旧い上下の余白（8px×2）。リールの枠を線いっぱいまで広げるため、この分を高さに足す
+function fitReels() {
     if (!box || !reelsEl) return;
     const w = box.clientWidth;
     if (!w) return;
     const lcdH = Math.round(w * 1.02 * 2 / 3);               // 液晶: 高さを2/3に (下に5段目ラベルパネルを増設)
     const sc = Math.max(0.6, Math.min(w * 0.8 / 198, 2));    // リール: 従来(液晶幅いっぱい)の80%
-    box.style.height = lcdH + 'px';
-    box.style.setProperty('--lcd-h', lcdH + 'px');
-    reelsEl.style.transform = `scale(${sc.toFixed(3)})`;
+    // 液晶は上下の段区切り線まで（すき間が出ないよう、上下の余白ぶんを足して、その分だけ上下にずらす）
+    box.style.height = (lcdH + LCD_BLEED_T + LCD_BLEED_B) + 'px';
+    box.style.marginTop = (-LCD_BLEED_T) + 'px';
+    box.style.marginBottom = (-LCD_BLEED_B) + 'px';
+    box.style.setProperty('--lcd-h', (lcdH + LCD_BLEED_T + LCD_BLEED_B) + 'px');
+    // リールは段の線いっぱいまで上下に広げる（幅は sc のまま、高さだけ REEL_PAD 分を足して伸ばす）
+    const H = 102 * sc + REEL_PAD;
+    reelsEl.style.transform = `scale(${sc.toFixed(3)}, ${(H / 102).toFixed(4)})`;
     reelsEl.style.marginTop = '0px';
-    if (slotEl) { slotEl.style.width = (198 * sc).toFixed(1) + 'px'; slotEl.style.height = (102 * sc).toFixed(1) + 'px'; }
+    if (slotEl) { slotEl.style.width = (198 * sc).toFixed(1) + 'px'; slotEl.style.height = H.toFixed(1) + 'px'; }
     window.REEL_SC = sc * (window.devicePixelRatio || 1);
     document.documentElement.style.setProperty('--side-h2', Math.floor(lcdH / 2) + 'px');
-    document.documentElement.style.setProperty('--side-fs', Math.max(18, Math.min(34, Math.floor((lcdH - 8) / 9 / 0.8))) + 'px');   // サイドのPEKARIKUN: 9文字が液晶の高さにぴったり収まる大きさ(行間を詰める)
+    document.documentElement.style.setProperty('--side-fs', Math.max(18, Math.min(34, Math.floor((lcdH - 32) / 9 / 0.8))) + 'px');   // サイドのPEKARIKUN: 9文字が液晶の高さにぴったり収まる大きさ(行間を詰める)
     document.documentElement.style.setProperty('--reel-w', (198 * sc).toFixed(1) + 'px');   // STOPボタンをリールの真下に合わせる
-    document.documentElement.style.setProperty('--reel-h', (102 * sc).toFixed(1) + 'px');
+    document.documentElement.style.setProperty('--reel-h', H.toFixed(1) + 'px');
   }
   fitReels();
   window.addEventListener('resize', fitReels);

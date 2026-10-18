@@ -17,7 +17,7 @@
 .side-lamp i { font-size: min(21px, calc(var(--side-h2, 200px) / 5.6)); }
 
 /* 3段目 */
-.cab-reelrow { display: flex; align-items: center; justify-content: space-between; gap: 0; border-top: 1px solid rgba(124, 92, 214, .7); padding: 8px 0; background: linear-gradient(rgba(23, 16, 47, .82), rgba(11, 7, 25, .82)); }
+.cab-reelrow { display: flex; align-items: center; justify-content: space-between; gap: 0; border-top: 1px solid rgba(124, 92, 214, .7); padding: 0; background: linear-gradient(rgba(23, 16, 47, .82), rgba(11, 7, 25, .82)); }
 .cab-reelrow .align-display { position: relative; flex: none; opacity: 1; transform: none; transition: none; margin: 0; inset: auto; }
 .cab-reelrow .reels { position: absolute; left: 0; top: 0; margin: 0; transform-origin: 0 0; }
 .rr-icon { flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; }

@@ -25,7 +25,7 @@ const ledWinEl = document.getElementById('led-win');
 const ledCreditEl = document.getElementById('led-credit');
 const ledTotalEl = document.getElementById('led-total');
 let ledWin = 0;
-function setLedWin(n) { ledWin = n; tweenLed('win', ledWinEl, n, 3); }
+function setLedWin(n) { ledWin = n; tweenLed('win', ledWinEl, n, 2); }
 /* メダル枚数: 50枚から。足りなくなったら50枚ずつ補充した扱い */
 function creditNow() {
   let v = 50 + diffCoins;
@@ -76,7 +76,7 @@ function syncPanel() {
   syncModeTheme();
   tweenLed('credit', ledCreditEl, creditNow(), 4);
   tweenLed('total', ledTotalEl, totalGetNow(), 4);
-  tweenLed('win', ledWinEl, ledWin, 3);
+  tweenLed('win', ledWinEl, ledWin, 2);
   tickDiff();
   const idle = !isReelSpinning && !spinBtn.disabled && !reelLocked;
   const betting = isReelSpinning || (replayPending ? false : false);

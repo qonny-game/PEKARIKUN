@@ -28,7 +28,7 @@
 | 22 | `JS/ui/boot.js` | 起動時の初期化（iOS対策・画面スリープ防止） | 29 | lastTouchEnd |
 | 23 | `JS/ext/bgm.js` | BGMエンジン (1.20.24) | 249 |  |
 | 24 | `JS/ext/fx.js` | 追加演出 | 1019 |  |
-| 25 | `JS/ext/lcd.js` | 演出液晶 | 792 |  |
+| 25 | `JS/ext/lcd.js` | 演出液晶 | 799 | fitReels |
 | 26 | `JS/ext/trophy.js` | トロフィー / ミッション / ランキング | 218 |  |
 
 ## その他

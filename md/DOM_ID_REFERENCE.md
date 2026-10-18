@@ -73,10 +73,10 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `reels` | `JS/core/state.js`, `JS/ext/lcd.js` |  |
 | `lever-btn` | `JS/ui/display.js` |  |
 | `pl-insert` | （HTMLのみ） |  |
-| `pl-bet` | （HTMLのみ） |  |
-| `pl-replay` | （HTMLのみ） |  |
 | `pl-start` | （HTMLのみ） |  |
+| `pl-bet` | （HTMLのみ） |  |
 | `pl-wait` | （HTMLのみ） |  |
+| `pl-replay` | （HTMLのみ） |  |
 | `led-win` | `JS/ui/display.js` |  |
 | `led-credit` | `JS/ui/display.js` |  |
 | `led-total` | `JS/ui/display.js` |  |
