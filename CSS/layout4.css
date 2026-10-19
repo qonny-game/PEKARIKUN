@@ -331,3 +331,23 @@
 .lcd-logobg { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: center / cover no-repeat; opacity: .6; }
 .lcd-logobg[data-m="rush"] { background-image: url(../assets/img/logo_rush.jpg); }
 .lcd-logobg[data-m="mtn"] { background-image: url(../assets/img/logo_mountain.jpg); }
+
+/* 1.33.0 換金 / POINT */
+.ex-now { display: flex; gap: 10px; margin-bottom: 6px; }
+.ex-now > div { flex: 1; padding: 8px; border-radius: 10px; background: rgba(255, 255, 255, .06); text-align: center; }
+.ex-now em { display: block; font-style: normal; font-size: 11px; color: #94a3b8; }
+.ex-now b { font-family: 'Orbitron', sans-serif; font-size: 24px; color: #fde047; }
+.ex-now i { font-style: normal; margin-left: 3px; font-size: 11px; color: #cbd5e1; }
+.ex-rate { text-align: center; margin: 4px 0 10px; font-weight: 800; color: #93c5fd; }
+.ex-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.ex-row button { flex: 1; padding: 10px 6px; border-radius: 8px; font-weight: 800; background: #2563eb; border: 1px solid #3b82f6; color: #fff; }
+.ex-row + .ex-row button { background: #0f766e; border-color: #14b8a6; }
+.ex-row button:disabled { opacity: .35; }
+.ex-auto { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0; font-size: 12px; line-height: 1.4; }
+.ex-auto input { margin-top: 2px; }
+.ex-note { font-size: 11px; line-height: 1.5; color: #94a3b8; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, .12); }
+#ex-bar { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 10px; background: rgba(15, 10, 40, .72); border: 1px solid rgba(253, 224, 71, .35); color: #cbd5e1; font-size: 11px; font-weight: 800; }
+#ex-bar .ex-bl { flex: 1; }
+#ex-bar b { font-size: 18px; color: #fde047; }
+#ex-bar i { font-style: normal; font-size: 11px; }
+#ex-bar button { margin-left: 6px; padding: 4px 14px; border-radius: 8px; font-weight: 800; background: #2563eb; border: 1px solid #3b82f6; color: #fff; }

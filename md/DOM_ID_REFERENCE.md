@@ -15,7 +15,7 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `auto-opt-btn` | `JS/game/auto.js`, `JS/ext/fx.js`, `JS/ext/trophy.js` |  |
 | `reel-btn` | `JS/ui/reel-view.js` |  |
 | `settings-btn` | `JS/ui/modal.js` |  |
-| `reset-btn` | `JS/ui/display.js` |  |
+| `reset-btn` | `JS/ui/display.js`, `JS/ext/exchange.js` |  |
 | `app-version` | `JS/ui/modal.js` |  |
 | `display-diff` | `JS/core/state.js` |  |
 | `display-rate` | `JS/ui/settings-panel.js` |  |
@@ -106,6 +106,7 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `pekari-auto-v1` | `JS/game/auto.js` |  |
 | `pekari-fx-v1` | `JS/ext/fx.js` |  |
 | `pekari-opt-v1` | `JS/game/reel-spin.js` |  |
+| `pekari-point-v1` | `JS/ext/exchange.js` |  |
 | `pekari-settings-v5` | `JS/data/config.js` |  |
 | `pekari-tro-v1` | `JS/ext/trophy.js` |  |
 

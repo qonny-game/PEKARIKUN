@@ -30,9 +30,10 @@
 | 24 | `JS/ext/fx.js` | 追加演出 | 1099 |  |
 | 25 | `JS/ext/lcd.js` | 演出液晶 | 893 | fitReels |
 | 26 | `JS/ext/trophy.js` | トロフィー / ミッション / ランキング | 218 |  |
-| 27 | `JS/ext/pushspoil.js` | 停止ボタンの右の常設PUSHボタン（先ばれ） | 53 |  |
-| 28 | `JS/ext/atpoint.js` |  | 164 |  |
-| 29 | `JS/ext/debug.js` | デバッグモード（設定ボタンを 3→2→3→3→1→2→3 の順に押すと開く／もう一度で閉じる） | 186 |  |
+| 27 | `JS/ext/exchange.js` | 換金 / PEKA POINT | 85 |  |
+| 28 | `JS/ext/pushspoil.js` | 停止ボタンの右の常設PUSHボタン（先ばれ） | 53 |  |
+| 29 | `JS/ext/atpoint.js` |  | 164 |  |
+| 30 | `JS/ext/debug.js` | デバッグモード（設定ボタンを 3→2→3→3→1→2→3 の順に押すと開く／もう一度で閉じる） | 186 |  |
 
 ## その他
 
