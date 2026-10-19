@@ -721,17 +721,32 @@ window.onCzSuccess = function () {
     return !!atEnding && !(atRun && atRun.bonusOnly);
   }
   /* サイドの PEKA RUSH / PEKA CHANCE ランプ: AT中 / ボーナス中だけ光る */
+  let sideRushG = null, sideMtnG = null;
   const rlRush = [...document.querySelectorAll('.rl.rush')], rlChance = [...document.querySelectorAll('.rl.chance')];
   setInterval(() => {
     if (document.hidden) return;   // 見えていない間は表示だけの更新を止める
-    const rush = rushNow();   // PEKA CHANCE中は光らせない (RUSH突入から)
+    const rush0 = rushNow();   // PEKA CHANCE中は光らせない (RUSH突入から)
+    const mtn0 = !!(bonusRun && bonusRun.zone);
+    /* RUSH / MOUNTAIN のロゴ: 突入から2ゲームで消す */
+    const gNow = (typeof cumulativeGames === 'number') ? cumulativeGames : 0;
+    if (!rush0) sideRushG = null; else if (sideRushG == null) sideRushG = gNow;
+    if (!mtn0) sideMtnG = null; else if (sideMtnG == null) sideMtnG = gNow;
+    const rush = rush0 && (gNow - sideRushG) < 2;
+    const mtnLit = mtn0 && (gNow - sideMtnG) < 2;
+    /* 液晶側のロゴ: 突入演出のあと、2ゲームのあいだ背景に残して消す */
+    const lbMode = (rush && !isPushing && !isRushing) ? 'rush' : (mtnLit && !document.querySelector('.lcd-zoneintro')) ? 'mtn' : '';
+    if (stageEl) {
+      let lb = stageEl.querySelector('.lcd-logobg');
+      if (lbMode && !lb) { lb = document.createElement('div'); lb.className = 'lcd-logobg'; stageEl.insertBefore(lb, stageEl.firstChild); }
+      if (lb) { if (lbMode) lb.dataset.m = lbMode; else lb.remove(); }
+    }
     const chance = !!bonusRun && !bonusRun.zone;
     rlRush.forEach(e => e.classList.toggle('lit', !!rush));
     rlChance.forEach(e => e.classList.toggle('lit', chance));
     const inBonus = typeof bonusRun !== 'undefined' && bonusRun;
     const cz = !inBonus && !rush && (czLeft > 0 || (window.czFrozen != null && zenchoLeft > 0));
     document.querySelectorAll('.rl.cz').forEach(e => e.classList.toggle('lit', !!cz));
-    document.querySelectorAll('.rl.mtn').forEach(e => e.classList.toggle('lit', !!(inBonus && bonusRun.zone)));
+    document.querySelectorAll('.rl.mtn').forEach(e => e.classList.toggle('lit', mtnLit));
     const cabEl = document.querySelector('.cabinet'); if (cabEl) cabEl.classList.toggle('in-zone', !!(inBonus && bonusRun.zone));   // PEKA PEKA MOUNTAIN中は筐体を緑ベースに
     /* サイドのGOGO!ランプ: 液晶のGOGO!と同じ見た目・同じ色。液晶より先に光ることもある(ボーナス確定のゲームだけ) */
     const gl = !!(gogoBox.classList.contains('peka') || window.sideGogo || window.sideConfirm);
@@ -753,8 +768,9 @@ window.onCzSuccess = function () {
       const lv = Math.min(level, 6);
       const L = document.createElement('div');   // 液晶の中央に大きく表示。表示中に色が変わる
       L.className = 'lcd-lvup';
-      L.innerHTML = '<span>LEVEL UP</span><b>!!</b>';
+      L.innerHTML = '<span>LEVEL</span><b>UP!!</b>';
       stageEl.appendChild(L);
+      if (window.hideGet) hideGet();   // 15枚GETは出さない
       setTimeout(() => L.remove(), 2400);
       act('jump');
       burst(); swoosh(lv >= 4 ? 3 : lv >= 2 ? 2 : 1);

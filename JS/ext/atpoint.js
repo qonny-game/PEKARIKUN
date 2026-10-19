@@ -61,9 +61,11 @@
       <div class="ah-c">タップで閉じる</div>`;
     const close = () => { E.remove(); clearTimeout(tm); };
     const tm = ms ? setTimeout(close, ms) : 0;
+    E.addEventListener('pointerdown', ev => ev.stopPropagation());   // 液晶のタップ=レバーON/リール停止 にならないように
     E.addEventListener('click', close);
     stage.appendChild(E);
   }
+  helpBtn.addEventListener('pointerdown', e => e.stopPropagation());   // ?を押してもレバーONにならない
   helpBtn.addEventListener('click', e => { e.stopPropagation(); const c = stage.querySelector('.atp-helpcard'); if (c) c.click(); else showHelp(0); });
   /* バトル中: 画面に敵を出して、ペカり君と戦っている感じにする */
   let enemyEl = null;

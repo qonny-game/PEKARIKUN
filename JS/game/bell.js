@@ -87,7 +87,7 @@ function getRumble(coins, ctx) {
 }
 function showGet(coins) {
   // 演出を優先する場面では「枚 GET」を出さない（PAYOUTの数字だけ）
-  if (isSuspense || (window.FX && FX.busy > 0) || document.querySelector('.lcd-czwin,.lcd-crackfx,.lcd-levercall,.lcd-bigintro,.lcd-zoneintro,.lcd-sandwin,.lcd-sevhint')) { cancelAnimationFrame(getRAF); getPop.classList.remove('show'); return; }
+  if (isSuspense || (window.FX && FX.busy > 0) || document.querySelector('.lcd-czwin,.lcd-crackfx,.lcd-levercall,.lcd-bigintro,.lcd-zoneintro,.lcd-sandwin,.lcd-sevhint,.lcd-lvup')) { cancelAnimationFrame(getRAF); getPop.classList.remove('show'); return; }
   playVoice('get');   // GET の声
   getRumble(coins);
   if (coins >= 15) playJaraJara(getRumbleLen(coins));   // ドゴドゴと同じ長さに合わせる

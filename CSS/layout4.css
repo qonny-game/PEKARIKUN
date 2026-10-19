@@ -301,7 +301,7 @@
 
 /* 上乗せバトル: ? ボタン / 説明カード / 敵の表示 */
 .atp-helpbtn { position: absolute; left: -22px; top: -2px; width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .6); background: rgba(0, 0, 0, .55); color: #ffe27a; font-size: 12px; font-weight: 800; line-height: 1; padding: 0; cursor: pointer; pointer-events: auto; }
-.atp-helpcard { position: absolute; inset: 0; z-index: 45; display: flex; flex-direction: column; justify-content: center; padding: 8px 14px; background: rgba(6, 6, 24, .94); color: #fff; font-family: sans-serif; cursor: pointer; }
+.atp-helpcard { position: absolute; inset: 0; z-index: 45; display: flex; flex-direction: column; justify-content: center; padding: 8px 14px; background: rgba(6, 6, 24, .94); color: #fff; font-family: sans-serif; cursor: pointer; pointer-events: auto; }
 .ah-t { text-align: center; font-size: 14px; font-weight: 900; letter-spacing: .15em; color: #ffd24a; margin-bottom: 4px; }
 .atp-helpcard ul { margin: 0; padding-left: 16px; font-size: 11px; line-height: 1.5; }
 .ah-c { text-align: center; font-size: 10px; color: #98a2bd; margin-top: 4px; }
@@ -320,3 +320,14 @@
 
 /* バトル中: ペカり君を中央寄りに。敵と向かい合って戦う */
 .atp-fighting .sl-actor { left: 27% !important; bottom: 40px !important; transition: left .5s ease-out, bottom .5s ease-out; }
+
+/* 1.32.0 LEVEL UP: 2行で大きく / 予告の暗幕は液晶と同じ高さ */
+.lcd-lvup { flex-direction: column; gap: 0; line-height: .92; }
+.lcd-lvup span { font-size: 62px; }
+.lcd-lvup b { font-size: 82px; }
+.fx-pv { top: 0 !important; bottom: 0 !important; left: 0 !important; right: 0 !important; }
+
+/* 1.32.1 突入後2ゲームだけ液晶の背景に残すロゴ (RUSH / MOUNTAIN) */
+.lcd-logobg { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: center / cover no-repeat; opacity: .6; }
+.lcd-logobg[data-m="rush"] { background-image: url(../assets/img/logo_rush.jpg); }
+.lcd-logobg[data-m="mtn"] { background-image: url(../assets/img/logo_mountain.jpg); }
