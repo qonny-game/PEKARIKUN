@@ -351,3 +351,15 @@
 #ex-bar b { font-size: 18px; color: #fde047; }
 #ex-bar i { font-style: normal; font-size: 11px; }
 #ex-bar button { margin-left: 6px; padding: 4px 14px; border-radius: 8px; font-weight: 800; background: #2563eb; border: 1px solid #3b82f6; color: #fff; }
+
+/* 1.34.0 換金ボタンは非表示(機能は残してある) / POINT増減の強調とトースト */
+#ex-bar-btn, #ex-btn { display: none !important; }
+#ex-bar.up { animation: ex-up 2.2s ease-out; }
+#ex-bar.down { animation: ex-down 1.6s ease-out; }
+#ex-bar.up b { animation: ex-num 2.2s ease-out; }
+@keyframes ex-up { 0%, 100% { box-shadow: none; } 10%, 60% { box-shadow: 0 0 0 2px #fde047, 0 0 22px #fde047; background: rgba(120, 80, 0, .85); } }
+@keyframes ex-down { 0%, 100% { box-shadow: none; } 15%, 50% { box-shadow: 0 0 0 2px #f87171, 0 0 14px #f87171; } }
+@keyframes ex-num { 0% { transform: scale(1); } 12% { transform: scale(1.7); color: #fff; } 40% { transform: scale(1.35); color: #fff7ae; } 100% { transform: scale(1); } }
+#ex-toast { position: fixed; left: 50%; top: 14px; z-index: 210; transform: translate(-50%, -140%); padding: 8px 16px; border-radius: 10px; background: rgba(15, 10, 40, .94); border: 1px solid #fde047; color: #fff; font-size: 13px; font-weight: 800; white-space: nowrap; pointer-events: none; opacity: 0; }
+#ex-toast.show { animation: ex-toast 3.2s ease-out both; }
+@keyframes ex-toast { 0% { transform: translate(-50%, -140%); opacity: 0; } 8%, 85% { transform: translate(-50%, 0); opacity: 1; } 100% { transform: translate(-50%, -140%); opacity: 0; } }

@@ -36,7 +36,6 @@
     <div class="ex-rate">100枚 = 2 POINT</div>
     <div class="ex-row"><button type="button" id="ex-m1">100枚 → 2P</button><button type="button" id="ex-mall">すべてPOINTへ</button></div>
     <div class="ex-row"><button type="button" id="ex-p1">100枚補充 (-2P)</button><button type="button" id="ex-p5">500枚補充 (-10P)</button></div>
-    <label class="ex-auto"><input type="checkbox" id="ex-auto"><span>POINTへ自動交換 (差枚数が100枚以上になった分を、ゲームの合間に交換)</span></label>
     <div class="ex-note">POINT はデータリセットやブラウザを閉じても消えません。この端末のブラウザに保存されます。<br>ブラウザのサイトデータを削除すると消えます。<br>メダルの補充は 100枚 = -2 POINT。POINT は 0 以下にもなります。</div>
   </div>`;
   document.body.appendChild(modal);
@@ -47,7 +46,7 @@
   $('ex-mall').addEventListener('click', () => toPoint(1e9));
   $('ex-p1').addEventListener('click', () => toMedal(1));
   $('ex-p5').addEventListener('click', () => toMedal(5));
-  $('ex-auto').addEventListener('change', e => { D.auto = e.target.checked; save(); if (D.auto) autoTick(); refresh(); });
+  
 
   /* 下バーのメニューと、画面上部の差枚数の横の表示 */
   const anchor = document.getElementById('reset-btn');
@@ -68,16 +67,31 @@
     ptView.querySelector('b').textContent = D.pt;
     $('ex-diff').textContent = (diffCoins >= 0 ? '+' : '') + diffCoins;
     $('ex-pt').textContent = D.pt;
-    $('ex-auto').checked = D.auto;
     $('ex-m1').disabled = $('ex-mall').disabled = diffCoins < RATE_COINS;
   }
 
-  /* 自動交換: ゲームの合間 (リール停止中・演出なし) に、100枚単位で */
+  /* 画面上部バーでPOINTの増減を目立たせる + トースト */
+  const toastEl = document.createElement('div');
+  toastEl.id = 'ex-toast';
+  document.body.appendChild(toastEl);
+  let toastT = 0;
+  function notify(msg, up) {
+    toastEl.textContent = msg; toastEl.classList.remove('show'); void toastEl.offsetWidth; toastEl.classList.add('show');
+    clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 3200);
+    ptView.classList.remove('up', 'down'); void ptView.offsetWidth; ptView.classList.add(up ? 'up' : 'down');
+    setTimeout(() => ptView.classList.remove('up', 'down'), 2200);
+  }
+  /* 自動: 差枚数が100枚以上 -> POINTへ交換 / メダル(50枚+差枚数)が0以下 -> 100枚補充(-2P)。ゲームの合間だけ */
   function autoTick() {
-    if (!D.auto || diffCoins < RATE_COINS) return;
     if (isReelSpinning || isPushing || (typeof isRushing !== 'undefined' && isRushing) || (typeof isAtResult !== 'undefined' && isAtResult)) return;
-    const n = toPoint(1e9);
-    if (n && typeof tickDiff === 'function') { /* 表示はtickDiffが追従 */ }
+    if (diffCoins >= RATE_COINS) {
+      const coins = Math.floor(diffCoins / RATE_COINS) * RATE_COINS;
+      const n = toPoint(1e9);
+      if (n) notify(`${coins}枚を PEKA POINT に交換: +${n * RATE_POINT}P`, true);
+    } else if (50 + diffCoins <= 0) {
+      toMedal(1);
+      notify('メダルが0枚になったので 100枚補充: -2P', false);
+    }
   }
   setInterval(() => { autoTick(); if (modal.classList.contains('open')) refresh(); }, 700);
   refresh();
