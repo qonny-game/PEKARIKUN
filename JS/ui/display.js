@@ -96,7 +96,7 @@ document.querySelectorAll('.stop-btn').forEach(b => {
     const c = +b.dataset.stop;
     const rs = reelSpin;
     // 第一停止が左以外: 左から押すことを推奨 (ボーナス中は押し順ナビが優先)
-    if (rs && rs.order.length === 0 && c !== 0 && !naviOrder && rs.plan.kind !== 'seven' && rs.plan.kind !== 'reg') {
+    if (rs && rs.order.length === 0 && c !== 0 && !naviOrder && rs.plan.kind !== 'seven' && rs.plan.kind !== 'reg' && rs.plan.kind !== 'sand' && rs.plan.kind !== 'superbell') {
       showAtToast('左リールから停止を推奨');
       atToast.classList.add('advice');
     }

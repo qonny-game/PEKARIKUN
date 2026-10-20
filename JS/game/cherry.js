@@ -114,7 +114,7 @@ function playSand() {
     updateAT();
     updateUI();
     maybeShowAtResult();
-  }, naviFor('', 1));   // 中リールから押す。左右のリールは薄暗くして中リールに視線を集める
+  });   // 中リールから止める。押し順ナビは出さない (左右は自動)
 }
 function roleEffects(role, inAT) {
   const R = ROLE_INFO[role];

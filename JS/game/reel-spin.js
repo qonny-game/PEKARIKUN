@@ -102,8 +102,12 @@ function stopCol(c, auto) {
   const rs = reelSpin;
   if (!rs) return;
   if (rs.plan.assist) auto = true;     // ボーナスの7揃え: 押せば必ず揃う(アシスト)。止めるのは自分のボタン
-  // 押し順ナビ付きのチェリー/スイカ: ナビ通りに止めれば取りこぼさない
-  if (rs.plan.navi) {
+  // サンド目: 第2リール(中)を最初に目押しで止める。左右は自動 (中より先の左・右のボタンは無効)
+  if (rs.plan.kind === 'sand' && rs.order.length === 0 && c !== 1) { showAtToast('中リールから止める'); return; }
+  // SUPERの15枚役: 第1停止は左リールの7を目押し。左より先の中・右のボタンは無効
+  if (rs.plan.kind === 'superbell' && rs.order.length === 0 && c !== 0) { showAtToast('左リールの7から止める'); return; }
+  // 押し順ナビ付きのチェリー/スイカ: ナビ通りに止めれば取りこぼさない (サンド目・SUPERの15枚役は目押しなのでナビ一致で自動にしない)
+  if (rs.plan.navi && rs.plan.kind !== 'sand' && rs.plan.kind !== 'superbell') {
     if (rs.naviOk === undefined) rs.naviOk = true;
     if (rs.plan.navi[rs.order.length] !== c) rs.naviOk = false;
     if (rs.naviOk) auto = true;
@@ -138,6 +142,14 @@ function stopCol(c, auto) {
       if (a !== undefined) { T = a; t = mod(a); }
       else if (auto) { tele = true; t = mod(STRIPS[1].indexOf('melon') - 1); }
       else { p.missed = true; tele = true; t = p.t1miss; }   // 外し: 弱チャンス目の形で止まる（取りこぼし）
+    }
+  } else if (p.kind === 'superbell') {   // SUPERの15枚役: 左リールの下段に7を目押し。滑りは大きめに引き込める。揃わなければ取りこぼし
+    if (c !== 0) { tele = true; t = p.ts[c]; }
+    else {
+      const wide = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(d => s + d);   // 引き込める範囲 (12コマ)
+      const a = wide.find(x => isSeven(windowOf(0, x)[2]));
+      if (a !== undefined) { T = a; t = mod(a); }
+      else { const b = wide.find(x => !isSeven(windowOf(0, x)[2])); T = b !== undefined ? b : wide[0]; t = mod(T); }   // 外し: 下段に7が来ない
     }
   } else if (p.kind === 'sand') {   // サンド目: 第2リールを目押し (バー・チェリー・バー)。左右は自動
     if (auto || c !== 1) { tele = true; t = p.ts[c]; }
@@ -218,6 +230,8 @@ function stopCol(c, auto) {
 /* レバー/タップで、止まっていないリールを左から順に止める */
 function stopNextReel() {
   if (!reelSpin) return;
+  // サンド目: 中リールを最初に止める
+  if (reelSpin.plan.kind === 'sand' && reelSpin.order.length === 0 && reelSpin.cols[1].state === 'spin') { stopCol(1, false); return; }
   // 押し順ナビ中は、タップでもナビ通りの順に止まる
   if (naviOrder) {
     const nc = naviOrder.find(x => reelSpin.cols[x].state === 'spin');
@@ -242,6 +256,7 @@ function finishReels() {
   else if (rs.plan.kind === 'cherry') success = f[0].includes('cherry');
   else if (rs.plan.kind === 'melon') success = f[0][0] === 'melon' && f[1][0] === 'melon' && f[2][0] === 'melon';
   else if (rs.plan.kind === 'sand') success = f[1][0] === 'bar' && f[1][1] === 'cherry' && f[1][2] === 'bar';
+  else if (rs.plan.kind === 'superbell') success = isSeven(f[0][2]) && f[1][1] === 'bell' && f[2][0] === 'bell';   // 左下の7・中段のベル・右上のベル
   spinBtn.innerText = 'レバーON';
   reelLocked = true;
   setTimeout(() => { reelLocked = false; }, 300);

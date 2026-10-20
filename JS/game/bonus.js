@@ -249,7 +249,7 @@ function bonusSand(b) {
       if (window.LCDX) { LCDX.say('サンド目!!', '', 2600, 'happy', 'jump'); }
     } else missEffect();
     updateAT(); updateUI();
-  }, naviFor('', 1));
+  });   // 押し順ナビは出さない (中リールから止める)
 }
 const BONUS_RARE_P = 0.12, BONUS_SAND_P = 0.05;
 /* JUDGEMENT最終G: 「レバーを叩け！！！」の文字色で期待度が分かる（白=通常 / 赤=80%以上 / 金=96%以上でAT性能が良い / 虹=AT確定で性能最高） */
