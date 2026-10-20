@@ -41,6 +41,7 @@
   reg('atEnding', () => atEnding, v => { atEnding = v; });
   reg('atRun', () => atRun, v => { atRun = v; });
   reg('atGrade', () => atGrade, v => { atGrade = v; });
+  reg('atUpLeft', () => atUpLeft, v => { atUpLeft = v; });
   reg('modeGames', () => modeGames, v => { modeGames = v; });
   reg('modeMult', () => modeMult, v => { modeMult = v; });
   reg('cherryGames', () => cherryGames, v => { cherryGames = v; });

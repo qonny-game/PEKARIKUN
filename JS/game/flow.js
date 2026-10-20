@@ -502,7 +502,7 @@ function handleSpin() {
     atGames--;
     if (atRun) atRun.games++;
     if (atGames === 0) {
-      if (atRun && Math.random() < AT_REVIVE_P) {
+      if (atRun && (atRun.revives || 0) < AT_GRADE.MAX_REVIVE && Math.random() < AT_REVIVE_P) {
         // 最終ゲームで復活: 数ゲーム延長してATが続く
         atGames = 3 + Math.floor(Math.random() * 5);
         atRun.revives = (atRun.revives || 0) + 1;
@@ -588,9 +588,9 @@ function handleSpin() {
   if (!isDebugRun) {
     const urFlag = !!window.urMode && !inAT && !bonusRun && (czWin || window.urFlagIn);   // 裏モード: 当選フラグが入った瞬間、下パネルが必ず消える
     if ((inCZ && (isHit || zenchoLeft > 0) && Math.random() < PANEL_P_CZ) || urFlag) window.panelPlan = 'cz';
-    else if (inAT && !isHit && Math.random() < PANEL_P_AT) {
+    else if (inAT && !isHit && atUpOpen() && Math.random() < PANEL_P_AT * atUpMult()) {
       window.panelPlan = 'at';
-      const bigG = scaleG([100, 100, 150, 200, 300, 500][Math.floor(Math.random() * 6)]);
+      const bigG = grantUp(scaleG([100, 100, 150, 200, 300, 500][Math.floor(Math.random() * 6)]));
       atGames += bigG; atEnding = false;
       awardPanelUp(bigG);
     }

@@ -47,7 +47,7 @@
   setInterval(render, 250);
   function banner(t, s, col, ms) { if (window.FXBanner) window.FXBanner(t, s || '', col || 'red', true, ms || 1800); }
   function addPt(n) {
-    if (!inAT() || battle || pending || n <= 0) return;
+    if (!inAT() || battle || pending || n <= 0 || !atUpOpen()) return;
     pt = Math.min(10, pt + n); render();
     if (pt >= 10) { pending = true; waitThenBattle(); }
   }
@@ -131,7 +131,7 @@
     battle.left--; battle.hp -= dmg; hitFx(dmg);
     if (battle.hp <= 0) {
       const g = WIN_G[Math.floor(Math.random() * WIN_G.length)];
-      const G = typeof scaleG === 'function' ? scaleG(g) : g;
+      const G = grantUp(scaleG(g));
       battle = null; removeEnemy(false, true); render();
       banner('ENEMY DOWN', `+${G}G`, 'gold', 2200);
       atEnding = false;

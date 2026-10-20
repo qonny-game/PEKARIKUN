@@ -39,7 +39,8 @@ const ZENCHO_P = 0.45;
 let modeGames = 0;                 // AT終了後の「次回モード」の残りG数 (当選率アップ・画面には出さない)
 let modeMult = 1;                  // 次回モードの当選確率の倍率
 let atRun = null;                  // いまのAT中の集計 {startDiff, games, bells, bonuses}
-let atGrade = 0;                   // いまのATの内部グレード 1〜20（0=ATの外。画面には出さない）
+let atGrade = 0;
+let atUpLeft = 0;                  // いまのATに残っている上乗せの枠(G)。0になったら以降の上乗せは出ない                   // いまのATの内部グレード 1〜20（0=ATの外。画面には出さない）
 let atEnding = false;              // ATのG数が0になった (リザルト待ち)
 let isAtResult = false;            // リザルト表示中 (レバー無効)
 let cherryGames = 0;               // チェリー後の当選しやすい期間 (残りG)

@@ -30,13 +30,16 @@ function updateAT() {
   updateAtGain();
   updateAtGrade();
 }
+/* 上乗せの枠: ATの上乗せ総量に上限がある（必ず終わるように）。枠が残っているときだけ上乗せを出す */
+function atUpOpen() { return atUpLeft > 0; }
+function grantUp(n) { const g = Math.max(0, Math.min(n, atUpLeft)); atUpLeft -= g; return g; }
 /* ATグレードの表示: デバッグ版(SHOW_INTERNAL)のときだけ。通常版は要素が無い/隠れたまま */
 function updateAtGrade() {
   const el = document.getElementById('at-grade');
   if (!el) return;
   const on = window.SHOW_INTERNAL === true && atGames > 0 && !bonusRun && atGrade > 0;
   el.hidden = !on;
-  if (on) el.textContent = `GRADE ${atGrade}`;
+  if (on) el.textContent = `GRADE ${atGrade} / 上乗せ残 ${atUpLeft}G`;
 }
 /* ペカラッシュ中の合計獲得枚数 */
 function updateAtGain() {
@@ -100,6 +103,7 @@ function startAT(games, typeId, superFlag) {
   atType = typeId !== undefined ? typeId : pickAtType();
   atSuper = !!superFlag;   // SUPER: 純増が多い
   atGrade = pickAtGrade(atType, atSuper);   // 内部グレード（上乗せの出やすさ）
+  atUpLeft = atUpCap(atGrade);
   if (window.TRO && atType > 0) TRO.seen(atType === 1 ? 'heaven' : 'death');
   const T = AT_TYPES[atType];
   const base = Math.max(games || pickAtGames(), T.minG);

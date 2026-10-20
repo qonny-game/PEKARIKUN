@@ -138,6 +138,7 @@ function resetData() {
     updateCherry();
     atRun = null;
     atGrade = 0;
+    atUpLeft = 0;
     overQueue = [];
     sinceEnd = null;
     pekaSpecial = null;

@@ -396,7 +396,8 @@ function bonusGameMain() {
         playAuraUp(b.zlv + 2);
         triggerFlash();
       }
-      const g = scaleG(Math.round(ZONE_G_CHOICES[weightedPick(ZONE_G_WEIGHTS[b.zlv])] * AT_TYPES[atType].zg));
+      const g0 = scaleG(Math.round(ZONE_G_CHOICES[weightedPick(ZONE_G_WEIGHTS[b.zlv])] * AT_TYPES[atType].zg));
+      const g = atGrade > 0 ? grantUp(scaleG(Math.round(g0 * atUpMult()))) : g0;   // ATの中: 上乗せの強さ(グレード)と上限で決まる
       b.zoneG += g;
       const last = b.played >= b.games;
       pushReveal(`+${g}G`, g >= 50, () => {

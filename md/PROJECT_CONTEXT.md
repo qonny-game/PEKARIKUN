@@ -76,3 +76,4 @@ md/               このフォルダ
 - **PUSH（液晶内 `#lcd-push`）**: 第2停止(`hintStop` n=2)から押せる。結果は `pushResult`（対応役 / CHANCE ZONE突入 / ボーナス濃厚 / ハズレ）。押さなくてもリール停止後に自動で出る。ドン3回=発展は `LCDX.don(3)` で次の強示唆を確定させる。
 - **通常時のチェリー・スイカは取りこぼさない**（`stopCol` で auto。ナビ付き(AT)だけ従来どおり）。
 - **ATグレード（1.39.0〜、内部用）**: `startAT` で `atGrade`（1〜20）を抽選（`pickAtGrade`、rules.js の `AT_GRADE`）。`atUpMult()` を、チェリー/スイカの上乗せ成立（cherry.js の cherryEffects / roleEffects）・サンド目の発生（playRole の sandLeft）・ポイント加算（atpoint.js の runRole wrapper）・バトルの敵HP（startBattle）に掛ける。画面には出さず、`window.SHOW_INTERNAL`（debug.html のみ true）のときだけ `#at-grade` を表示。ATの終了で0に戻す（at-result / display.js）。セーブ対象。
+- **ATの終わり方（1.40.0〜）**: `atUpLeft`（ATの上乗せ枠 = `atUpCap(グレード)`）を startAT で設定。上乗せ（cherry.js の roleEffects / cherryEffects・サンド目、atpoint.js の addPt・バトルのG、flow.js の下パネル）は `grantUp(n)` で枠から引く。枠が0なら `atUpOpen()` で出さない。最終Gの復活は `AT_GRADE.MAX_REVIVE` 回まで。ゾーン（bonus.js のゾーン上乗せ）もAT中は grantUp・グレードの強さで変わる。SUPERは同じグレード分布（`AT_GRADE.SUPER_BONUS` = 0）。
