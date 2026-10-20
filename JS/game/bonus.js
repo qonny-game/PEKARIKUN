@@ -168,13 +168,12 @@ function showNavi(order, style = '', partial = false, seven = false) {
   document.body.dataset.navi = style || 'y';
   naviOrder = order;
   naviPartial = !!partial;
-  const textOnly = style === 'purple' && !partial;   // 紫: 順番の数字は出さず「左から順押し!!!」だけ
-  naviEl.className = 'navi on ' + style + (partial ? ' partial' : '') + (textOnly ? ' msg' : '');     // red: チェリー / purple: スイカ (上乗せ確定)
-  naviEl.dataset.msg = textOnly ? '左から順押し!!!' : '';
+  const noNum = (style === 'red' || style === 'purple') && !partial;   // 赤・紫: 丸は数字なし（左から順押しのみ）
+  naviEl.className = 'navi on ' + style + (partial ? ' partial' : '');     // red: チェリー / purple: スイカ (上乗せ確定)
   const sevenNavi = !!seven && atSuper && atGames > 0 && !bonusRun;   // SUPERのベルのナビだけ。レア役・サンド目は 1-2-3 のまま   // SUPER中: 第1停止の「1」を7の画像に（色もいろいろ）
   const sevenImg = () => { const k = SEVENS[Math.floor(Math.random() * SEVENS.length)]; return `<img class="navi-7" src="${SYM_IMG[k] || ASSET_DIR.img + k + '.png'}" alt="1">`; };
   [...naviEl.children].forEach((el, c) => {
-    el.textContent = partial ? (c === order[0] ? '1' : '') : (order.indexOf(c) + 1) + (style === 'purple' ? '!' : '');
+    el.textContent = partial ? (c === order[0] ? '1' : '') : (noNum ? '' : order.indexOf(c) + 1);
     if (sevenNavi && c === order[0]) el.innerHTML = sevenImg();
     el.className = '';
   });
