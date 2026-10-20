@@ -120,7 +120,7 @@
     let bg = e.s - 1; const q = Math.random();
     if (q < 0.16 && bg < 4) bg = Math.min(4, bg + 1 + Math.floor(Math.random() * (4 - bg)));
     else if (q < 0.26 && bg > 0) bg = Math.floor(Math.random() * bg);
-    const eff = ENEMIES[Math.max(bg, e.s - 1)].hp;
+    const eff = Math.max(2, Math.round(ENEMIES[Math.max(bg, e.s - 1)].hp * (1.3 - 0.4 * atUpMult())));   // グレードが高いほど敵のHPが低い
     battle = { left: 10, hp: eff, max: eff, e }; pt = 0; render();
     showEnemy(e);
     intro(e, bg, true);
@@ -163,7 +163,7 @@
       if (!wasAT) return;
       const ok = kind === 'lose' || kind === 'bell' || kind === 'replay' || kind === 'sand' || !res || res.success !== false;
       if (battle) { hit(ok ? kind : 'lose'); return; }
-      if (ok && PT[kind]) addPt(PT[kind] === 2 ? 2 + (Math.random() < 0.4 ? 1 : 0) : PT[kind]);
+      if (ok && PT[kind] && Math.random() < Math.min(1, atUpMult())) addPt(PT[kind] === 2 ? 2 + (Math.random() < 0.4 ? 1 : 0) : PT[kind]);
     }, navi);
   };
   /* AT中のサンド目: 3〜4P */

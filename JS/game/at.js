@@ -17,6 +17,7 @@ function updateAT() {
     const gainEl = document.getElementById('at-gain');   // ボーナス中の獲得枚数（右上）
     if (gainEl) { gainEl.textContent = bonusRun.paid; gainEl.parentNode.classList.add('has-gain'); }
     atStatus.classList.toggle('low', !bonusRun.zone && bonusRun.games - bonusRun.played <= 3);
+    updateAtGrade();
     return;
   }
   atStatus.classList.remove('bonus');
@@ -27,6 +28,15 @@ function updateAT() {
   atStatus.classList.toggle('death', atType === 2);
   atRemain.textContent = String(atGames).padStart(2, '0');   // LAST 00G 表記
   updateAtGain();
+  updateAtGrade();
+}
+/* ATグレードの表示: デバッグ版(SHOW_INTERNAL)のときだけ。通常版は要素が無い/隠れたまま */
+function updateAtGrade() {
+  const el = document.getElementById('at-grade');
+  if (!el) return;
+  const on = window.SHOW_INTERNAL === true && atGames > 0 && !bonusRun && atGrade > 0;
+  el.hidden = !on;
+  if (on) el.textContent = `GRADE ${atGrade}`;
 }
 /* ペカラッシュ中の合計獲得枚数 */
 function updateAtGain() {
@@ -89,6 +99,7 @@ const rushLines = rushOverlay.querySelectorAll('.rush-line');
 function startAT(games, typeId, superFlag) {
   atType = typeId !== undefined ? typeId : pickAtType();
   atSuper = !!superFlag;   // SUPER: 純増が多い
+  atGrade = pickAtGrade(atType, atSuper);   // 内部グレード（上乗せの出やすさ）
   if (window.TRO && atType > 0) TRO.seen(atType === 1 ? 'heaven' : 'death');
   const T = AT_TYPES[atType];
   const base = Math.max(games || pickAtGames(), T.minG);

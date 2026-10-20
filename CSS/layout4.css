@@ -125,11 +125,8 @@
 /* CHANCE ZONE 成功: BONUS 確定! */
 .lcd-czwin { position: absolute; inset: 0; z-index: 77; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; font-family: 'Orbitron', sans-serif; font-weight: 900; font-style: italic; animation: cw-in .3s linear both; }
 .lcd-czwin .cw-bg { position: absolute; inset: 0; background: radial-gradient(circle, rgba(255, 240, 150, .9), rgba(255, 61, 113, .85) 55%, rgba(30, 5, 60, .9)); animation: cw-bgp .15s steps(2) infinite; }
-.lcd-czwin .cw-a { position: relative; font-size: 54px; line-height: 1; color: #fff; -webkit-text-stroke: 4px #9a3412; paint-order: stroke fill; text-shadow: 0 0 22px #fde047, 0 0 44px #ff6a00; animation: cw-don .15s ease-out 0s 9, cw-hue 1s linear .3s infinite; }
-.lcd-czwin .cw-b { position: relative; margin-top: 4px; font-size: 62px; line-height: 1; color: #fde047; -webkit-text-stroke: 4px #7f1d1d; paint-order: stroke fill; text-shadow: 0 0 22px #fff, 0 0 44px #f97316; animation: cw-don .15s ease-out .07s 9, cw-hue 1s linear .3s infinite; }
 @keyframes cw-don { 0% { transform: scale(1.7) translateY(-6px); } 100% { transform: scale(1) translateY(0); } }
 @keyframes cw-bgp { from { filter: brightness(1); } to { filter: brightness(1.5); } }
-@keyframes cw-hue { to { filter: hue-rotate(360deg); } }
 
 /* BONUS確定表示の間: サイドのGOGO!がちかちかと虹色 */
 .rl.gogo.rb .gogo-text { color: #fff; animation: gg-rb .18s steps(2) infinite, gg-hue .7s linear infinite !important; text-shadow: 0 0 6px #fff, 0 0 14px #f0abfc, 0 0 28px #38bdf8, 0 0 44px #fde047; }
@@ -143,8 +140,6 @@
 /* 確定表示を残す: 3秒の登場のあと、そのまま次ゲームへ。777が揃うまで */
 .lcd-czwin.keep { animation: none; opacity: 1; transition: opacity .4s; }
 .lcd-czwin.keep .cw-bg { animation: none; opacity: .72; }
-.lcd-czwin.keep .cw-a { font-size: 34px; animation: cw-hue 1s linear infinite; }
-.lcd-czwin.keep .cw-b { font-size: 40px; margin-top: 0; animation: cw-hue 1s linear infinite; }
 .lcd-czwin.out { opacity: 0; }
 .lcd-czwin .cw-sev { position: relative; margin-top: 8px; display: flex; flex-direction: column; align-items: center; gap: 2px; animation: cw-don .25s ease-out both; }
 .lcd-czwin .cw-sev span { display: none; }
@@ -343,8 +338,6 @@
 .ex-row button { flex: 1; padding: 10px 6px; border-radius: 8px; font-weight: 800; background: #2563eb; border: 1px solid #3b82f6; color: #fff; }
 .ex-row + .ex-row button { background: #0f766e; border-color: #14b8a6; }
 .ex-row button:disabled { opacity: .35; }
-.ex-auto { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0; font-size: 12px; line-height: 1.4; }
-.ex-auto input { margin-top: 2px; }
 .ex-note { font-size: 11px; line-height: 1.5; color: #94a3b8; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, .12); }
 #ex-bar { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 10px; background: rgba(15, 10, 40, .72); border: 1px solid rgba(253, 224, 71, .35); color: #cbd5e1; font-size: 11px; font-weight: 800; }
 #ex-bar .ex-bl { flex: 1; }

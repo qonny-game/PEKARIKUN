@@ -35,7 +35,7 @@ function cherryEffects(inAT, strong, coins) {
   setLedWin(coins);
   recordPoint();
   if (inAT) {
-    if (strong || Math.random() < CHERRY_AT_SUCCESS) {
+    if ((strong || Math.random() < CHERRY_AT_SUCCESS) && Math.random() < atUpMult()) {   // グレードが低いと上乗せが出にくい
       const addG = scaleG(Math.round(pickCherryAtG() * AT_TYPES[atType].up));
       atEnding = false;     // 最終ゲームなら終了を取り消して延長
       pushReveal(`+${addG}G`, false, () => { atGames += addG; updateAT(); });
@@ -117,7 +117,7 @@ function roleEffects(role, inAT, paid = true) {
   setLedWin(coins);
   recordPoint();
   if (inAT) {
-    if (R.atP() > 0 && Math.random() < R.atP()) {
+    if (R.atP() > 0 && Math.random() < Math.min(1, R.atP() * atUpMult())) {
       const addG = scaleG(Math.round(pickCherryAtG() * AT_TYPES[atType].up * R.upM));   // レア役ほど上乗せが多い
       atEnding = false;
       pushReveal(`+${addG}G`, false, () => { atGames += addG; updateAT(); });
@@ -136,7 +136,7 @@ function playRole(role, inAT) {
     const hit = !aimed || res.success;
     roleEffects(role, inAT, hit);   // 取りこぼしても恩恵(上乗せ・当選率UP)はもらえる。枚数だけ取りこぼす
     if (hit) showRoleBadge(R.label, R.coins(), R.notes, role); else missEffect();
-    if (inAT && /^(melon|cherry)/.test(role)) sandLeft = 1 + Math.floor(Math.random() * 3);
+    if (inAT && /^(melon|cherry)/.test(role) && Math.random() < Math.min(1, atUpMult())) sandLeft = 1 + Math.floor(Math.random() * 3);
     updateUI();
     maybeShowAtResult();
   }, navi);

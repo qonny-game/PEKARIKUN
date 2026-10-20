@@ -1858,3 +1858,6 @@ body.fx-lite .sub-lcd .sl-aurora, body.fx-lite .sub-lcd .sl-fg { display: none; 
 .navi.bang b { display: none; }
 .navi.bang::before { content: attr(data-msg); grid-column: 1; justify-self: center; align-self: center; white-space: nowrap; font-family: 'Orbitron', sans-serif; font-weight: 900; font-size: 30px; letter-spacing: .08em; color: #fff; padding: 2px 22px; border-radius: 999px; border: 3px solid #fff; background: radial-gradient(circle at 50% 30%, #f0c6ff, #7e22ce 75%); box-shadow: 0 0 22px #c084fc; animation: navi-next-p .3s ease-in-out infinite alternate; }
 .navi.bang.red::before { background: radial-gradient(circle at 50% 30%, #ff9a9a, #dc2626 75%); box-shadow: 0 0 20px #ff4d4d; }
+
+/* デバッグ版だけに出す内部グレード表示 */
+.at-grade { margin-left: 6px; font-size: 10px; font-weight: 700; letter-spacing: .04em; color: #fde68a; opacity: .9; }

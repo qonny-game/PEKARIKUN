@@ -75,3 +75,4 @@ md/               このフォルダ
 - **液晶の示唆システム（1.19.35〜、ext/lcd.js）**: 飛来物は役・フラグの示唆のときだけ出す（背景として勝手に出さない）。役示唆=クジラ(スイカ)/風船(ベル)/雲(リプレイ)/鳥(チェリー)/UFO(チャンス目)、ボーナス示唆=星★/ロケット・花火・雷★★/目・宝箱・虹★★★。「その役 or ハズレ」で、外れたら灰色のペカり君マーク `LCDX.miss()`。定義は `ROLE_SPR` `FLAG_SPR` `FLAG_W`、抽選は `planHint(kind)`。矛盾させない原則: サイドランプ・停止ヒントは必ず役と一致（ボーナス確定中のみ例外）。
 - **PUSH（液晶内 `#lcd-push`）**: 第2停止(`hintStop` n=2)から押せる。結果は `pushResult`（対応役 / CHANCE ZONE突入 / ボーナス濃厚 / ハズレ）。押さなくてもリール停止後に自動で出る。ドン3回=発展は `LCDX.don(3)` で次の強示唆を確定させる。
 - **通常時のチェリー・スイカは取りこぼさない**（`stopCol` で auto。ナビ付き(AT)だけ従来どおり）。
+- **ATグレード（1.39.0〜、内部用）**: `startAT` で `atGrade`（1〜20）を抽選（`pickAtGrade`、rules.js の `AT_GRADE`）。`atUpMult()` を、チェリー/スイカの上乗せ成立（cherry.js の cherryEffects / roleEffects）・サンド目の発生（playRole の sandLeft）・ポイント加算（atpoint.js の runRole wrapper）・バトルの敵HP（startBattle）に掛ける。画面には出さず、`window.SHOW_INTERNAL`（debug.html のみ true）のときだけ `#at-grade` を表示。ATの終了で0に戻す（at-result / display.js）。セーブ対象。

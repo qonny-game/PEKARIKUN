@@ -147,6 +147,7 @@ document.getElementById('at-result-close').addEventListener('click', () => {
   stopParticles();
   isAtResult = false;
   atRun = null;
+  atGrade = 0;
   atEnding = false;
   sinceEnd = 0;          // ここからボーナス終了後のゲーム数を数える
   updateAT();

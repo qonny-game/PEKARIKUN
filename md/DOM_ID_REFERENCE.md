@@ -15,14 +15,14 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `auto-opt-btn` | `JS/game/auto.js`, `JS/ext/fx.js`, `JS/ext/trophy.js` |  |
 | `reel-btn` | `JS/ui/reel-view.js` |  |
 | `settings-btn` | `JS/ui/modal.js` |  |
-| `reset-btn` | `JS/ui/display.js`, `JS/ext/exchange.js` |  |
+| `reset-btn` | `JS/ui/display.js`, `JS/ext/exchange.js`, `JS/ext/save.js` |  |
 | `app-version` | `JS/ui/modal.js` |  |
 | `display-diff` | `JS/core/state.js` |  |
 | `display-rate` | `JS/ui/settings-panel.js` |  |
 | `side-l` | `JS/game/flow.js` |  |
 | `gogo-box` | `JS/core/state.js`, `JS/ext/lcd.js` |  |
 | `sub-lcd` | `JS/game/flow.js`, `JS/ext/lcd.js` |  |
-| `lcd-stage` | `JS/game/bonus.js`, `JS/game/at-result.js`, `JS/ext/fx.js`, `JS/ext/lcd.js`, `JS/ext/trophy.js`, `JS/ext/atpoint.js` |  |
+| `lcd-stage` | `JS/game/bonus.js`, `JS/game/at-result.js`, `JS/ext/fx.js`, `JS/ext/lcd.js`, `JS/ext/trophy.js`, `JS/ext/atpoint.js`, `JS/ext/czfreeze.js` |  |
 | `gogo-text-container` | `JS/core/state.js` |  |
 | `gogo-text` | （HTMLのみ） |  |
 | `gogo-subtext` | `JS/core/state.js` |  |
@@ -59,7 +59,7 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `cherry-remain` | `JS/game/cherry.js` |  |
 | `at-toast` | `JS/game/at.js` |  |
 | `get-pop` | `JS/game/bell.js` |  |
-| `navi` | `JS/game/bonus.js` |  |
+| `navi` | `JS/game/reel-spin.js`, `JS/game/bonus.js` |  |
 | `over-pop` | `JS/game/at-result.js` |  |
 | `chance-logo` | `JS/game/bonus.js` |  |
 | `next-hint` | （HTMLのみ） |  |
@@ -72,7 +72,7 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | `align-display` | `JS/core/state.js`, `JS/ext/lcd.js` |  |
 | `reels` | `JS/core/state.js`, `JS/ext/lcd.js` |  |
 | `lever-btn` | `JS/ui/display.js` |  |
-| `hw-push` | `JS/ext/pushspoil.js` |  |
+| `hw-push` | `JS/ext/pushspoil.js`, `JS/ext/urmode.js` |  |
 | `pl-insert` | （HTMLのみ） |  |
 | `pl-start` | （HTMLのみ） |  |
 | `pl-bet` | （HTMLのみ） |  |
@@ -103,11 +103,15 @@ index.html の id と、どのJSで取得しているかの対応。id を足し
 | キー | 使っているJS | 内容 |
 |---|---|---|
 | `pekari-ach-v1` | `JS/ext/fx.js` |  |
-| `pekari-auto-v1` | `JS/game/auto.js` |  |
-| `pekari-fx-v1` | `JS/ext/fx.js` |  |
-| `pekari-opt-v1` | `JS/game/reel-spin.js` |  |
+| `pekari-auto-v1` | `JS/ext/save.js`, `JS/game/auto.js` |  |
+| `pekari-fx-v1` | `JS/ext/fx.js`, `JS/ext/save.js` |  |
+| `pekari-hist-v1` | `JS/ext/save.js` |  |
+| `pekari-money-v1` | `JS/ext/exchange.js` |  |
+| `pekari-opt-v1` | `JS/ext/save.js`, `JS/game/reel-spin.js` |  |
 | `pekari-point-v1` | `JS/ext/exchange.js` |  |
-| `pekari-settings-v5` | `JS/data/config.js` |  |
+| `pekari-settings-v5` | `JS/data/config.js`, `JS/ext/save.js` |  |
+| `pekari-slot-v1` | `JS/ext/save.js` |  |
+| `pekari-state-v1` | `JS/ext/save.js` |  |
 | `pekari-tro-v1` | `JS/ext/trophy.js` |  |
 
 ※ 保存キーは互換性のため変えない（変えると既存ユーザーの設定・記録が消える）。

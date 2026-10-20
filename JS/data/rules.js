@@ -67,3 +67,22 @@ const BENEFITS = {
      bonusP: ボーナス中のサンド目発生率 / bonusWin: ボーナス中に揃えたときの恩恵 (AT確定・SUPER率・オーラ) */
   sand: { upG: [5, 10, 15, 20, 25, 30, 50], bonusP: 0.05, bonusWin: { superP: 0.7, aura: 6 } }
 };
+
+/* ATグレード（内部用・非表示。デバッグ版 debug.html の AT表示にだけ出す）
+   AT開始時に 1〜20 を抽選。高グレードほど 上乗せ（チェリー・スイカ・サンド目・ポイント・バトルの取りやすさ）が多い。
+   SKEW: 大きいほど低グレードが多い / TYPE_BONUS: HEAVEN・DEATH は高グレードが出やすい / SUPER_BONUS: SUPER はさらに上がる
+   UP_MIN〜UP_MAX: 上乗せ抽選にかける倍率（グレード1で UP_MIN、グレード20で UP_MAX）。UP_POW: 中ほどの伸び方 */
+const AT_GRADE = { MAX: 20, SKEW: 1.8, TYPE_BONUS: [0, 3, 6], SUPER_BONUS: 2, UP_MIN: 0.03, UP_MAX: 1.6, UP_POW: 1.2 };
+function pickAtGrade(type, sup) {
+  const A = AT_GRADE;
+  let g = 1 + Math.floor(Math.pow(Math.random(), A.SKEW) * A.MAX);
+  g += (A.TYPE_BONUS[type] || 0) + (sup ? A.SUPER_BONUS : 0);
+  return Math.min(A.MAX, g);
+}
+/* 上乗せ抽選の倍率。ATの外（グレード0）から呼ばれたときは中くらい(10)として扱う */
+function atUpMult() {
+  const A = AT_GRADE;
+  const g = (typeof atGrade !== 'undefined' && atGrade > 0) ? atGrade : 10;
+  return A.UP_MIN + (A.UP_MAX - A.UP_MIN) * Math.pow((g - 1) / (A.MAX - 1), A.UP_POW);
+}
+

@@ -137,6 +137,7 @@ function resetData() {
     cherryGames = 0;
     updateCherry();
     atRun = null;
+    atGrade = 0;
     overQueue = [];
     sinceEnd = null;
     pekaSpecial = null;
