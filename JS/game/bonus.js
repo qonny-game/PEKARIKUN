@@ -168,7 +168,9 @@ function showNavi(order, style = '', partial = false, seven = false) {
   document.body.dataset.navi = style || 'y';
   naviOrder = order;
   naviPartial = !!partial;
-  naviEl.className = 'navi on ' + style + (partial ? ' partial' : '');     // red: チェリー / purple: スイカ (上乗せ確定)
+  const textOnly = style === 'purple' && !partial;   // 紫: 順番の数字は出さず「左から順押し!!!」だけ
+  naviEl.className = 'navi on ' + style + (partial ? ' partial' : '') + (textOnly ? ' msg' : '');     // red: チェリー / purple: スイカ (上乗せ確定)
+  naviEl.dataset.msg = textOnly ? '左から順押し!!!' : '';
   const sevenNavi = !!seven && atSuper && atGames > 0 && !bonusRun;   // SUPERのベルのナビだけ。レア役・サンド目は 1-2-3 のまま   // SUPER中: 第1停止の「1」を7の画像に（色もいろいろ）
   const sevenImg = () => { const k = SEVENS[Math.floor(Math.random() * SEVENS.length)]; return `<img class="navi-7" src="${SYM_IMG[k] || ASSET_DIR.img + k + '.png'}" alt="1">`; };
   [...naviEl.children].forEach((el, c) => {

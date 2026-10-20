@@ -1301,6 +1301,10 @@ button, .gogo-lamp, .stop-btn { touch-action: manipulation; }
 .navi.red b { color: #fff; background: radial-gradient(circle at 35% 30%, #ff9a9a, #dc2626 70%); border-color: #fff; box-shadow: 0 0 12px #ff4d4d; }
 .navi.purple b { width: 40px; height: 40px; font-size: 19px; color: #fff; background: radial-gradient(circle at 35% 30%, #f0c6ff, #7e22ce 70%); border-color: #fff; box-shadow: 0 0 16px #c084fc; }
 .navi.purple b.next { animation: navi-next-p 0.3s ease-in-out infinite alternate; }
+/* 紫の押し順ナビ: 数字は出さず、「左から順押し!!!」の文字だけ */
+.navi.msg { grid-template-columns: 1fr; }
+.navi.msg b { display: none; }
+.navi.msg::before { content: attr(data-msg); grid-column: 1; justify-self: center; align-self: center; white-space: nowrap; font-family: 'Orbitron', 'Noto Sans JP', sans-serif; font-weight: 900; font-size: 17px; letter-spacing: 0.05em; color: #fff; padding: 4px 12px; border-radius: 999px; background: radial-gradient(circle at 50% 30%, #f0c6ff, #7e22ce 75%); border: 2px solid #fff; box-shadow: 0 0 16px #c084fc; animation: navi-next-p 0.3s ease-in-out infinite alternate; }
 @keyframes navi-next-p { from { transform: scale(1); } to { transform: scale(1.3); box-shadow: 0 0 26px #e9b6ff; } }
 
 /* 上乗せ特化ゾーンのロゴ (PEKA CHANCE! とは別配色) */
