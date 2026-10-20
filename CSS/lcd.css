@@ -292,8 +292,8 @@
 .sub-lcd[data-scene="night"] .sl-photo  { opacity: 1; background-image: url(../assets/img/stage/mountain.jpg); }
 .sub-lcd[data-scene="zencho"] .sl-photo,
 .sub-lcd[data-scene="cz"] .sl-photo     { opacity: 1; background-image: url(../assets/img/stage/cave.jpg); }
-/* 1.37.1 AT中(RUSH/HEAVEN/DEATH)=宇宙 / PEKA MOUNTAIN中=山岳 */
-.sub-lcd[data-scene="at"] .sl-photo,
-.sub-lcd[data-scene="heaven"] .sl-photo,
-.sub-lcd[data-scene="death"] .sl-photo  { opacity: 1; background-image: url(../assets/img/stage/space.jpg); }
+/* 1.37.1 AT中(RUSH)=宇宙 / PEKA MOUNTAIN中=山岳 / 1.37.9 HEAVEN=金の雲 / DEATH=赤い雲 */
+.sub-lcd[data-scene="at"] .sl-photo  { opacity: 1; background-image: url(../assets/img/stage/space.jpg); }
+.sub-lcd[data-scene="heaven"] .sl-photo { opacity: 1; background-image: url(../assets/img/stage/heaven.jpg); }
+.sub-lcd[data-scene="death"] .sl-photo  { opacity: 1; background-image: url(../assets/img/stage/death.jpg); }
 .sub-lcd[data-scene="zone"] .sl-photo   { opacity: 1; background-image: url(../assets/img/stage/mountain.jpg); }

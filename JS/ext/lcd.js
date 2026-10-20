@@ -759,10 +759,11 @@ function fitReels() {
     const gNow = (typeof cumulativeGames === 'number') ? cumulativeGames : 0;
     if (!rush0) sideRushG = null; else if (sideRushG == null) sideRushG = gNow;
     if (!mtn0) sideMtnG = null; else if (sideMtnG == null) sideMtnG = gNow;
-    const rush = rush0 && (gNow - sideRushG) < 2;
+    const rush = rush0;   // 右パネルのRUSHランプ: RUSH中ずっと点灯
+    const rushLogo = rush0 && (gNow - sideRushG) < 2;   // 中央液晶のRUSHロゴ: 突入から2ゲームで消す
     const mtnLit = mtn0 && (gNow - sideMtnG) < 2;
     /* 液晶側のロゴ: 突入演出のあと、2ゲームのあいだ背景に残して消す */
-    const lbMode = (rush && !isPushing && !isRushing) ? 'rush' : (mtnLit && !document.querySelector('.lcd-zoneintro')) ? 'mtn' : '';
+    const lbMode = (rushLogo && !isPushing && !isRushing) ? 'rush' : (mtnLit && !document.querySelector('.lcd-zoneintro')) ? 'mtn' : '';
     if (stageEl) {
       let lb = stageEl.querySelector('.lcd-logobg');
       if (lbMode && !lb) { lb = document.createElement('div'); lb.className = 'lcd-logobg'; stageEl.insertBefore(lb, stageEl.firstChild); }
@@ -772,7 +773,7 @@ function fitReels() {
     rlRush.forEach(e => e.classList.toggle('lit', !!rush));
     rlChance.forEach(e => e.classList.toggle('lit', chance));
     const inBonus = typeof bonusRun !== 'undefined' && bonusRun;
-    const cz = !inBonus && !rush && (czLeft > 0 || (window.czFrozen != null && zenchoLeft > 0));
+    const cz = !inBonus && !rush0 && (czLeft > 0 || (window.czFrozen != null && zenchoLeft > 0));
     document.querySelectorAll('.rl.cz').forEach(e => e.classList.toggle('lit', !!cz));
     document.querySelectorAll('.rl.mtn').forEach(e => e.classList.toggle('lit', mtnLit));
     const cabEl = document.querySelector('.cabinet'); if (cabEl) cabEl.classList.toggle('in-zone', !!(inBonus && bonusRun.zone));   // PEKA PEKA MOUNTAIN中は筐体を緑ベースに
