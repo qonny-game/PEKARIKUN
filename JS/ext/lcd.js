@@ -667,7 +667,27 @@ function fitReels() {
   window.onCzEnd = function () { if (isDebugRun) return; setTimeout(() => { window.panelUpDone = true; if (czLeft === 0 && !window.czHoldNow) say('', 'ゾーン終了…', 2800, 'sad', 'sad'); }, 400); };   // 連続演出でHOLDされたら終了しない
   window.onCzHold = function () { if (isDebugRun) return; setTimeout(() => { act('hop'); }, 100); };
   window.czKeepClear = function () { const E = window.czKeep; window.czKeep = null; if (E) { E.classList.add('out'); setTimeout(() => E.remove(), 400); } };
-window.onCzSuccess = function () {
+/* BONUS確定: ビガビガ!と鳴って、強烈にフラッシュ (液晶いっぱいに白と色を交互に) */
+  window.bigaFlash = function () {
+    if (isDebugRun || !stageEl) return;
+    const F = document.createElement('div');
+    F.className = 'lcd-biga';
+    stageEl.appendChild(F);
+    setTimeout(() => F.remove(), 1700);
+    if (window.shakeMain) shakeMain(500);
+    if (!soundEnabled) return;
+    initAudio();
+    const t0 = audioCtx.currentTime + 0.01;
+    for (let i = 0; i < 30; i++) {   // ビガビガ: 高い音と低い音を速く交互に (約1.4秒)
+      const t = t0 + i * 0.047, hi = i % 2 === 0;
+      tone(hi ? 2093 : 1175, t, 0.04, 'square', 0.16);
+      tone(hi ? 1568 : 880, t, 0.04, 'sawtooth', 0.1);
+      if (i % 4 === 0) tone(90, t, 0.1, 'sine', 0.3);
+    }
+    tone(55, t0, 0.9, 'sine', 0.42);   // 腹に響く低音
+    tone(2637, t0 + 1.42, 0.5, 'triangle', 0.12);
+  };
+  window.onCzSuccess = function () {
     if (isDebugRun || !stageEl) return;
     window.czSevenColor = SEVENS[Math.floor(Math.random() * SEVENS.length)];   // 予告の7の色（揃えるときも同じ色を狙う）
     window.sideConfirm = true;   // 確定したら、以降サイドのGOGO!ランプは(ボーナス開始まで)光り続ける
@@ -679,7 +699,7 @@ window.onCzSuccess = function () {
       stageEl.appendChild(E);
       window.czKeep = E;   // 777が揃うまで液晶に残す
       setTimeout(() => { if (window.czKeep !== E) return; E.classList.add('keep'); const im = SYM_IMG[window.czSevenColor] || ASSET_DIR.img + window.czSevenColor + '.png'; E.insertAdjacentHTML('beforeend', `<div class="cw-sev"><div class="cw-imgs"><img src="${im}"><img src="${im}"><img src="${im}"></div></div>`); }, 2200);
-      act('jump'); swoosh(3);
+      act('jump'); swoosh(3); if (window.bigaFlash) bigaFlash();
       window.sideRb = Date.now() + 3200;   // 確定表示の間は、サイドのGOGO!がちかちか虹色
       for (let i = 0; i < 9; i++) setTimeout(() => {
         if (window.shakeMain) shakeMain(140); burst();

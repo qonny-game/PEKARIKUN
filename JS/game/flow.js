@@ -294,6 +294,7 @@ window.onFlagSeven = function () {
   window.pekaLit = true;
   lightLamp();
   if (window.LCDX) { LCDX.say('PEKA!!', '7揃い!!', 2400, 'happy', 'jump'); LCDX.spawn('fire', 3); }
+  if (window.bigaFlash) bigaFlash();
   updateUI();
   onBonusAligned();
 };

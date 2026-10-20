@@ -10,7 +10,7 @@
 | 4 | `JS/core/state.js` | ゲーム状態変数・UI要素の参照 | 85 | gameHistory, bonusLog, recordPoint, roleStat, totalGames, cumulativeGames, bigCount, atSuper …他61 |
 | 5 | `JS/core/audio.js` | 音声（効果音・ペカリ音・枚数表示のファンファーレ） | 282 | audioCtx, initAudio, SOUND_FILES, soundAudio, soundBuffers, VVV_MIN_COINS, SAMPLE_MAX_SEC, SAMPLE_FADE_SEC …他11 |
 | 6 | `JS/core/effects.js` | 画面演出（フラッシュ・パーティクル・シェイク） | 136 | flashTimer, triggerFlash, tripleFlash, shakeMain, particles, particleMode, particleRAF, resizeCanvas …他7 |
-| 7 | `JS/game/flow.js` | ゲーム進行の中心（レバーON・当選処理・ペカ演出・枚数表示） | 743 | PEKA_FX, pickPekaFx, pekaLater, clearPekaTimers, sideL, sideR, SIDE_COLOR, sideTok …他61 |
+| 7 | `JS/game/flow.js` | ゲーム進行の中心（レバーON・当選処理・ペカ演出・枚数表示） | 744 | PEKA_FX, pickPekaFx, pekaLater, clearPekaTimers, sideL, sideR, SIDE_COLOR, sideTok …他61 |
 | 8 | `JS/game/reels.js` | リール表示・リール配列・役の組み合わせ | 137 | REEL_LINES, EMOJI, SYM_FALLBACK, symbolHTML, lineOf, STRIP_LEN, STRIPS, SEVENS …他13 |
 | 9 | `JS/game/reel-spin.js` | リール回転・目押し停止・予告・役の結果 | 434 | OPT_KEY, AUTO_STOP, saveOpt, SPIN_SPEED, SLIP_MAX, CELL_H, reelSpin, isReelSpinning …他31 |
 | 10 | `JS/game/bell.js` | ベル | 140 | BELL_TYPES, pickBellType, bellBadge, getPop, getRAF, rainCoins, playJaraJara, getRumbleLen …他6 |
@@ -28,7 +28,7 @@
 | 22 | `JS/ui/boot.js` | 起動時の初期化（iOS対策・画面スリープ防止） | 29 | lastTouchEnd |
 | 23 | `JS/ext/bgm.js` | BGMエンジン (1.20.24) | 249 |  |
 | 24 | `JS/ext/fx.js` | 追加演出 | 1100 |  |
-| 25 | `JS/ext/lcd.js` | 演出液晶 | 900 | fitReels |
+| 25 | `JS/ext/lcd.js` | 演出液晶 | 920 | fitReels |
 | 26 | `JS/ext/trophy.js` | トロフィー / ミッション / ランキング | 218 |  |
 | 27 | `JS/ext/exchange.js` | 換金 / PEKA POINT | 99 |  |
 | 28 | `JS/ext/pushspoil.js` | 停止ボタンの右の常設PUSHボタン（先ばれ） | 53 |  |
