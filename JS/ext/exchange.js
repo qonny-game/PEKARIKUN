@@ -1,7 +1,7 @@
 /* =========================================================
    換金 / PEKA MONEY (exchange.js)  ※ trophy.js と同様、最後のほうに読み込む
    - 100枚 = 2000 MONEY (1枚 = 20 MONEY)。メダル(差枚数) -> MONEY、MONEY -> メダル のどちらにも交換できる
-   - 自動でMONEYに交換する設定 (差枚数が100枚以上になった分を、ゲームの合間に交換)
+   - 自動交換・自動補充は行わない (1.37.15 で廃止。ボタンでの手動交換のみ)
    - MONEY は localStorage に保存: データリセットやブラウザを閉じても消えない
    - 旧 PEKA POINT (1P = 50枚相当 / 100枚 = 2P) の残高は、初回読み込み時に 1000倍して MONEY に移す
    ========================================================= */
@@ -114,7 +114,7 @@
       notify('メダルが0枚になったので 100枚補充: -2000M', false);
     }
   }
-  setInterval(() => { autoTick(); if (modal.classList.contains('open')) refresh(); }, 700);
+  setInterval(() => { if (modal.classList.contains('open')) refresh(); }, 700);   // 自動交換・自動補充は廃止（保存機能があるため）。交換は手動のみ
   refresh();
   window.EXCH = { D, toMoney, toMedal };   // 今後の交換先を増やすとき用の入口
 })();

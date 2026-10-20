@@ -44,7 +44,7 @@ function startReels(plan, onDone) {
   spinBtn.innerText = spinBtn.dataset.navi ? `ストップ ${spinBtn.dataset.navi}` : 'ストップ';
   cols.forEach(drawOverlay);
   reelSpin.raf = requestAnimationFrame(reelFrame);
-  if (AUTO_STOP) [0, 1, 2].forEach(c => reelSpin.timers.push(setTimeout(() => stopCol(c, true), 380 + c * 260)));
+  if (AUTO_STOP) ((plan.kind === 'sand' || plan.sandMid) ? [1, 0, 2] : [0, 1, 2]).forEach((c, i) => reelSpin.timers.push(setTimeout(() => stopCol(c, true), 380 + i * 260)));   // サンド目は中→左→右
 }
 
 function drawOverlay(col) {
@@ -229,7 +229,6 @@ function stopCol(c, auto) {
 /* レバー/タップで、止まっていないリールを左から順に止める */
 function stopNextReel() {
   if (!reelSpin) return;
-  // サンド目: 中リールを最初に止める
   // 押し順ナビ中は、タップでもナビ通りの順に止まる
   if (naviOrder) {
     const nc = naviOrder.find(x => reelSpin.cols[x].state === 'spin');
