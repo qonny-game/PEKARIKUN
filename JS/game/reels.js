@@ -111,9 +111,9 @@ function pickMelonPlan() {
 }
 function planFor(kind) {
   if (kind === 'sand') return { kind: 'sand', ts: pickCombo('sand') };
-  if (kind === 'bell2' && typeof atSuper !== 'undefined' && atSuper && atGames > 0 && !bonusRun) return { kind: 'fixed', ts: pickCombo('bell15s') };   // SUPER中の15枚役: 7・ベル・ベル
+  if (kind === 'bell2' && typeof atSuper !== 'undefined' && atSuper && atGames > 0 && !bonusRun) return { kind: 'superbell', ts: pickCombo('bell15s') };   // SUPER中の15枚役: 7・ベル・ベル
   if (kind === 'lose' && window.contraMixed) { window.contraMixed = false; return { kind: 'fixed', ts: pickCombo('mixed7') }; }   // 矛盾演出: 色違いの7が揃う
-  if (kind === 'lose' && sandReachNow) return { kind: 'fixed', ts: pickCombo('sand') };   // 通常時のリーチ目（サンド目の形で止まる）
+  if (kind === 'lose' && sandReachNow) return { kind: 'fixed', ts: pickCombo('sand'), sandMid: atGames > 0 && !bonusRun };   // AT中のサンド目は中リールから（通常時は左からのまま）   // 通常時のリーチ目（サンド目の形で止まる）
   if (kind === 'cherry' || kind === 'cherryW' || kind === 'cherryS') return { kind: 'cherry', ts: pickCombo(kind), strong: kind === 'cherryS' };
   return kind === 'melon' ? pickMelonPlan() : { kind: 'fixed', ts: pickCombo(kind) };
 }

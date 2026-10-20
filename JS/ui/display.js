@@ -93,10 +93,12 @@ document.querySelectorAll('.stop-btn').forEach(b => {
     e.preventDefault();
     hideLastCount();   // STOP を押したら LAST カウントダウンは消す
     if (!isReelSpinning) return;
-    const c = +b.dataset.stop;
+    let c = +b.dataset.stop;
     const rs = reelSpin;
+    // サンド目（AT中のリーチ目含む）: 下パネルのボタンは中リールから止める
+    if (rs && (rs.plan.kind === 'sand' || rs.plan.sandMid) && rs.order.length === 0 && c !== 1 && rs.cols[1].state === 'spin') c = 1;
     // 第一停止が左以外: 左から押すことを推奨 (ボーナス中は押し順ナビが優先)
-    if (rs && rs.order.length === 0 && c !== 0 && !naviOrder && rs.plan.kind !== 'seven' && rs.plan.kind !== 'reg' && rs.plan.kind !== 'sand' && rs.plan.kind !== 'superbell') {
+    if (rs && rs.order.length === 0 && c !== 0 && !naviOrder && rs.plan.kind !== 'seven' && rs.plan.kind !== 'reg' && rs.plan.kind !== 'sand' && rs.plan.kind !== 'superbell' && !rs.plan.sandMid) {
       showAtToast('左リールから停止を推奨');
       atToast.classList.add('advice');
     }

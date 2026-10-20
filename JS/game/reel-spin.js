@@ -102,8 +102,7 @@ function stopCol(c, auto) {
   const rs = reelSpin;
   if (!rs) return;
   if (rs.plan.assist) auto = true;     // ボーナスの7揃え: 押せば必ず揃う(アシスト)。止めるのは自分のボタン
-  // サンド目: 第2リール(中)を最初に目押しで止める。左右は自動 (中より先の左・右のボタンは無効)
-  if (rs.plan.kind === 'sand' && rs.order.length === 0 && c !== 1) { showAtToast('中リールから止める'); return; }
+  // サンド目: 第2リール(中)を目押しで止める。左右は自動 (下パネルのボタン・オートストップは中から。タップは左右どちらからでも可)
   // SUPERの15枚役: 第1停止は左リールの7を目押し。左より先の中・右のボタンは無効
   if (rs.plan.kind === 'superbell' && rs.order.length === 0 && c !== 0) { showAtToast('左リールの7から止める'); return; }
   // 押し順ナビ付きのチェリー/スイカ: ナビ通りに止めれば取りこぼさない (サンド目・SUPERの15枚役は目押しなのでナビ一致で自動にしない)
@@ -231,7 +230,6 @@ function stopCol(c, auto) {
 function stopNextReel() {
   if (!reelSpin) return;
   // サンド目: 中リールを最初に止める
-  if (reelSpin.plan.kind === 'sand' && reelSpin.order.length === 0 && reelSpin.cols[1].state === 'spin') { stopCol(1, false); return; }
   // 押し順ナビ中は、タップでもナビ通りの順に止まる
   if (naviOrder) {
     const nc = naviOrder.find(x => reelSpin.cols[x].state === 'spin');
