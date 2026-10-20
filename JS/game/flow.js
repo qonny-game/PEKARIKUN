@@ -487,6 +487,7 @@ function handleSpin() {
     return;
   }
 
+  hideNavi();   // 通常のゲームは押し順ナビなし（残っている表示を消す）
   playClickSound();
   setLedWin(0);
 
@@ -662,10 +663,11 @@ function handleSpin() {
     let type = pickBellType(inAT);
     // AT中のベル: 揃いやすいが、ナビが出ないことがあり、ナビなしのときはハズレ目になることもある
     const atNavi = inAT && Math.random() < 0.85 ? naviFor('') : null;   // ベルのナビは黄
-    if (atNavi && atSuper) { atNavi.seven = true; type = 2; }   // SUPERのナビは第1停止が7。出目は 7・ベル・ベル の15枚役
+    if (atNavi && atSuper) { atNavi.seven = true; type = 2; atNavi.order = [0, ...atNavi.order.filter(c => c !== 0)]; }   // SUPERのナビは第1停止が左の7。出目は 7・ベル・ベル の15枚役
     const atBellMiss = inAT && !atNavi && Math.random() < 0.1;
-    runRole(atBellMiss ? 'lose' : 'bell' + type, () => {
+    runRole(atBellMiss ? 'lose' : 'bell' + type, res => {
       if (atBellMiss) { stopTension(); updateUI(); maybeShowAtResult(); return; }
+      if (type === 2 && atSuper && res && res.success === false) { stopTension(); showAtToast('MISS'); updateUI(); maybeShowAtResult(); return; }   // SUPERの7を外した: 取りこぼし
       stopTension();
       diffCoins += BELL_TYPES[type].coins;
       setLedWin(BELL_TYPES[type].coins);

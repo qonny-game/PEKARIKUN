@@ -95,6 +95,7 @@ function sandSound() {
 }
 /* サンド目: 第2リールを目押しで止める (バー・チェリー・バー)。揃えたら AT に上乗せ、外れは何も無し */
 function playSand() {
+  hideNavi();
   const N = SAND_UP[Math.floor(Math.random() * SAND_UP.length)];
   if (window.FXBanner) window.FXBanner('サンド目をそろえろ！！！', '', 'red', true, 1700);   // 液晶いっぱいにあおる
   reelsEl.classList.add('focus-mid');

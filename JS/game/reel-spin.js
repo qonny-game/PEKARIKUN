@@ -23,7 +23,7 @@ const colSym = (col, idx) => (col.ov[idx] !== undefined ? col.ov[idx] : stripSym
 function startReels(plan, onDone) {
   if (window.flag7Game && !plan.assist) plan.flag7 = true;   // ボーナスフラグ中: 目押しで7が揃えられる
   if (window.wmNext) { plan.wm = true; window.wmNext = false; }   // 白7・スイカ・白7 を第1リールに止める（当選確定のゲームだけ）
-  if (!naviOrder) delete spinBtn.dataset.navi;
+  if (!naviOrder) { delete spinBtn.dataset.navi; delete document.body.dataset.navi; if (naviEl) naviEl.className = 'navi'; }   // ナビなしの回転: 残っている押し順の表示を消す
   reelsPrepareDOM();
   bellBadge.classList.remove('show');
   alignDisplay.classList.remove('show-align');

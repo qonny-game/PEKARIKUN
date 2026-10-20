@@ -235,6 +235,7 @@ function bonusRare(b) {
 }
 /* BIG中のサンド目: 揃えたら一発でPEKA RUSH確定。SUPERも優遇 */
 function bonusSand(b) {
+  hideNavi();
   if (window.FXBanner) window.FXBanner('サンド目をそろえろ！！！', '', 'red', true, 1700);
   reelsEl.classList.add('focus-mid');
   runRole('sand', res => {
