@@ -90,6 +90,7 @@ function landCol(col) {
     F.className = 'wm-colflash'; reelsEl.appendChild(F); setTimeout(() => F.remove(), 1800);
     if (typeof sandSound === 'function') sandSound();
     if (window.LCDX && LCDX.wmWin) LCDX.wmWin();
+    if (bonusRun && !bonusRun.zone) bonusRun.confirmShown = true;   // PEKA CHANCE: 確定表示のあとは LEVEL UP・枚GET を出さない
   }
   // サンド目(中リールのバー・チェリー・バー)が止まった直後にビカビカ。上乗せなどは第3停止後
   const rs = reelSpin;

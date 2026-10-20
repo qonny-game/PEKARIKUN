@@ -7,11 +7,36 @@
 // ==========================================
 let audioCtx = null;
 
+/* ---------- 音を止める: 画面を閉じた・隠したとき / 端末がサイレント(マナー)のとき ---------- */
+let appHidden = document.hidden;   // 画面が見えていない間は、どの音も鳴らさない
+const liveAudios = new Set();      // 作った HTMLAudio を全部覚えておく (止めるため)
+const _AudioCtor = window.Audio;
+window.Audio = function (src) { const a = new _AudioCtor(src); liveAudios.add(a); return a; };
+{
+  const _play = HTMLMediaElement.prototype.play;
+  HTMLMediaElement.prototype.play = function () {
+    if (appHidden) return Promise.reject(new Error('hidden'));   // 画面を隠している間は再生させない
+    return _play.apply(this, arguments);
+  };
+}
+function stopAllSound() {
+  liveAudios.forEach(a => { try { a.pause(); } catch (e) { /* 無視 */ } });
+  if (audioCtx && audioCtx.state === 'running') audioCtx.suspend().catch(() => {});
+}
+function setAppHidden(hidden) {
+  appHidden = !!hidden;
+  if (appHidden) stopAllSound();   // 次に画面を開いても鳴らない。次の操作で音は再開する (initAudio)
+}
+document.addEventListener('visibilitychange', () => setAppHidden(document.hidden));
+window.addEventListener('pagehide', () => setAppHidden(true));
+/* iPhone/iPad: マナーモード(サイレント)のときは音を出さない (Safari 16.4以降。対応していない端末では何もしない) */
+try { if (navigator.audioSession) navigator.audioSession.type = 'ambient'; } catch (e) { /* 対応していない */ }
+
 function initAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
-  if (audioCtx.state === 'suspended') {
+  if (audioCtx.state === 'suspended' && !appHidden) {
     audioCtx.resume();
   }
 }
@@ -45,7 +70,7 @@ const SAMPLE_MAX_SEC = { vvv: 2.8 };
 const SAMPLE_FADE_SEC = 0.15;
 
 function playSampleOnce(name) {
-  if (!soundEnabled) return;
+  if (!soundEnabled || appHidden) return;
   const max = SAMPLE_MAX_SEC[name];
   const buf = soundBuffers[name];
   if (buf && audioCtx) {
@@ -66,6 +91,7 @@ function playSampleOnce(name) {
     return;
   }
   const a = soundAudio[name].cloneNode();
+  liveAudios.add(a);
   a.currentTime = 0;
   if (max) {
     const steps = 6;
@@ -90,7 +116,7 @@ const voiceAudio = {};
 const EXCLUSIVE_VOICES = ['left', 'center', 'right', 'get'];   // CHANCE は対象外
 Object.keys(VOICE_FILES).forEach(k => { const a = new Audio(ASSET_DIR.sound + VOICE_FILES[k] + '.mp3'); a.preload = 'auto'; a.volume = 0.9; voiceAudio[k] = a; });
 function playVoice(name) {
-  if (!soundEnabled) return;
+  if (!soundEnabled || appHidden) return;
   const a = voiceAudio[name];
   if (!a) return;
   if (EXCLUSIVE_VOICES.includes(name)) EXCLUSIVE_VOICES.forEach(k => { if (k !== name) { const o = voiceAudio[k]; if (o && !o.paused) { o.pause(); o.currentTime = 0; } } });   // ナビ(LEFT/CENTER/RIGHT)とGETは、次の声が鳴ったら前の声を止める
@@ -99,7 +125,7 @@ function playVoice(name) {
 
 /* ペカリ音 (name: 'gako' | 'vvv' を count回 gapミリ秒刻みで連続再生) */
 function playGakoSound(name = 'gako', count = 1, gap = 100) {
-  if (!soundEnabled) return;
+  if (!soundEnabled || appHidden) return;
   for (let i = 0; i < count; i++) {
     if (i === 0) playSampleOnce(name);
     else setTimeout(() => playSampleOnce(name), i * gap);

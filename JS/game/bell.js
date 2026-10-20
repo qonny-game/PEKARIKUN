@@ -86,6 +86,8 @@ function getRumble(coins, ctx) {
   o2.connect(g2); g2.connect(ac.destination); o2.start(t0); o2.stop(t0 + len + 0.35);
 }
 function showGet(coins) {
+  // PEKA CHANCE: 確定表示のあとは「枚 GET」を出さない（PAYOUTの数字だけ）
+  if (bonusRun && !bonusRun.zone && bonusRun.confirmShown) { hideGet(); return; }
   // 演出を優先する場面では「枚 GET」を出さない（PAYOUTの数字だけ）
   if (isSuspense || (window.FX && FX.busy > 0) || document.querySelector('.lcd-czwin,.lcd-crackfx,.lcd-levercall,.lcd-bigintro,.lcd-zoneintro,.lcd-sandwin,.lcd-sevhint,.lcd-lvup')) { cancelAnimationFrame(getRAF); getPop.classList.remove('show'); return; }
   playVoice('get');   // GET の声

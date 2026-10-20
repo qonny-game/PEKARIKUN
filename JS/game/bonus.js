@@ -228,9 +228,9 @@ function bonusRare(b) {
   b.aura = Math.min(6, b.aura + n);
   if (b.aura >= 6) b.atWin = true;   // 虹オーラはAT確定 (レア役で虹になってもAT非当選にならない)
   setAura(b.aura, true);
-  playAuraUp(b.aura);
+  if (!b.confirmShown) playAuraUp(b.aura);
   if (!b.atWin && Math.random() < 0.15 * n) b.atWin = true;
-  if (window.LCDX) { LCDX.say(name, strong ? 'LEVEL UP x2!!' : 'LEVEL UP!', 1800, 'happy', 'jump'); LCDX.tag(strong ? 'オーラ 2段階UP' : 'オーラ UP', strong ? 'f3' : 'f2', 1800); }
+  if (window.LCDX && !b.confirmShown) { LCDX.say(name, strong ? 'LEVEL UP x2!!' : 'LEVEL UP!', 1800, 'happy', 'jump'); LCDX.tag(strong ? 'オーラ 2段階UP' : 'オーラ UP', strong ? 'f3' : 'f2', 1800); }
   if (strong) triggerFlash();
 }
 /* BIG中のサンド目: 揃えたら一発でPEKA RUSH確定。SUPERも優遇 */
@@ -357,8 +357,8 @@ function bonusGameMain() {
       b.aura = Math.min(6, b.aura + 1);
       if (b.aura >= 6) b.atWin = true;   // 虹オーラはAT確定
       setAura(b.aura, true);
-      playAuraUp(b.aura);
-      if (b.aura >= 4) triggerFlash();
+      if (!b.confirmShown) playAuraUp(b.aura);
+      if (b.aura >= 4 && !b.confirmShown) triggerFlash();
     }
     updateAT();
     updateUI();

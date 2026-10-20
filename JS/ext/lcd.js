@@ -792,7 +792,7 @@ function fitReels() {
   const _setAura = window.setAura;
   if (typeof _setAura === 'function') window.setAura = setAura = function (level, pop) {
     const r = _setAura.apply(this, arguments);
-    if (pop && level > 0 && !isDebugRun && bonusRun && !bonusRun.zone) {
+    if (pop && level > 0 && !isDebugRun && bonusRun && !bonusRun.zone && !bonusRun.confirmShown) {
       const lv = Math.min(level, 6);
       const L = document.createElement('div');   // 液晶の中央に大きく表示。表示中に色が変わる
       L.className = 'lcd-lvup';
