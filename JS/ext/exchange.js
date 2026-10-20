@@ -1,7 +1,7 @@
 /* =========================================================
    換金 / PEKA MONEY (exchange.js)  ※ trophy.js と同様、最後のほうに読み込む
    - 100枚 = 2000 MONEY (1枚 = 20 MONEY)。メダル(差枚数) -> MONEY、MONEY -> メダル のどちらにも交換できる
-   - 自動交換・自動補充は行わない (1.37.15 で廃止。ボタンでの手動交換のみ)
+   - 自動補充のみ行う: メダルが0枚になったら -1000M で 50枚。MONEY への自動交換(100枚=2000M)は行わない (1.37.15 で停止。交換は手動のみ)
    - MONEY は localStorage に保存: データリセットやブラウザを閉じても消えない
    - 旧 PEKA POINT (1P = 50枚相当 / 100枚 = 2P) の残高は、初回読み込み時に 1000倍して MONEY に移す
    ========================================================= */
@@ -102,19 +102,17 @@
     ptView.classList.remove('up', 'down'); void ptView.offsetWidth; ptView.classList.add(up ? 'up' : 'down');
     setTimeout(() => ptView.classList.remove('up', 'down'), 2200);
   }
-  /* 自動: 差枚数が100枚以上 -> MONEYへ交換 / メダル(50枚+差枚数)が0以下 -> 100枚補充(-2000M)。ゲームの合間だけ */
+  /* 自動補充だけ行う: メダル(50枚+差枚数)が0以下 -> 50枚補充(-1000M)。ゲームの合間だけ。
+     100枚ごとの MONEY への自動交換は行わない (1.37.15 で停止。交換は手動のみ) */
+  const REFILL_COINS = 50, REFILL_MONEY = 1000;
   function autoTick() {
     if (isReelSpinning || isPushing || (typeof isRushing !== 'undefined' && isRushing) || (typeof isAtResult !== 'undefined' && isAtResult)) return;
-    if (diffCoins >= RATE_COINS) {
-      const coins = Math.floor(diffCoins / RATE_COINS) * RATE_COINS;
-      const n = toMoney(1e9);
-      if (n) notify(`${coins}枚を PEKA MONEY に交換: +${n * RATE_MONEY}M`, true);
-    } else if (50 + diffCoins <= 0) {
-      toMedal(1);
-      notify('メダルが0枚になったので 100枚補充: -2000M', false);
+    if (50 + diffCoins <= 0) {
+      D.pt -= REFILL_MONEY; diffCoins += REFILL_COINS; save(); refresh();
+      notify('メダルが0枚になったので 50枚補充: -1000M', false);
     }
   }
-  setInterval(() => { if (modal.classList.contains('open')) refresh(); }, 700);   // 自動交換・自動補充は廃止（保存機能があるため）。交換は手動のみ
+  setInterval(() => { autoTick(); if (modal.classList.contains('open')) refresh(); }, 700);
   refresh();
   window.EXCH = { D, toMoney, toMedal };   // 今後の交換先を増やすとき用の入口
 })();
