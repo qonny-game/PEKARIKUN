@@ -11,13 +11,13 @@
 | 5 | `JS/core/state.js` | ゲーム状態変数・UI要素の参照 | 87 | gameHistory, bonusLog, recordPoint, roleStat, totalGames, cumulativeGames, bigCount, atSuper …他63 |
 | 6 | `JS/core/audio.js` | 音声（効果音・ペカリ音・枚数表示のファンファーレ） | 308 | audioCtx, appHidden, liveAudios, _AudioCtor, stopAllSound, setAppHidden, initAudio, SOUND_FILES …他16 |
 | 7 | `JS/core/effects.js` | 画面演出（フラッシュ・パーティクル・シェイク） | 136 | flashTimer, triggerFlash, tripleFlash, shakeMain, particles, particleMode, particleRAF, resizeCanvas …他7 |
-| 8 | `JS/game/flow.js` | ゲーム進行の中心（レバーON・当選処理・ペカ演出・枚数表示） | 760 | PEKA_FX, pickPekaFx, pekaLater, clearPekaTimers, sideL, sideR, SIDE_COLOR, sideTok …他63 |
+| 8 | `JS/game/flow.js` | ゲーム進行の中心（レバーON・当選処理・ペカ演出・枚数表示） | 774 | PEKA_FX, pickPekaFx, pekaLater, clearPekaTimers, sideL, sideR, SIDE_COLOR, sideTok …他66 |
 | 9 | `JS/game/reels.js` | リール表示・リール配列・役の組み合わせ | 137 | REEL_LINES, EMOJI, SYM_FALLBACK, symbolHTML, lineOf, STRIP_LEN, STRIPS, SEVENS …他13 |
 | 10 | `JS/game/reel-spin.js` | リール回転・目押し停止・予告・役の結果 | 450 | OPT_KEY, AUTO_STOP, saveOpt, SPIN_SPEED, wideCands, stopWhere, SLIP_MAX, CELL_H …他33 |
 | 11 | `JS/game/bell.js` | ベル | 142 | BELL_TYPES, pickBellType, bellBadge, getPop, getRAF, rainCoins, playJaraJara, getRumbleLen …他6 |
 | 12 | `JS/game/cherry.js` | チェリー | 191 | cherryStatus, cherryRemain, updateCherry, CHERRY_AT_CHOICES, pickCherryAtG, setBoost, cherryEffects, ROLE_INFO …他16 |
 | 13 | `JS/game/at.js` | AT（ペカラッシュ）・PUSH演出 | 154 | atStatus, atRemain, atLabel, atToast, updateAT, atUpOpen, grantUp, updateAtGrade …他12 |
-| 14 | `JS/game/bonus.js` | ボーナス消化・押し順ナビ・ドンドンドン | 504 | AURA_NAMES, AURA_WIN_W, AURA_LOSE_W, auraEl, atEntryRateFor, pickAuraLevel, ZONE_G_CHOICES, ZONE_G_WEIGHTS …他37 |
+| 14 | `JS/game/bonus.js` | ボーナス消化・押し順ナビ・ドンドンドン | 505 | AURA_NAMES, AURA_WIN_W, AURA_LOSE_W, auraEl, atEntryRateFor, pickAuraLevel, ZONE_G_CHOICES, ZONE_G_WEIGHTS …他37 |
 | 15 | `JS/game/at-result.js` | ATリザルト・獲得枚数OVER・次回示唆 | 378 | atResultEl, atResultGain, arHintBar, arHintText, atResultRAF, MODES, HINT_LABELS, decideNextMode …他27 |
 | 16 | `JS/ui/display.js` | 電光掲示（LED・ランプ表示） | 223 | setOn, setLed, ledWinEl, ledCreditEl, ledTotalEl, ledWin, setLedWin, creditNow …他13 |
 | 17 | `JS/game/auto.js` | オートプレイ・サウンドボタン | 168 | autoBtn, AUTO_KEY, AUTO_SPEEDS, AUTO_STOPS, AUTO_OPT, saveAutoOpt, AUTOPLAY, autoIdle …他20 |

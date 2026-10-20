@@ -171,7 +171,20 @@ const AT_TYPES = [
 ];
 // ATタイプの出現比率 [RUSH, HEAVEN, DEATH] (設定1〜6 / 設定7)
 let atType = 0;   // いまのATのタイプ (0:RUSH 1:HEAVEN 2:DEATH)
-function pickAtType() { return weightedPick(AT_TYPE_W); }
+/* ATの種類の抽選（通常70 : SUPER 20 : HEAVEN・DEATH 10 が目安）
+   SUPERは 通常14 / HEAVEN 4 / DEATH 2 で固定。HEAVEN・DEATH（SUPERなし）の合計は AT_TYPE_W の HEAVEN+DEATH で決まり、
+   設定4(79:15:6)のとき 10%。設定が上がると増え、下がると減る（比率 HEAVEN:DEATH = 6:4 は固定） */
+const AT_SUPER_SHARE = [[0, true, 14], [1, true, 4], [2, true, 2]];
+const AT_HD_REF = 21;   // AT_TYPE_W の HEAVEN+DEATH の基準（設定4）
+function pickAtMix() {
+  const f = Math.max(0, AT_TYPE_W[1] + AT_TYPE_W[2]) / AT_HD_REF;
+  const items = [[0, false, 80 - 10 * f], [1, false, 6 * f], [2, false, 4 * f], ...AT_SUPER_SHARE.map(([t, s, w]) => [t, s, w])];
+  const tot = items.reduce((a, x) => a + x[2], 0);
+  let r = Math.random() * tot;
+  for (const [type, sup, w] of items) { r -= w; if (r < 0) return { type, sup }; }
+  return { type: 0, sup: false };
+}
+function pickAtType() { return pickAtMix().type; }
 
 /* ---------- フリーズ → PEKA! PEKA! MOUNTAIN! 直撃 ---------- */
 const FREEZE_RATE = 1 / 1500;   // 通常時1ゲームあたりのフリーズ確率
@@ -348,7 +361,8 @@ function directAT() {
     totalGames = 0; modeGames = 0; modeMult = 1;
     atCount++;
     updateUI();
-    startAT(undefined, undefined, Math.random() < 0.25);
+    const m = pickAtMix();
+    startAT(undefined, m.type, m.sup);
   }, 1900);
 }
 /* 前兆: スイカ・チェリー・チャンス目が契機。前兆のあとCHANCE ZONEへ（通常→前兆→CZ→BIG→AT→MOUNTAIN）。まれに前兆なしの直CZ */

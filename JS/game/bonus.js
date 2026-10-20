@@ -275,8 +275,9 @@ function bonusSand(b) {
 const BONUS_RARE_P = BENEFITS.bonusRare.p, BONUS_SAND_P = BENEFITS.sand.bonusP;   // 恩恵の数値は JS/data/rules.js
 /* JUDGEMENT最終G: 「レバーを叩け！！！」の文字色で期待度が分かる（白=通常 / 赤=80%以上 / 金=96%以上でAT性能が良い / 虹=AT確定で性能最高） */
 function judgeColor(b) {
-  b.superRoll = Math.random() < (b.superP || 0);
-  b.atTypeRoll = pickAtType();
+  const mix = pickAtMix();   // AT種類（通常70 : SUPER 20 : HEAVEN・DEATH 10）
+  b.superRoll = mix.sup;
+  b.atTypeRoll = mix.type;
   if (b.atWin && b.superRoll && b.aura >= 5) { b.atTypeRoll = Math.max(1, b.atTypeRoll); return 'rainbow'; }
   if (b.atWin && (b.superRoll || b.atTypeRoll > 0)) return 'gold';
   if (!b.atWin) return Math.random() < 0.06 ? 'red' : 'white';
@@ -488,7 +489,7 @@ function finishBonus() {
       setTimeout(() => setAura(null), 1500);
       if (!b.debug) atCount++;
       updateUI();
-      startAT(undefined, b.atTypeRoll, b.superRoll !== undefined ? b.superRoll : Math.random() < (b.superP || 0));   // SUPERは高ランク・サンド目で出やすい
+      startAT(undefined, b.atTypeRoll, !!b.superRoll);
     } else if (b.upgrade && !b.debug) {
       setAura(null);
       showAtToast('BONUS END');

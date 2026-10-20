@@ -65,11 +65,11 @@ const DEFAULT_SETTINGS = {
   hintTrue: 70,        // リザルト示唆が実際のモードと一致する割合
   coinScale: 1,        // ボーナス枚数の倍率 (遊モードは0.5)
   gScale: 1,           // ATの獲得G数の倍率 (遊モードは0.5)
-  typeW0: 84,          // ATタイプの比率: RUSH
-  typeW1: 12,          // HEAVEN
-  typeW2: 4            // DEATH
+  typeW0: 79,          // ATタイプの比率（参照用・AT_TYPE_W）: RUSH
+  typeW1: 15,          // HEAVEN（設定4で HEAVEN+DEATH が10%になる基準）
+  typeW2: 6            // DEATH
 };
-const APP_VERSION = '1.41.0';
+const APP_VERSION = '1.42.0';
 const SETTINGS_KEY = 'pekari-settings-v5';   // v5: モード (本気/極楽/遊) を追加。機械割は100〜130%
 
 // ==========================================
