@@ -731,6 +731,7 @@ function fitReels() {
   /* ハマり中のひとこと: ペカり君が励ます。250G超えで救済(当選率UP)が始まる */
   const HAMARI = [[150, 'ちょっとハマり気味…', 'sad'], [250, '救済スタート！', 'jump'], [400, 'がんばれ！', 'jump'], [600, '絶対くるよ！', 'cross'], [800, 'もう少し…！', 'jump']];
   let hamariG = 0;
+  window.HAMARIX = { get: () => hamariG, set: v => { hamariG = v | 0; } };   // セーブ/ロード用
   setInterval(() => {
     if (isDebugRun) return;
     if (totalGames < hamariG) hamariG = 0;

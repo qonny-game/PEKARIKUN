@@ -143,6 +143,16 @@
   }
   window.atpAddPt = addPt;
   window.atpIntro = (i, bg) => intro(ENEMIES[i], bg);   // ガイド用スクリーンショット・確認用
+  /* セーブ/ロード用: ポイントメーターと上乗せバトルの状態を出し入れする */
+  window.ATPX = {
+    get: () => ({ pt, pending, battle: battle ? { n: battle.e.n, left: battle.left, hp: battle.hp, max: battle.max } : null }),
+    set: s => {
+      pt = Math.max(0, Math.min(10, s.pt | 0)); pending = false; battle = null;
+      if (s.battle) { const e = ENEMIES.find(x => x.n === s.battle.n) || ENEMIES[0]; battle = { left: s.battle.left, hp: s.battle.hp, max: s.battle.max, e }; showEnemy(e); }
+      render();
+      if (s.pending && !battle && pt >= 10) { pending = true; waitThenBattle(); }
+    }
+  };
   /* 役の結果: AT中のゲーム終了時 */
   const rr = runRole;
   runRole = function (kind0, done, navi) {
