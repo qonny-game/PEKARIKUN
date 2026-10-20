@@ -61,6 +61,7 @@
   reg('alignStage', () => alignStage, v => { alignStage = v; });
   reg('sandLeft', () => sandLeft, v => { sandLeft = v; });
   reg('sandReachNow', () => sandReachNow, v => { sandReachNow = v; });
+  reg('urMode', () => !!window.urMode, v => { window.urMode = !!v; });
   reg('roleStat', () => ({ ...roleStat }), v => { Object.keys(roleStat).forEach(k => { roleStat[k] = +v[k] || 0; }); });
   /* ウィンドウ上の演出フラグ (window.xxx) */
   const WIN_KEYS = ['czSevenColor', 'bonusSure', 'contraMixed', 'contraPair', 'wmNext', 'sevenMiss', 'pekaAt', 'pekaLit', 'sideAt', 'sideGogo', 'czFrozen'];

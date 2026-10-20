@@ -48,14 +48,7 @@ function cherryEffects(inAT, strong, coins) {
   return 0;
 }
 /* 弱/強の役: 払い出し・通常時の当選しやすさ(倍率/G数)・AT中の上乗せ成立率 */
-const ROLE_INFO = {
-  cherryW: { label: '弱チェリー',   coins: () => CHERRY_COINS, m: () => CHERRY_MULT, g: 15, upM: 1, atP: () => CHERRY_AT_SUCCESS, notes: [1319, 1760, 2349] },
-  cherryS: { label: '強チェリー',   coins: () => CHERRY_COINS * 2, m: () => CHERRY_MULT * 2.5, g: 15, upM: 2, atP: () => 1, notes: [1319, 1760, 2349, 2637] },
-  melonW:  { label: '弱スイカ',     coins: () => Math.max(1, MELON_COINS - 2), m: () => 2, g: 15, upM: 1.2, atP: () => 0.8, notes: [1047, 1319, 1568] },
-  melon:   { label: '強スイカ',     coins: () => MELON_COINS, m: () => 4, g: 15, upM: 2.5, atP: () => 1, notes: [1047, 1319, 1568, 2093] },
-  chanceW: { label: '弱チャンス目', coins: () => 0, m: () => 3, g: 8, upM: 1, atP: () => 0, notes: [523, 659, 784] },
-  chanceS: { label: '強チャンス目', coins: () => 0, m: () => 8, g: 8, upM: 1, atP: () => 0, notes: [523, 659, 784, 1047, 1319] }
-};
+const ROLE_INFO = BENEFITS.role;   // 役ごとの恩恵は JS/data/rules.js に集約
 const CHERRY_STRONG_P = 0.12;   // チェリーのうち強の割合
 const MELON_STRONG_P = 0.35;    // スイカのうち強の割合
 const CHANCE_S_P = 0.0088, CHANCE_W_P = 0.0386;   // ハズレ目のうち強/弱チャンス目になる割合 (通常時のみ)
@@ -63,7 +56,7 @@ const SAND_REACH_P = 0.25;   // 通常時、ボーナス当選済み＆ランプ
 let sandReachNow = false;     // このゲームがリーチ目（通常時）か
 /* サンド目までの残りゲーム (AT中: スイカ・チェリー成立の次から3G以内) */
 let sandLeft = 0;
-const SAND_UP = [5, 10, 15, 20, 25, 30, 50];   // 揃えたときの上乗せG数 (どれか抽選)
+const SAND_UP = BENEFITS.sand.upG;   // 揃えたときの上乗せG数 (どれか抽選)
 /* サンド目が揃った瞬間: リール全体をビカビカ光らせる（光の点滅・虹色の縁・上昇音） */
 function sandFlash() {
   if (!reelsEl) return;
@@ -117,9 +110,9 @@ function playSand() {
     maybeShowAtResult();
   });   // 中リールから止める。押し順ナビは出さない (左右は自動)
 }
-function roleEffects(role, inAT) {
+function roleEffects(role, inAT, paid = true) {
   const R = ROLE_INFO[role];
-  const coins = R.coins();
+  const coins = paid ? R.coins() : BENEFITS.onMiss.coins;   // 取りこぼしは枚数だけ。恩恵はもらえる
   diffCoins += coins;
   setLedWin(coins);
   recordPoint();
@@ -136,17 +129,14 @@ function roleEffects(role, inAT) {
 /* 役の実行: リールを回し、止まったら払い出し・演出。チェリー/強スイカは目押し成否あり */
 function playRole(role, inAT) {
   const R = ROLE_INFO[role];
-  const aimed = role === 'cherryW' || role === 'cherryS' || role === 'melon';
-  const navi = inAT ? (role === 'melon' || role === 'cherryS' ? naviFor('purple', 0) : (role === 'cherryW' || role === 'melonW') ? naviFor('red', 0) : null) : null;   // 赤=レア / 紫=強レア
+  const aimed = STOP_RULES.isAimedRole(role);
+  const navi = null;   // チェリー・スイカの押し順ナビは無い
   runRole(role, res => {
     stopTension();
-    if (!aimed || res.success) {
-      roleEffects(role, inAT);
-      showRoleBadge(R.label, R.coins(), R.notes, role);
-      if (inAT && /^(melon|cherry)/.test(role)) sandLeft = 1 + Math.floor(Math.random() * 3);
-    } else {
-      missEffect();
-    }
+    const hit = !aimed || res.success;
+    roleEffects(role, inAT, hit);   // 取りこぼしても恩恵(上乗せ・当選率UP)はもらえる。枚数だけ取りこぼす
+    if (hit) showRoleBadge(R.label, R.coins(), R.notes, role); else missEffect();
+    if (inAT && /^(melon|cherry)/.test(role)) sandLeft = 1 + Math.floor(Math.random() * 3);
     updateUI();
     maybeShowAtResult();
   }, navi);

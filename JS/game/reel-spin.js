@@ -9,6 +9,9 @@ try { AUTO_STOP = !!JSON.parse(localStorage.getItem(OPT_KEY) || '{}').autoStop; 
 function saveOpt() { try { localStorage.setItem(OPT_KEY, JSON.stringify({ autoStop: AUTO_STOP })); } catch (e) { /* 無視 */ } }
 
 const SPIN_SPEED = 28;    // 1秒に流れる図柄の数 (日本機と同じ: 80回転/分 = 1周0.75秒 = 21コマ/0.75秒)
+const wideCands = (s, n) => Array.from({ length: n + 1 }, (_, d) => s + d);
+/* c番目のリールの r段(0上/1中/2下)に、pred を満たす図柄が来る停止位置 t をランダムに1つ (windowOf の中段 = t) */
+function stopWhere(c, r, pred) { const ts = []; STRIPS[c].forEach((k, i) => { if (pred(k)) ts.push(mod(i + r - 1)); }); return ts[Math.floor(Math.random() * ts.length)]; }
 const SLIP_MAX = 4;       // 目押し: 狙った図柄が中段の4コマ手前までなら引き込める
 const CELL_H = 34;   // 絵柄1コマの高さ(px)。CSS の .reels / .reel-ov の高さと揃える
 let reelSpin = null;
@@ -44,7 +47,7 @@ function startReels(plan, onDone) {
   spinBtn.innerText = spinBtn.dataset.navi ? `ストップ ${spinBtn.dataset.navi}` : 'ストップ';
   cols.forEach(drawOverlay);
   reelSpin.raf = requestAnimationFrame(reelFrame);
-  if (AUTO_STOP) ((plan.kind === 'sand' || plan.sandMid) ? [1, 0, 2] : [0, 1, 2]).forEach((c, i) => reelSpin.timers.push(setTimeout(() => stopCol(c, true), 380 + i * 260)));   // サンド目は中→左→右
+  if (AUTO_STOP) STOP_RULES.autoOrder(plan, naviOrder).forEach((c, i) => reelSpin.timers.push(setTimeout(() => stopCol(c, true), 380 + i * 260)));   // 押し順ナビがあればナビ順 / なければ左→中→右 (サンド目は中→左→右)
 }
 
 function drawOverlay(col) {
@@ -101,31 +104,25 @@ function landCol(col) {
 function stopCol(c, auto) {
   const rs = reelSpin;
   if (!rs) return;
-  if (rs.plan.assist) auto = true;     // ボーナスの7揃え: 押せば必ず揃う(アシスト)。止めるのは自分のボタン
-  // サンド目: 第2リール(中)を目押しで止める。左右は自動 (下パネルのボタン・オートストップは中から。タップは左右どちらからでも可)
-  // SUPERの15枚役: 第1停止は左リールの7を目押し。左より先の中・右のボタンは無効
-  if (rs.plan.kind === 'superbell' && rs.order.length === 0 && c !== 0) { showAtToast('左リールの7から止める'); return; }
+  // 停止順・取りこぼしのルールは STOP_RULES (JS/data/stop-rules.js) に集約
   // 押し順ナビ付きのチェリー/スイカ: ナビ通りに止めれば取りこぼさない (サンド目・SUPERの15枚役は目押しなのでナビ一致で自動にしない)
   if (rs.plan.navi && rs.plan.kind !== 'sand' && rs.plan.kind !== 'superbell') {
     if (rs.naviOk === undefined) rs.naviOk = true;
     if (rs.plan.navi[rs.order.length] !== c) rs.naviOk = false;
     if (rs.naviOk) auto = true;
   }
-  else if (rs.plan.kind === 'melon' || rs.plan.kind === 'cherry') auto = true;   // 通常時のチェリー・スイカは取りこぼさない（ランプや予告と矛盾させない）
   const col = rs.cols[c];
   if (!col || col.state !== 'spin') return;
   const s = Math.round(col.pos);
-  const cands = [0, 1, 2, 3, 4].map(d => s + d);
+  const cands = wideCands(s, STOP_RULES.slip.normal);
+  const wide7 = wideCands(s, STOP_RULES.slip.seven);   // 7は激アマ (自力で揃える)
   const p = rs.plan;
   let T = null, t = 0, tele = false, manual = false;
   /* ボーナスフラグ中のゲーム: ランプや確定画面が出ていれば7揃いをアシスト / 出ていなくても、目押しで7が引き込めれば揃えられる */
-  if (p.flag7 && !p.assist && rs.flag7ok !== false && (window.pekaLit || window.czKeep || window.sideGogo)) {
-    p.kind = 'seven'; p.assist = true; p.diag = null; p.wm = false; p.navi = null; p.ts = null; auto = true;
-    if (rs.flag7color) rs.color = rs.flag7color;
-  } else if (p.flag7 && !p.assist) {
+  if (p.flag7 && !p.assist) {   // ボーナスフラグ中: ランプや確定画面が出ていても、7は自力で揃える (滑りは激アマ)
     if (rs.flag7ok !== false) {
       const want = rs.flag7color || null;
-      const a = cands.find(x => { const k = stripSym(c, x); return isSeven(k) && (!want || k === want); });
+      const a = wide7.find(x => { const k = stripSym(c, x); return isSeven(k) && (!want || k === want); });
       if (a !== undefined) { T = a; t = mod(a); manual = true; rs.flag7color = stripSym(c, a); rs.flag7ok = true; }
     }
     if (!manual) rs.flag7ok = false;
@@ -133,33 +130,41 @@ function stopCol(c, auto) {
   if (manual) { /* 目押しで7を引き込んだ */ }
   else if (p.kind === 'fixed') {
     tele = true; t = p.ts[c];
-  } else if (p.kind === 'melon') {
-    if (c === 0) { tele = true; t = p.t0; }
-    else if (c === 2) { tele = true; t = p.missed ? p.t2mid : p.t2; }
-    else {
-      const a = cands.find(x => stripSym(1, x + 1) === 'melon');   // 上段にスイカが来る位置
+  } else if (p.kind === 'melon') {   // 強スイカ: 第1・第2リールは目押し(上段にスイカ)、第3リールだけ自動停止 (揃う形 / 外した形)
+    if (c === 2) {
+      tele = true;
+      const x0 = rs.cols[0], x1 = rs.cols[1];
+      const tops = STRIPS[2].map((k, i) => (k === 'melon' ? mod(i - 1) : -1)).filter(v => v >= 0);
+      if (x0.state !== 'spin' && x1.state !== 'spin') {
+        const win = stripSym(0, x0.t + 1) === 'melon' && stripSym(1, x1.t + 1) === 'melon';
+        const pool = win ? tops : STRIPS[2].map((_, i) => i);
+        const good = pool.filter(t2 => { const g = gridOf([x0.t, x1.t, t2]), L = alignedLines(g); return leftCherries(g) === 0 && (win ? (L.length === 1 && L[0].i === 0 && L[0].sym === 'melon') : L.length === 0); });
+        const use = good.length ? good : pool;
+        t = use[Math.floor(Math.random() * use.length)];
+      } else t = p.t2;
+    } else if (c === 0) {
+      const a = cands.find(x => stripSym(0, x + 1) === 'melon');   // 上段にスイカが来る位置
       if (a !== undefined) { T = a; t = mod(a); }
-      else if (auto) { tele = true; t = mod(STRIPS[1].indexOf('melon') - 1); }
+      else { p.missed = true; const ok = cands.filter(x => !windowOf(0, x).includes('cherry')); T = (ok.length ? ok : cands)[0]; t = mod(T); }   // 取りこぼし
+    } else {
+      const a = cands.find(x => stripSym(1, x + 1) === 'melon');
+      if (a !== undefined) { T = a; t = mod(a); }
       else { p.missed = true; tele = true; t = p.t1miss; }   // 外し: 弱チャンス目の形で止まる（取りこぼし）
     }
-  } else if (p.kind === 'superbell') {   // SUPERの15枚役: 左リールの下段に7を目押し。滑りは大きめに引き込める。揃わなければ取りこぼし
-    if (c !== 0) { tele = true; t = p.ts[c]; }
+  } else if (p.kind === 'superbell') {   // SUPERの15枚役: 7の位置は 左下・中段・右上 のランダム。7の段を目押し、残り2つは自動でベル。外すと取りこぼし
+    const rowOf = [2, 1, 0], sc = p.sevenCol;
+    if (c !== sc) { tele = true; t = stopWhere(c, rowOf[c], k => k === 'bell'); }
+    else if (auto) { tele = true; t = stopWhere(c, rowOf[c], isSeven); }
     else {
-      const wide = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(d => s + d);   // 引き込める範囲 (12コマ)
-      const a = wide.find(x => isSeven(windowOf(0, x)[2]));
+      const wide = wideCands(s, STOP_RULES.slip.super7);
+      const a = wide.find(x => isSeven(windowOf(c, x)[rowOf[c]]));
       if (a !== undefined) { T = a; t = mod(a); }
-      else { const b = wide.find(x => !isSeven(windowOf(0, x)[2])); T = b !== undefined ? b : wide[0]; t = mod(T); }   // 外し: 下段に7が来ない
+      else { const b = wide.find(x => !isSeven(windowOf(c, x)[rowOf[c]])); T = b !== undefined ? b : wide[0]; t = mod(T); }   // 外し: 7が来ない
     }
   } else if (p.kind === 'sand') {   // サンド目: 第2リールを目押し (バー・チェリー・バー)。左右は自動
-    if (auto || c !== 1) { tele = true; t = p.ts[c]; }
-    else {
-      const a = cands.find(x => windowOf(1, x).join() === 'bar,cherry,bar');
-      if (a !== undefined) { T = a; t = mod(a); }
-      else { T = cands[0]; t = mod(T); }   // 取りこぼし
-    }
+    tele = true; t = p.ts[c];   // 疑似遊戯: 取りこぼしなし (中を押せば必ず揃う)
   } else if (p.kind === 'cherry') {   // チェリー: 左リールで狙う (取りこぼしあり)
-    if (auto) { tele = true; t = p.ts[c]; }
-    else if (c === 0) {
+    if (c === 0) {
       const a = (p.strong ? cands.find(x => stripSym(0, x) === 'cherry') : cands.find(x => { const w = windowOf(0, x); return w.includes('cherry') && w[1] !== 'cherry'; }))
         ?? cands.find(x => windowOf(0, x).includes('cherry'));
       if (a !== undefined) { T = a; t = mod(a); }
@@ -178,7 +183,7 @@ function stopCol(c, auto) {
     }
   } else if (p.kind === 'reg') {   // REG: 左・中は同じ色の7、右はBAR (7・7・BAR)
     const want = rs.color;
-    const a = cands.find(x => { const k = stripSym(c, x); return c === 2 ? k === 'bar' : (isSeven(k) && (!want || k === want)); });
+    const a = wide7.find(x => { const k = stripSym(c, x); return c === 2 ? k === 'bar' : (isSeven(k) && (!want || k === want)); });
     if (a !== undefined) { T = a; t = mod(a); if (c !== 2 && !rs.color) rs.color = stripSym(c, a); }
     else {
       tele = true;
@@ -190,7 +195,7 @@ function stopCol(c, auto) {
     tele = true; t = mod(row === 0 ? idx - 1 : row === 2 ? idx + 1 : idx); rs.color = '7white';
   } else {   // seven: 同じ色の7を3つ揃える
     const want = rs.color;
-    const a = cands.find(x => { const k = stripSym(c, x); return isSeven(k) && (!want || k === want); });
+    const a = wide7.find(x => { const k = stripSym(c, x); return isSeven(k) && (!want || k === want); });
     if (a !== undefined) {
       T = a; t = mod(a);
       if (!rs.color) rs.color = stripSym(c, a);
@@ -229,11 +234,9 @@ function stopCol(c, auto) {
 /* レバー/タップで、止まっていないリールを左から順に止める */
 function stopNextReel() {
   if (!reelSpin) return;
-  // 押し順ナビ中は、タップでもナビ通りの順に止まる
-  if (naviOrder) {
-    const nc = naviOrder.find(x => reelSpin.cols[x].state === 'spin');
-    if (nc !== undefined) { stopCol(nc, false); return; }
-  }
+  // 押し順ナビがあればナビ順 / なければ左→中→右 (サンド目は中→左→右)。ルールは STOP_RULES
+  const c = STOP_RULES.nextCol(reelSpin, naviOrder);
+  if (c !== undefined) { stopCol(c, false); return; }
   const col = reelSpin.cols.find(x => x.state === 'spin');
   if (col) stopCol(col.c, false);
 }
@@ -253,7 +256,7 @@ function finishReels() {
   else if (rs.plan.kind === 'cherry') success = f[0].includes('cherry');
   else if (rs.plan.kind === 'melon') success = f[0][0] === 'melon' && f[1][0] === 'melon' && f[2][0] === 'melon';
   else if (rs.plan.kind === 'sand') success = f[1][0] === 'bar' && f[1][1] === 'cherry' && f[1][2] === 'bar';
-  else if (rs.plan.kind === 'superbell') success = isSeven(f[0][2]) && f[1][1] === 'bell' && f[2][0] === 'bell';   // 左下の7・中段のベル・右上のベル
+  else if (rs.plan.kind === 'superbell') success = [0, 1, 2].every(c => (c === rs.plan.sevenCol ? isSeven(f[c][[2, 1, 0][c]]) : f[c][[2, 1, 0][c]] === 'bell'));   // 7 (位置はランダム) と ベル2つが 左下→右上 の斜めに並ぶ
   spinBtn.innerText = 'レバーON';
   reelLocked = true;
   setTimeout(() => { reelLocked = false; }, 300);

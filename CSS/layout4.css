@@ -373,3 +373,13 @@
   86% { background: rgba(255, 255, 255, .8); } 93% { background: rgba(255, 255, 255, .25); } 100% { background: transparent; }
 }
 @media (prefers-reduced-motion: reduce) { .lcd-biga { animation: lcd-biga-soft .5s ease-out both; } @keyframes lcd-biga-soft { 0% { background: #fff; } 100% { background: transparent; } } }
+
+/* 裏モード: 下パネルの点滅で ON/OFF を知らせる (ON: 速い点滅3回 / OFF: ゆっくり1回) */
+.cab-label.ur-on { animation: ur-on-blink 1s steps(1); }
+.cab-label.ur-off { animation: ur-off-blink 1.2s steps(1); }
+@keyframes ur-on-blink { 0%, 33%, 66% { filter: brightness(.05) saturate(.2); } 16%, 50%, 83% { filter: brightness(1.8); } 100% { filter: none; } }
+@keyframes ur-off-blink { 0% { filter: brightness(.05) saturate(.2); } 60% { filter: brightness(.05) saturate(.2); } 100% { filter: none; } }
+
+/* CZフリーズ: 液晶が消えて真っ暗 (czfreeze.js) */
+.lcd-freeze { position: absolute; inset: 0; z-index: 120; background: #000; pointer-events: none; animation: lcd-freeze-cut .14s linear both; }
+@keyframes lcd-freeze-cut { 0% { background: #fff; } 40% { background: #5a6a80; } 100% { background: #000; } }

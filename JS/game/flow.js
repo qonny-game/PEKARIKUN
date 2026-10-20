@@ -310,6 +310,8 @@ const coinScaleNow = () => BIG_TIERS[0].coins / BASE_COINS[0];   // 遊モード
 const regCoins = () => Math.max(1, Math.round(100 * coinScaleNow()));   // REGは100枚固定
 const bigCoins = () => Math.max(1, Math.round(200 * coinScaleNow()));   // BIGは200枚固定（AT性能は当選ランクで差をつける）
 /* 直BIG: 7との2択（7/BELLなど）から、7が揃ってそのままBIG。ランプを待たずに即当選 */
+const CZ_FREEZE_P = 0.05;     // CZ当選ゲームのうち、確定系の演出が出ていないときに「フリーズ」(czfreeze.js)になる割合
+const CZ_REVENGE_P = 0.05;    // CZ失敗の直後のゲームが、実は当選(逆転フリーズ)になる割合
 const WM_P = 0.1;            // 当選ゲームのうち、白7・スイカ・白7 が出る割合
 const WHITE_DIAG_P = 0.04;   // BIG当選のうち、白7斜め揃い(BIG+AT確定)になる割合
 let pendingWhiteDiag = null;  // 白7斜め揃いの形 ([0,1,2]=左上→右下 / [2,1,0]=左下→右上)
@@ -538,6 +540,7 @@ function handleSpin() {
     czLeft--;
     if (czNew) { czNew = false; if (window.FXBanner) window.FXBanner(czLoop ? 'むげんLOOP' : 'CHANCE ZONE', czLoop ? 'CHANCE ZONE' : `${CZ_G}G`, 'red', true, 1700); }
   } else czLeft = 0;
+  window.urFlagIn = false;
   const regBoost = !inAT && !bonusRun && regBoostG > 0;
   if (regBoost) regBoostG--;   // REG後のBIG当選しやすい期間
   const hitMult = (regBoost ? REG_BOOST_MULT : 1) * (inAT ? AT_HIT_MULT * AT_TYPES[atType].hit * (atSuper ? 1.3 : 1) : inMode ? modeMult : 1) * (inCherry ? cherryM : 1) * (inCZ ? CZ_MULT : 1) * droughtMult(inAT);
@@ -564,6 +567,7 @@ function handleSpin() {
     if (zenchoLeft > 0) zStep = { real: true, i: zenchoTotal - zenchoLeft + 1, n: zenchoTotal, end: false };
   } else {
     isHit = Math.random() < Math.min(1, HIT_RATE * hitMult);
+    if (isHit) window.urFlagIn = true;   // 当選フラグが入った瞬間 (裏モードの判定用)
     // 当選が決まっても、すぐには光らせず3〜5G遅らせることがある (その間のハズレ矛盾は確定のサイン)
     if (isHit && !inAT && !inCZ && !isDebugRun && Math.random() >= ZENCHO_P) { latentLeft = LATENT_MIN + Math.floor(Math.random() * (LATENT_MAX - LATENT_MIN + 1)); isHit = false; contraGame = true; }   // 前兆なしのボーナスフラグ: 潜伏
     else if (isHit && !inAT && Math.random() < ZENCHO_P) { zenchoLeft = zenchoTotal = 3 + Math.floor(Math.random() * 3); isHit = false; fakeZencho = 0; zStep = { real: true, i: 1, n: zenchoTotal, end: false }; }
@@ -572,12 +576,18 @@ function handleSpin() {
   // CHANCE ZONE中に当選が決まったら、前兆(連続演出)は省略して、そのまま当選画面へ
   const czWin = inCZ && (isHit || zenchoLeft > 0);
   if (czWin && !isHit) { zenchoLeft = 0; zenchoTotal = 0; isHit = true; zStep = null; }
+  // CZ失敗の直後のゲーム: まれに実は当選している。失敗を見せたあと、第2リール停止不能 → 暗転 → BONUS確定で喜ばせる
+  const revengeHit = !!window.czFailPrev && !inCZ && !inAT && !bonusRun && !isDebugRun && !isHit && czLeft === 0 && zenchoLeft === 0 && latentLeft === 0 && fakeZencho === 0 && pendingBonusType === null && !!window.czFreezeArm && Math.random() < (window.CZ_REVENGE_P ?? CZ_REVENGE_P);
+  window.czFailPrev = false;
+  if (revengeHit) { isHit = true; window.urFlagIn = true; }
+  const czLike = czWin || revengeHit;
   if (window.bonusSure && flagGame && !isHit) zStep = null;   // 確定のサインのあとは前兆の演出も出さない
   if (zStep && typeof window.onZenchoStep === 'function') window.onZenchoStep(zStep);
   window.flag7Game = !isDebugRun && !inAT && !bonusRun && (flagGame || (isHit && !inAT));
   // 下パネル消灯: 回転中にパネルが消えたら確定。CZ=当選確定 / RUSH中=100G以上の上乗せ確定 (確定でないゲームでは絶対に消えない)
   if (!isDebugRun) {
-    if (inCZ && (isHit || zenchoLeft > 0) && Math.random() < PANEL_P_CZ) window.panelPlan = 'cz';
+    const urFlag = !!window.urMode && !inAT && !bonusRun && (czWin || window.urFlagIn);   // 裏モード: 当選フラグが入った瞬間、下パネルが必ず消える
+    if ((inCZ && (isHit || zenchoLeft > 0) && Math.random() < PANEL_P_CZ) || urFlag) window.panelPlan = 'cz';
     else if (inAT && !isHit && Math.random() < PANEL_P_AT) {
       window.panelPlan = 'at';
       const bigG = scaleG([100, 100, 150, 200, 300, 500][Math.floor(Math.random() * 6)]);
@@ -586,13 +596,16 @@ function handleSpin() {
     }
   }
 
-  if (inCZ && (isHit || zenchoLeft > 0)) { window.czFrozen = (!isHit && zenchoLeft > 0) ? czLeft : null; czLeft = 0; czLoop = false; if (window.onCzSuccess) window.onCzSuccess(); }   // 前兆に入った場合は、CZの残りGを止めたまま表示し続ける(czFrozen)     // 当選(前兆に入った場合も)でゾーン終了=成功
+  // 確定系の演出が1つも出ていない当選ゲームで、まれに「第2リール停止不可 → 液晶ブツン暗転 → 約2秒後にBONUS確定」(czfreeze.js)
+  const cfreeze = czLike && !isDebugRun && !inAT && !bonusRun && !window.panelPlan && !window.bonusSure && !!window.czFreezeArm && Math.random() < (window.CZ_FREEZE_P ?? CZ_FREEZE_P);
+  if (inCZ && (isHit || zenchoLeft > 0)) { window.czFrozen = (!isHit && zenchoLeft > 0) ? czLeft : null; czLeft = 0; czLoop = false; if (cfreeze) window.czFreezeArm(); else if (window.onCzSuccess) window.onCzSuccess(); }
+  else if (cfreeze) window.czFreezeArm();   // CZ失敗直後の逆転当選   // 前兆に入った場合は、CZの残りGを止めたまま表示し続ける(czFrozen)     // 当選(前兆に入った場合も)でゾーン終了=成功
   else if (inCZ && czLeft === 0 && czLoop) {   // むげんLOOP: 0Gで当たっていなければ、最初から（当たるまで繰り返す）
     czLeft = CZ_G;
     if (window.FXBanner) window.FXBanner('LOOP!!!!', 'もう一度 ' + CZ_G + 'G', 'red', true, 1700);
     if (soundEnabled) { initAudio(); const t0 = audioCtx.currentTime; [523, 784, 1047, 1568].forEach((f, i) => tone(f, t0 + i * 0.08, 0.3, 'triangle', 0.12)); }
   }
-  else if (inCZ && czLeft === 0) { window.czTimedOut = true; if (window.onCzEnd) window.onCzEnd(false); }
+  else if (inCZ && czLeft === 0) { window.czTimedOut = true; window.czFailPrev = true; if (window.onCzEnd) window.onCzEnd(false); }   // CZ失敗: 次のゲームは、まれに実は当選(逆転フリーズ)
 
   // 小役は1回の乱数で決める（実機と同じ。確率は従来の順番抽選と同じ配分）
   const role = isHit ? 'hit' : ((contraGame || (flagGame && window.bonusSure)) ? contraRole() : drawRole(inAT));
@@ -621,29 +634,29 @@ function handleSpin() {
     pendingZone = inAT;
     pendingBonusType = 'BIG';
     pendingWhiteDiag = null;
-    pendingReg = !inAT && !czWin && !isDebugRun && !regBoost && regBoostG === 0 && Math.random() < REG_P;   // REG後の優遇期間はBIGだけ
+    pendingReg = !inAT && !czLike && !isDebugRun && !regBoost && regBoostG === 0 && Math.random() < REG_P;   // REG後の優遇期間はBIGだけ
     pendingDisplayIndex = pendingReg ? 0 : pickTierIndex();
     pendingTierIndex = pendingDisplayIndex;
     if (!pendingReg) regBoostG = 0;
     if (!inAT && !pendingReg && !isDebugRun && Math.random() < WHITE_DIAG_P) pendingWhiteDiag = Math.random() < 0.5 ? [0, 1, 2] : [2, 1, 0];
     pendingPlan = null;
     replayPending = false;
-    window.pekaAt = isDebugRun ? 'end' : (czWin ? 'end' : pickPekaAt()); window.pekaLit = false;   // CZ成功は「BONUS確定!」を見せたあとにランプ
+    window.pekaAt = isDebugRun ? 'end' : (czLike ? 'end' : pickPekaAt()); window.pekaLit = false;   // CZ成功は「BONUS確定!」を見せたあとにランプ
     {
       const ORD = ['lever', 'fx', 's2', 's3', 'end'], pi = ORD.indexOf(window.pekaAt);
       window.sideGogo = false;
-      window.sideAt = (!isDebugRun && !czWin && pi > 0 && Math.random() < 0.4) ? ORD[Math.floor(Math.random() * pi)] : null;   // 液晶より前のタイミングで、サイドだけ光る
+      window.sideAt = (!isDebugRun && !czLike && pi > 0 && Math.random() < 0.4) ? ORD[Math.floor(Math.random() * pi)] : null;   // 液晶より前のタイミングで、サイドだけ光る
     }
     // 通常時のサンド目（リーチ目）: ボーナス当選済みで、GOGO!ランプがまだ光っていないゲームだけ（ランプが先に光るゲームでは出ない）
-    const reach = !inAT && !czWin && !isDebugRun && !window.bonusSure && window.pekaAt === 'end' && !window.sideAt && Math.random() < SAND_REACH_P;
+    const reach = !inAT && !czLike && !isDebugRun && !window.bonusSure && window.pekaAt === 'end' && !window.sideAt && Math.random() < SAND_REACH_P;
     lampEarly('lever');
     if (inAT && atRun) atRun.bonuses++;
     cherryGames = 0;
     updateCherry();
     // 今回はハズレ目で止まり、止まったあとにGOGO!ランプが光る
-    const directBig = !reach && !inAT && !czWin && !pendingReg && !isDebugRun && window.pekaAt === 'end' && !window.sideAt && Math.random() < DIRECT_BIG_P;
+    const directBig = !reach && !inAT && !czLike && !pendingReg && !isDebugRun && window.pekaAt === 'end' && !window.sideAt && Math.random() < DIRECT_BIG_P;
     if (directBig) { playDirectBig(); return; }   // 7との2択 → 7が揃ってそのままBIG
-    if (!reach && !window.bonusSure && Math.random() < WM_P) window.wmNext = true;   // 白7・スイカ・白7 が第1リールに止まる（当選確定の演出）
+    if (!reach && !window.bonusSure && !cfreeze && Math.random() < WM_P) window.wmNext = true;   // 白7・スイカ・白7 が第1リールに止まる（当選確定の演出）
     sandReachNow = reach;
     runRole('lose', () => {
       sandReachNow = false;
@@ -663,7 +676,8 @@ function handleSpin() {
     let type = pickBellType(inAT);
     // AT中のベル: 揃いやすいが、ナビが出ないことがあり、ナビなしのときはハズレ目になることもある
     const atNavi = inAT && Math.random() < 0.85 ? naviFor('') : null;   // ベルのナビは黄
-    if (atNavi && atSuper) { atNavi.seven = true; type = 2; atNavi.order = [0, ...atNavi.order.filter(c => c !== 0)]; }   // SUPERのナビは第1停止が左の7。出目は 7・ベル・ベル の15枚役
+    window.superSevenCol = null;
+    if (atNavi && atSuper) { const sc = Math.floor(Math.random() * 3); window.superSevenCol = sc; atNavi.seven = true; type = 2; atNavi.order = [sc, ...atNavi.order.filter(c => c !== sc)]; }   // SUPERのナビは第1停止が7の位置(ランダム)。出目は 7・ベル・ベル の15枚役
     const atBellMiss = inAT && !atNavi && Math.random() < 0.1;
     runRole(atBellMiss ? 'lose' : 'bell' + type, res => {
       if (atBellMiss) { stopTension(); updateUI(); maybeShowAtResult(); return; }

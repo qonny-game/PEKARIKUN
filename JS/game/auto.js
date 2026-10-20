@@ -100,8 +100,7 @@ function autoTick() {
     autoIdle = 0;
     if (reelSpin && !reelSpin.autoArmed) {
       reelSpin.autoArmed = true;
-      const sandLike = reelSpin.plan.kind === 'sand' || reelSpin.plan.sandMid;   // サンド目: オートストップは中→左→右
-      const order = naviOrder ? naviOrder.slice() : (sandLike ? [1, 0, 2] : [0, 1, 2]);
+      const order = STOP_RULES.autoOrder(reelSpin.plan, naviOrder);   // ナビ順 / 左→中→右 (サンド目は中→左→右)
       order.forEach((c, i) => reelSpin.timers.push(setTimeout(() => stopCol(c, true), Math.round((350 + i * 260) * sp.stop))));
     }
     return;

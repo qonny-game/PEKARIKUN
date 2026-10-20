@@ -180,6 +180,17 @@ function showNavi(order, style = '', partial = false, seven = false) {
   refreshNavi();
   spinBtn.dataset.navi = (partial ? [order[0]] : order).map(c => ['左', '中', '右'][c]).join('→');
 }
+/* ボーナス中のチェリー/スイカ: 順番の数字は出さず「!!!」の文字だけ */
+function showBangNavi(strong) {
+  rareWarn(strong ? 'purple' : 'red');
+  naviVoiceIdx = 3;
+  document.body.dataset.navi = strong ? 'purple' : 'red';
+  naviOrder = [];                 // ナビ順は無い (空配列: 回転開始時に消されない)
+  naviPartial = false;
+  naviEl.className = 'navi on bang ' + (strong ? 'purple' : 'red');
+  naviEl.dataset.msg = '!!!';
+  spinBtn.dataset.navi = '';
+}
 function refreshNavi() {
   if (!naviOrder || !naviEl) return;
   const done = reelSpin ? reelSpin.order : [];
@@ -223,14 +234,22 @@ function donStop(k, plan) {
   }
 }
 /* BIG(PEKA CHANCE)中のレア役: 弱=オーラ1段UP / 強=2段UP。AT当選の期待も上がる */
-function bonusRare(b) {
-  const strong = Math.random() < 0.3, n = strong ? 2 : 1;
-  const name = strong ? ['強チェリー', '強スイカ'][Math.floor(Math.random() * 2)] : ['弱チェリー', '弱スイカ'][Math.floor(Math.random() * 2)];
+/* ボーナス中のチェリー/スイカ: このゲームの役を決める (強弱・種類) */
+function pickBonusRare() {
+  const strong = Math.random() < BENEFITS.bonusRare.strongP, cherry = Math.random() < 0.5;
+  return { kind: strong ? (cherry ? 'cherryS' : 'melon') : (cherry ? 'cherryW' : 'melonW'), strong, name: (strong ? '強' : '弱') + (cherry ? 'チェリー' : 'スイカ') };
+}
+/* 恩恵: オーラUP・AT当選の追加抽選 (取りこぼしてももらえる) */
+function bonusRare(b, role) {
+  const BR = BENEFITS.bonusRare;
+  role = role || pickBonusRare();
+  const strong = role.strong, n = strong ? BR.aura.strong : BR.aura.weak;
+  const name = role.name;
   b.aura = Math.min(6, b.aura + n);
   if (b.aura >= 6) b.atWin = true;   // 虹オーラはAT確定 (レア役で虹になってもAT非当選にならない)
   setAura(b.aura, true);
   if (!b.confirmShown) playAuraUp(b.aura);
-  if (!b.atWin && Math.random() < 0.15 * n) b.atWin = true;
+  if (!b.atWin && Math.random() < BR.atWinP * n) b.atWin = true;
   if (window.LCDX && !b.confirmShown) { LCDX.say(name, strong ? 'LEVEL UP x2!!' : 'LEVEL UP!', 1800, 'happy', 'jump'); LCDX.tag(strong ? 'オーラ 2段階UP' : 'オーラ UP', strong ? 'f3' : 'f2', 1800); }
   if (strong) triggerFlash();
 }
@@ -243,7 +262,7 @@ function bonusSand(b) {
     reelsEl.classList.remove('focus-mid');
     stopTension();
     if (res.success) {
-      b.atWin = true; b.superP = 0.7; b.aura = 6;
+      b.atWin = true; b.superP = BENEFITS.sand.bonusWin.superP; b.aura = BENEFITS.sand.bonusWin.aura;
       setAura(6, true); playAuraUp(6);
       markWin([1, 4, 7], '');
       triggerFlash();
@@ -253,7 +272,7 @@ function bonusSand(b) {
     updateAT(); updateUI();
   });   // 押し順ナビは出さない (中リールから止める)
 }
-const BONUS_RARE_P = 0.12, BONUS_SAND_P = 0.05;
+const BONUS_RARE_P = BENEFITS.bonusRare.p, BONUS_SAND_P = BENEFITS.sand.bonusP;   // 恩恵の数値は JS/data/rules.js
 /* JUDGEMENT最終G: 「レバーを叩け！！！」の文字色で期待度が分かる（白=通常 / 赤=80%以上 / 金=96%以上でAT性能が良い / 虹=AT確定で性能最高） */
 function judgeColor(b) {
   b.superRoll = Math.random() < (b.superP || 0);
@@ -314,8 +333,10 @@ function bonusGameMain() {
   const isFinal = !b.zone && b.played + 1 >= b.games;   // 最終ゲームはジャッジメント (ここでATの当否が決まる)
   const navi = [0, 1, 2].sort(() => Math.random() - 0.5);   // 押し順ナビ
   const partial = Math.random() < 0.3;                       // 1だけナビ (最初の1つだけ表示)
-  showNavi(navi, '', partial);
-  if (partial && window.TRO) TRO.seen('navi_partial');
+  const rare = !b.zone && !b.debug && !isFinal && b.played + 1 < b.games && Math.random() < BONUS_RARE_P;   // このゲームはチェリー/スイカ
+  const rareRole = rare ? pickBonusRare() : null;
+  if (rare) showBangNavi(rareRole.strong); else showNavi(navi, '', partial);
+  if (!rare && partial && window.TRO) TRO.seen('navi_partial');
   if (!b.zone && b.games - b.played <= 3 && !isFinal) showLastCount(b.games - b.played); else hideLastCount();
   if (isFinal && !judgeEl.classList.contains('tense')) { startTension('JUDGEMENT'); if (chanceLogo) chanceLogo.classList.add('judge'); }   // デバッグ時や押し順ミスのやり直し時(通常は judgeIntro で表示済み)
   updateAT();
@@ -327,10 +348,10 @@ function bonusGameMain() {
       if (b.judgeWaitFinish) { const f = b.judgeWaitFinish; b.judgeWaitFinish = null; f(); }
     }), 250);
   }
-  runRole('bell2', res => {
+  runRole(rare ? rareRole.kind : 'bell2', res => {
     hideNavi();
     // 押し順を間違えた: ベルこぼし (1枚だけ。ゲーム数は消化されない)
-    if (!AUTO_STOP && !(partial ? res.order[0] === navi[0] : sameOrder(res.order, navi))) {
+    if (!rare && !AUTO_STOP && !(partial ? res.order[0] === navi[0] : sameOrder(res.order, navi))) {
       const pay1 = Math.max(0, Math.min(1, b.total - b.paid - 1));
       b.paid += pay1;
       if (!b.debug && pay1) { diffCoins += pay1; recordPoint(); }
@@ -342,19 +363,22 @@ function bonusGameMain() {
       return;
     }
     b.played++;
-    if (!b.zone && !b.debug && b.played < b.games && Math.random() < BONUS_RARE_P) bonusRare(b);
+    const rareMiss = rare && STOP_RULES.isAimedRole(rareRole.kind) && !res.success;   // 取りこぼし: 枚数だけ取りこぼす (恩恵はもらえる)
+    if (rare) bonusRare(b, rareRole);
     if (b.upgrade && !b.upShown && b.played >= b.upAt && !b.debug) { b.upShown = true; regUpgradeShow(); }
     // ゾーンは5〜10Gで枚数を均等に払い出し、最終ゲームで残りを払う
-    const pay = b.zone
+    const pay0 = b.zone
       ? (b.played >= b.games ? b.total - b.paid : Math.min(b.zonePay, b.total - b.paid))
       : Math.min(BONUS_BELL_PAY, b.total - b.paid);
+    const pay = rareMiss ? BENEFITS.onMiss.coins : pay0;
     b.paid += pay;
     if (!b.debug) {
       diffCoins += pay;
       recordPoint();
     }
     setLedWin(pay);
-    if ((pay > 0 || !b.zone) && !(!b.zone && b.played >= b.games)) showBellResult(pay, true);   // 最終G(ジャッジメント)は「枚 GET」を出さない（PAYOUTだけ）
+    if (rareMiss) missEffect();
+    else if ((pay > 0 || !b.zone) && !(!b.zone && b.played >= b.games)) showBellResult(pay, true);   // 最終G(ジャッジメント)は「枚 GET」を出さない（PAYOUTだけ）
     if (b.promo.includes(b.played)) {
       b.aura = Math.min(6, b.aura + 1);
       if (b.aura >= 6) b.atWin = true;   // 虹オーラはAT確定
