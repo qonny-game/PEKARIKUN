@@ -10,7 +10,7 @@
   const rnd = Math.random;
   const pick = a => a[Math.floor(rnd() * a.length)];
   const freq = () => (window.FXO_FREQ ? window.FXO_FREQ() : 1);
-  el.innerHTML = '<div class="sl-stars"></div><div class="sl-body"></div><div class="sl-aurora"></div><div class="sl-weather"></div><div class="sl-ground"></div><div class="sl-fg"></div><div class="sl-actor"></div><div class="sl-msg"><b></b><small></small></div>';
+  el.innerHTML = '<div class="sl-photo"></div><div class="sl-stars"></div><div class="sl-body"></div><div class="sl-aurora"></div><div class="sl-weather"></div><div class="sl-ground"></div><div class="sl-fg"></div><div class="sl-actor"></div><div class="sl-msg"><b></b><small></small></div>';
   const fg = el.querySelector('.sl-fg'), actor = el.querySelector('.sl-actor');
   const m1 = el.querySelector('.sl-msg b'), m2 = el.querySelector('.sl-msg small'), msg = el.querySelector('.sl-msg');
 

@@ -280,3 +280,16 @@
 @keyframes sw-slam { 0% { transform: scale(3) rotate(-8deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
 @keyframes sw-spin { to { transform: rotate(360deg) scale(1.6); } }
 @keyframes sw-hue { to { filter: hue-rotate(360deg); } }
+
+/* 1.37.0 ステージ背景 (写真): 通常=草原 / 夕=海 / 夜=山 / 前兆・CHANCE ZONE=洞窟 */
+.sl-photo { position: absolute; inset: 0; z-index: 0; opacity: 0; transition: opacity .6s; pointer-events: none; background: center / cover no-repeat; }
+.sub-lcd[data-scene="day"] .sl-photo    { opacity: 1; background-image: url(../assets/img/stage/field.jpg); }
+.sub-lcd[data-scene="dusk"] .sl-photo   { opacity: 1; background-image: url(../assets/img/stage/beach.jpg); }
+.sub-lcd[data-scene="night"] .sl-photo  { opacity: 1; background-image: url(../assets/img/stage/mountain.jpg); }
+.sub-lcd[data-scene="zencho"] .sl-photo,
+.sub-lcd[data-scene="cz"] .sl-photo     { opacity: 1; background-image: url(../assets/img/stage/cave.jpg); }
+/* 1.37.1 AT中(RUSH/HEAVEN/DEATH)=宇宙 / PEKA MOUNTAIN中=山岳 */
+.sub-lcd[data-scene="at"] .sl-photo,
+.sub-lcd[data-scene="heaven"] .sl-photo,
+.sub-lcd[data-scene="death"] .sl-photo  { opacity: 1; background-image: url(../assets/img/stage/space.jpg); }
+.sub-lcd[data-scene="zone"] .sl-photo   { opacity: 1; background-image: url(../assets/img/stage/mountain.jpg); }
