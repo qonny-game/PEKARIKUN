@@ -10,14 +10,14 @@
 | 4 | `JS/core/state.js` | ゲーム状態変数・UI要素の参照 | 85 | gameHistory, bonusLog, recordPoint, roleStat, totalGames, cumulativeGames, bigCount, atSuper …他61 |
 | 5 | `JS/core/audio.js` | 音声（効果音・ペカリ音・枚数表示のファンファーレ） | 282 | audioCtx, initAudio, SOUND_FILES, soundAudio, soundBuffers, VVV_MIN_COINS, SAMPLE_MAX_SEC, SAMPLE_FADE_SEC …他11 |
 | 6 | `JS/core/effects.js` | 画面演出（フラッシュ・パーティクル・シェイク） | 136 | flashTimer, triggerFlash, tripleFlash, shakeMain, particles, particleMode, particleRAF, resizeCanvas …他7 |
-| 7 | `JS/game/flow.js` | ゲーム進行の中心（レバーON・当選処理・ペカ演出・枚数表示） | 711 | PEKA_FX, pickPekaFx, pekaLater, clearPekaTimers, sideL, sideR, SIDE_COLOR, sideTok …他61 |
+| 7 | `JS/game/flow.js` | ゲーム進行の中心（レバーON・当選処理・ペカ演出・枚数表示） | 743 | PEKA_FX, pickPekaFx, pekaLater, clearPekaTimers, sideL, sideR, SIDE_COLOR, sideTok …他61 |
 | 8 | `JS/game/reels.js` | リール表示・リール配列・役の組み合わせ | 137 | REEL_LINES, EMOJI, SYM_FALLBACK, symbolHTML, lineOf, STRIP_LEN, STRIPS, SEVENS …他13 |
-| 9 | `JS/game/reel-spin.js` | リール回転・目押し停止・予告・役の結果 | 419 | OPT_KEY, AUTO_STOP, saveOpt, SPIN_SPEED, SLIP_MAX, CELL_H, reelSpin, isReelSpinning …他31 |
+| 9 | `JS/game/reel-spin.js` | リール回転・目押し停止・予告・役の結果 | 434 | OPT_KEY, AUTO_STOP, saveOpt, SPIN_SPEED, SLIP_MAX, CELL_H, reelSpin, isReelSpinning …他31 |
 | 10 | `JS/game/bell.js` | ベル | 140 | BELL_TYPES, pickBellType, bellBadge, getPop, getRAF, rainCoins, playJaraJara, getRumbleLen …他6 |
 | 11 | `JS/game/cherry.js` | チェリー | 199 | cherryStatus, cherryRemain, updateCherry, CHERRY_AT_CHOICES, pickCherryAtG, setBoost, cherryEffects, ROLE_INFO …他16 |
 | 12 | `JS/game/at.js` | AT（ペカラッシュ）・PUSH演出 | 139 | atStatus, atRemain, atLabel, atToast, updateAT, updateAtGain, showAtToast, AT_CHOICES …他9 |
 | 13 | `JS/game/bonus.js` | ボーナス消化・押し順ナビ・ドンドンドン | 477 | AURA_NAMES, AURA_WIN_W, AURA_LOSE_W, auraEl, atEntryRateFor, pickAuraLevel, ZONE_G_CHOICES, ZONE_G_WEIGHTS …他35 |
-| 14 | `JS/game/at-result.js` | ATリザルト・獲得枚数OVER・次回示唆 | 375 | atResultEl, atResultGain, arHintBar, arHintText, atResultRAF, MODES, HINT_LABELS, decideNextMode …他27 |
+| 14 | `JS/game/at-result.js` | ATリザルト・獲得枚数OVER・次回示唆 | 376 | atResultEl, atResultGain, arHintBar, arHintText, atResultRAF, MODES, HINT_LABELS, decideNextMode …他27 |
 | 15 | `JS/ui/display.js` | 電光掲示（LED・ランプ表示） | 221 | setOn, setLed, ledWinEl, ledCreditEl, ledTotalEl, ledWin, setLedWin, creditNow …他13 |
 | 16 | `JS/game/auto.js` | オートプレイ・サウンドボタン | 168 | autoBtn, AUTO_KEY, AUTO_SPEEDS, AUTO_STOPS, AUTO_OPT, saveAutoOpt, AUTOPLAY, autoIdle …他20 |
 | 17 | `JS/ui/settings-panel.js` | 確率設定パネル | 178 | settingsModal, settingsBody, displayRate, SETTING_ROWS, formLevel, lvHist, DEBUG_SEQ, secretBuf …他8 |
@@ -27,8 +27,8 @@
 | 21 | `JS/ui/reel-view.js` | リール配列の表示 | 26 | reelModal, reelView, miniSym, buildReelView |
 | 22 | `JS/ui/boot.js` | 起動時の初期化（iOS対策・画面スリープ防止） | 29 | lastTouchEnd |
 | 23 | `JS/ext/bgm.js` | BGMエンジン (1.20.24) | 249 |  |
-| 24 | `JS/ext/fx.js` | 追加演出 | 1099 |  |
-| 25 | `JS/ext/lcd.js` | 演出液晶 | 893 | fitReels |
+| 24 | `JS/ext/fx.js` | 追加演出 | 1100 |  |
+| 25 | `JS/ext/lcd.js` | 演出液晶 | 900 | fitReels |
 | 26 | `JS/ext/trophy.js` | トロフィー / ミッション / ランキング | 218 |  |
 | 27 | `JS/ext/exchange.js` | 換金 / PEKA POINT | 99 |  |
 | 28 | `JS/ext/pushspoil.js` | 停止ボタンの右の常設PUSHボタン（先ばれ） | 53 |  |

@@ -21,6 +21,7 @@ function reelsPrepareDOM() {
 const colSym = (col, idx) => (col.ov[idx] !== undefined ? col.ov[idx] : stripSym(col.c, idx));
 
 function startReels(plan, onDone) {
+  if (window.flag7Game && !plan.assist) plan.flag7 = true;   // ボーナスフラグ中: 目押しで7が揃えられる
   if (window.wmNext) { plan.wm = true; window.wmNext = false; }   // 白7・スイカ・白7 を第1リールに止める（当選確定のゲームだけ）
   if (!naviOrder) delete spinBtn.dataset.navi;
   reelsPrepareDOM();
@@ -112,8 +113,21 @@ function stopCol(c, auto) {
   const s = Math.round(col.pos);
   const cands = [0, 1, 2, 3, 4].map(d => s + d);
   const p = rs.plan;
-  let T = null, t = 0, tele = false;
-  if (p.kind === 'fixed') {
+  let T = null, t = 0, tele = false, manual = false;
+  /* ボーナスフラグ中のゲーム: ランプや確定画面が出ていれば7揃いをアシスト / 出ていなくても、目押しで7が引き込めれば揃えられる */
+  if (p.flag7 && !p.assist && rs.flag7ok !== false && (window.pekaLit || window.czKeep || window.sideGogo)) {
+    p.kind = 'seven'; p.assist = true; p.diag = null; p.wm = false; p.navi = null; p.ts = null; auto = true;
+    if (rs.flag7color) rs.color = rs.flag7color;
+  } else if (p.flag7 && !p.assist) {
+    if (rs.flag7ok !== false) {
+      const want = rs.flag7color || null;
+      const a = cands.find(x => { const k = stripSym(c, x); return isSeven(k) && (!want || k === want); });
+      if (a !== undefined) { T = a; t = mod(a); manual = true; rs.flag7color = stripSym(c, a); rs.flag7ok = true; }
+    }
+    if (!manual) rs.flag7ok = false;
+  }
+  if (manual) { /* 目押しで7を引き込んだ */ }
+  else if (p.kind === 'fixed') {
     tele = true; t = p.ts[c];
   } else if (p.kind === 'melon') {
     if (c === 0) { tele = true; t = p.t0; }
@@ -183,7 +197,7 @@ function stopCol(c, auto) {
       T = pool[0]; t = mod(T);
     }
   }
-  if (p.wm && c === 0) { tele = true; t = 16; }   // 白7(15)・スイカ(16)・白7(17)
+  if (p.wm && c === 0 && !manual) { tele = true; t = 16; }   // 白7(15)・スイカ(16)・白7(17)
   if (tele) {
     // 配列どおりの図柄(3コマ)が、4コマ先に流れてきて止まる
     T = Math.floor(col.pos) + SLIP_MAX;
@@ -220,7 +234,8 @@ function finishReels() {
   const f = rs.cols.map(col => col.final);
   const grid = [f[0][0], f[1][0], f[2][0], f[0][1], f[1][1], f[2][1], f[0][2], f[1][2], f[2][2]];
   let success = false;
-  if (rs.plan.kind === 'reg') success = isSeven(f[0][1]) && f[1][1] === f[0][1] && f[2][1] === 'bar';
+  if (rs.plan.flag7 && isSeven(f[0][1]) && f[1][1] === f[0][1] && f[2][1] === f[0][1]) success = true;
+  else if (rs.plan.kind === 'reg') success = isSeven(f[0][1]) && f[1][1] === f[0][1] && f[2][1] === 'bar';
   else if (rs.plan.kind === 'seven' && rs.plan.diag) success = rs.plan.diag.every((r, c) => f[c][r] === '7white');
   else if (rs.plan.kind === 'seven') success = isSeven(f[0][1]) && f[1][1] === f[0][1] && f[2][1] === f[0][1];
   else if (rs.plan.kind === 'cherry') success = f[0].includes('cherry');
@@ -229,7 +244,7 @@ function finishReels() {
   spinBtn.innerText = 'レバーON';
   reelLocked = true;
   setTimeout(() => { reelLocked = false; }, 300);
-  setTimeout(() => rs.onDone({ grid, success, order: rs.order }), 220);
+  setTimeout(() => { if (rs.plan.flag7 && success && window.onFlagSeven) window.onFlagSeven(); else rs.onDone({ grid, success, order: rs.order }); }, 220);
 }
 
 function cancelReels() {

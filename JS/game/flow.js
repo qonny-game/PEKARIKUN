@@ -274,6 +274,30 @@ function onBonusAligned() {
   spinBtn.innerText = 'NEXT';
 }
 
+/* ボーナスフラグが立っているゲームで、告知なしに7を目押しで揃えた(またはランプ点灯済みのゲームで揃えた): そのままボーナス確定 */
+window.onFlagSeven = function () {
+  const wasHit = pendingBonusType === 'BIG';
+  clearPekaTimers();
+  if (!wasHit) {   // 潜伏・前兆中に揃えた: ここでボーナス当選
+    pekaSpecial = null; sinceEnd = null; pendingZone = false; pendingBonusType = 'BIG'; pendingWhiteDiag = null;
+    pendingDisplayIndex = pickTierIndex(); pendingTierIndex = pendingDisplayIndex; regBoostG = 0; pendingPlan = null;
+    cherryGames = 0; updateCherry();
+  }
+  pendingReg = false; pendingWhiteDiag = null;   // 同じ色の7が3つ揃ったのでBIG
+  if (pendingDisplayIndex < 0) { pendingDisplayIndex = pickTierIndex(); pendingTierIndex = pendingDisplayIndex; }
+  latentLeft = 0; zenchoLeft = 0; zenchoToCz = false; fakeZencho = 0; replayPending = false;
+  window.contraPair = null; window.contraMixed = false; sandReachNow = false; window.bonusSure = false; window.wmNext = false;
+  omenOff(); stopTension();
+  const cabE = document.querySelector('.cabinet'); if (cabE) cabE.classList.remove('fx-glow');
+  totalGames = 0;
+  isPekared = true; isBonusAligned = false;
+  window.pekaLit = true;
+  lightLamp();
+  if (window.LCDX) { LCDX.say('PEKA!!', '7揃い!!', 2400, 'happy', 'jump'); LCDX.spawn('fire', 3); }
+  updateUI();
+  onBonusAligned();
+};
+
 /* REG(レギュラーボーナス): 7・7・BAR 揃い。枚数は小さく、AT突入率も低め。終わったあとしばらくBIGが当たりやすい */
 let pendingReg = false;       // 今回の当選はREGか
 let regBoostG = 0;            // REG後、BIG当選しやすい残りG数
@@ -332,11 +356,12 @@ let latentLeft = 0;
 const LATENT_MIN = 8, LATENT_MAX = 12;
 function contraRole() {
   sandReachNow = false; window.contraMixed = false; window.contraPair = null;
+  if (window.bonusSure) return Math.random() < 0.14 ? 'replay' : 'lose';   // 確定のサインが出たあとは、ハズレかリプレイだけ(演出なし)
   if (window.pushSpoilArm && Math.random() < 0.5) window.pushSpoilArm('bonus');
   const r = Math.random();
-  if (r < 0.22) { window.wmNext = true; return 'lose'; }              // 白7・スイカ・白7
-  if (r < 0.38) { sandReachNow = true; return 'lose'; }               // サンド目
-  if (r < 0.50) { window.contraMixed = true; return 'lose'; }         // 色違いの7が揃う
+  if (r < 0.22) { window.wmNext = true; window.bonusSure = true; return 'lose'; }              // 白7・スイカ・白7
+  if (r < 0.38) { sandReachNow = true; window.bonusSure = true; return 'lose'; }               // サンド目
+  if (r < 0.50) { window.contraMixed = true; window.bonusSure = true; return 'lose'; }         // 色違いの7が揃う
   const role = ['bell', 'replay', 'cherryW', 'melonW', 'chanceW', 'lose'][Math.floor(Math.random() * 6)];
   if (Math.random() < 0.7) {   // 2択を出すが、結果はその2つのどちらでもない
     const grp = { bell: 'bell', replay: 'replay', cherryW: 'cherry', melonW: 'melon', chanceW: 'chance' }[role];
@@ -349,6 +374,8 @@ const ZEN_TO_CZ = { strong: 0.7, weak: 0.17 }, CZ_DIRECT = { strong: 0.1, weak: 
 const SEVEN_HINT_MISS = 3;   // 7を何回外したら液晶に777を出すか
 /* ペカっている間のレバーON: 7を狙って揃える (取りこぼしたら、もう一度) */
 function attemptBonus() {
+  if (!window.czSevenColor && !pendingWhiteDiag) window.czSevenColor = SEVENS[Math.floor(Math.random() * SEVENS.length)];   // 揃える7の色をここで決める
+  if (window.showSevenGuide) showSevenGuide();   // ペカったあとの1ゲーム目: 揃える7の色を液晶に出す
   playClickSound();
   setLedWin(0);
   if (!isDebugRun) {
@@ -426,6 +453,7 @@ function awardPanelUp(n) {
 }
 
 function handleSpin() {
+  window.flag7Game = false;
   hideLastCount();   // レバーを押したら LAST カウントダウンは消す
   // PUSHボタン待ちのときは、レバーでもPUSHできる
   if (isPushing) {
@@ -518,15 +546,17 @@ function handleSpin() {
   else if (fakeZencho > 0) { fakeZencho--; zStep = { real: false, i: fakeTotal - fakeZencho + 1, n: fakeTotal, end: fakeTotal - fakeZencho + 1 >= fakeTotal }; if (fakeZencho === 0) zStep = null; }
   else if (zenchoLeft === 0 && Math.random() < FAKE_ZENCHO_P) { fakeZencho = fakeTotal = 3 + Math.floor(Math.random() * 3); zStep = { real: false, i: 1, n: fakeTotal, end: false }; }
   let contraGame = false;   // 潜伏中: 矛盾した目を出すゲーム
+  let flagGame = false;     // ボーナスフラグが立っているゲーム(告知がなくても7を目押しで揃えられる)
   if (latentLeft > 0 && !inAT && !bonusRun) {
     latentLeft--;
     if (latentLeft === 0) isHit = true;   // 最後のゲーム: ここでボーナス当選(ランプ点灯)
-    else contraGame = true;
+    else { contraGame = true; flagGame = true; }
   } else if (zenchoLeft > 0 && zenchoToCz) {   // 前兆のあとはCHANCE ZONEへ（ボーナスには直接ならない）
     zenchoLeft--;
     if (zenchoLeft > 0) zStep = { real: true, i: zenchoTotal - zenchoLeft + 1, n: zenchoTotal, end: false };
     else { zenchoToCz = false; czLeft = CZ_G; czNew = true; czLoop = Math.random() < CZ_LOOP_P; zStep = { real: true, i: zenchoTotal, n: zenchoTotal, end: true }; }
   } else if (zenchoLeft > 0) {
+    flagGame = true;   // ボーナス前兆中もフラグは成立済み
     zenchoLeft--;
     isHit = zenchoLeft === 0;
     if (zenchoLeft > 0) zStep = { real: true, i: zenchoTotal - zenchoLeft + 1, n: zenchoTotal, end: false };
@@ -540,7 +570,9 @@ function handleSpin() {
   // CHANCE ZONE中に当選が決まったら、前兆(連続演出)は省略して、そのまま当選画面へ
   const czWin = inCZ && (isHit || zenchoLeft > 0);
   if (czWin && !isHit) { zenchoLeft = 0; zenchoTotal = 0; isHit = true; zStep = null; }
+  if (window.bonusSure && flagGame && !isHit) zStep = null;   // 確定のサインのあとは前兆の演出も出さない
   if (zStep && typeof window.onZenchoStep === 'function') window.onZenchoStep(zStep);
+  window.flag7Game = !isDebugRun && !inAT && !bonusRun && (flagGame || (isHit && !inAT));
   // 下パネル消灯: 回転中にパネルが消えたら確定。CZ=当選確定 / RUSH中=100G以上の上乗せ確定 (確定でないゲームでは絶対に消えない)
   if (!isDebugRun) {
     if (inCZ && (isHit || zenchoLeft > 0) && Math.random() < PANEL_P_CZ) window.panelPlan = 'cz';
@@ -561,7 +593,7 @@ function handleSpin() {
   else if (inCZ && czLeft === 0) { window.czTimedOut = true; if (window.onCzEnd) window.onCzEnd(false); }
 
   // 小役は1回の乱数で決める（実機と同じ。確率は従来の順番抽選と同じ配分）
-  const role = isHit ? 'hit' : (contraGame ? contraRole() : drawRole(inAT));
+  const role = isHit ? 'hit' : ((contraGame || (flagGame && window.bonusSure)) ? contraRole() : drawRole(inAT));
   // CHANCE ZONE の突入抽選: 強レアは入りやすい。突入は次ゲームから
   if (!inAT && !bonusRun && !isHit && !contraGame && czLeft === 0 && zenchoLeft === 0 && fakeZencho === 0) {
     const strong = ['cherryS', 'melonS', 'chanceS'].includes(role);
@@ -601,7 +633,7 @@ function handleSpin() {
       window.sideAt = (!isDebugRun && !czWin && pi > 0 && Math.random() < 0.4) ? ORD[Math.floor(Math.random() * pi)] : null;   // 液晶より前のタイミングで、サイドだけ光る
     }
     // 通常時のサンド目（リーチ目）: ボーナス当選済みで、GOGO!ランプがまだ光っていないゲームだけ（ランプが先に光るゲームでは出ない）
-    const reach = !inAT && !czWin && !isDebugRun && window.pekaAt === 'end' && !window.sideAt && Math.random() < SAND_REACH_P;
+    const reach = !inAT && !czWin && !isDebugRun && !window.bonusSure && window.pekaAt === 'end' && !window.sideAt && Math.random() < SAND_REACH_P;
     lampEarly('lever');
     if (inAT && atRun) atRun.bonuses++;
     cherryGames = 0;
@@ -609,7 +641,7 @@ function handleSpin() {
     // 今回はハズレ目で止まり、止まったあとにGOGO!ランプが光る
     const directBig = !reach && !inAT && !czWin && !pendingReg && !isDebugRun && window.pekaAt === 'end' && !window.sideAt && Math.random() < DIRECT_BIG_P;
     if (directBig) { playDirectBig(); return; }   // 7との2択 → 7が揃ってそのままBIG
-    if (!reach && Math.random() < WM_P) window.wmNext = true;   // 白7・スイカ・白7 が第1リールに止まる（当選確定の演出）
+    if (!reach && !window.bonusSure && Math.random() < WM_P) window.wmNext = true;   // 白7・スイカ・白7 が第1リールに止まる（当選確定の演出）
     sandReachNow = reach;
     runRole('lose', () => {
       sandReachNow = false;

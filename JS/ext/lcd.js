@@ -690,17 +690,24 @@ window.onCzSuccess = function () {
     }, 400);
   };
   /* 7が何度も揃えられないとき: 狙う色の777を液晶に出し続ける（揃うまで）。色は以降の7揃えにも使う */
-  window.onSevenHint = function () {
+  window.showSevenGuide = function () {
     if (isDebugRun || !stageEl || window.czKeep) return;
+    const diag = typeof pendingWhiteDiag !== 'undefined' && pendingWhiteDiag;
+    const reg = typeof pendingReg !== 'undefined' && pendingReg;
     if (!window.czSevenColor) window.czSevenColor = SEVENS[Math.floor(Math.random() * SEVENS.length)];
-    const im = SYM_IMG[window.czSevenColor] || ASSET_DIR.img + window.czSevenColor + '.png';
+    const col = diag ? '7white' : window.czSevenColor;
+    const NM = { '7red': '赤7', '7blue': '青7', '7white': '白7' };
+    const imgOf = k => SYM_IMG[k] || ASSET_DIR.img + k + '.png';
+    const keys = reg ? [col, col, 'bar'] : [col, col, col];
+    const text = diag ? '白7を斜めに揃えろ' : reg ? `${NM[col]}・${NM[col]}・BAR を揃えろ` : `${NM[col]}を揃えろ`;
     const E = document.createElement('div');
     E.className = 'lcd-sevhint';
-    E.innerHTML = `<i class="sh-bg"></i><div class="sh-box"><em>7を狙え</em><div class="sh-imgs"><img src="${im}"><img src="${im}"><img src="${im}"></div></div>`;
+    E.innerHTML = `<i class="sh-bg"></i><div class="sh-box"><em>${text}</em><div class="sh-imgs">${keys.map(k => `<img src="${imgOf(k)}">`).join('')}</div></div>`;
     stageEl.appendChild(E);
     window.czKeep = E;   // 揃ったら czKeepClear で消える
     if (soundEnabled) { initAudio(); const t = audioCtx.currentTime; [784, 1047, 1319].forEach((f, i) => tone(f, t + i * 0.08, 0.3, 'triangle', 0.1)); }
   };
+  window.onSevenHint = window.showSevenGuide;   // 7を何度も外したときも同じ表示
   /* ハマり中のひとこと: ペカり君が励ます。250G超えで救済(当選率UP)が始まる */
   const HAMARI = [[150, 'ちょっとハマり気味…', 'sad'], [250, '救済スタート！', 'jump'], [400, 'がんばれ！', 'jump'], [600, '絶対くるよ！', 'cross'], [800, 'もう少し…！', 'jump']];
   let hamariG = 0;
@@ -879,7 +886,7 @@ window.onCzSuccess = function () {
   }, { passive: true }));
   const cabinetOnly = on => { const c = document.querySelector('.cabinet'); if (c) c.classList.toggle('demo', on); };
   setInterval(() => {
-    const busy = isDebugRun || bonusRun || atGames > 0 || isReelSpinning || isPekared || isBonusAligned || isAtResult || isPushing || FX.busy > 0 || zenchoLeft > 0 || fakeZencho > 0 || czLeft > 0 || (typeof AUTOPLAY !== 'undefined' && AUTOPLAY);
+    const busy = isDebugRun || bonusRun || atGames > 0 || isReelSpinning || isPekared || isBonusAligned || isAtResult || isPushing || FX.busy > 0 || zenchoLeft > 0 || fakeZencho > 0 || czLeft > 0 || window.bonusSure || (typeof AUTOPLAY !== 'undefined' && AUTOPLAY);
     if (busy) { lastInput = Date.now(); return; }
     if (!demoOn && Date.now() - lastInput > 45000) { demoOn = true; demoStep = 0; cabinetOnly(true); }
     if (!demoOn) return;

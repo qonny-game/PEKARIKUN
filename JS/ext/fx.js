@@ -231,7 +231,7 @@
 
   /* ---------- 予告: 矛盾演出 (強い予告と弱い予告が食い違う。結果は通常の抽選どおり) ---------- */
   function showContradict(hit, done) {
-    unlock('mujun');
+    unlock('mujun'); if (!hit) window.bonusSure = true;
     if (hit && rnd() < 0.6) st.rev = 'rev';
     // 矛盾は文字を出さず、不可解な音だけで感じさせる
     const end = () => { snd([466, 392, 466, 311, 277], 0.11, 0.32, 'sawtooth', 0.08); FX.hold(1400); wait(1250, done); };
@@ -453,6 +453,7 @@
 
   runRole = function (kind, done, navi) {
     if (isDebugRun) return _runRole(kind, done, navi);
+    if (window.bonusSure && !bonusRun && atGames === 0 && !atEnding && outcomeClass(kind) !== 'hit') { st.noOmen = true; return _runRole(kind, done, navi); }   // 確定のサインのあとは、演出なし(ハズレ・リプレイのみ)
     // ドンドンドン!: 当選なら揺れが多い (通常/AT)。揺れ終わったら同じ役でもう一度ここに戻る
     if (st.donDone) { st.donDone = false; FX.don = false; }
     else if (!bonusRun) {
